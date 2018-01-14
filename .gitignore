@@ -97,3 +97,9 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# data folders which contain copyrighted files
+Data/
+Information/
+.vscode/
+wiki/
