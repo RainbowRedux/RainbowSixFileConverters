@@ -1,9 +1,13 @@
-#Converts RSB files to png files and an acompanying JSON file with extra meta data
-#information for file format from here:
-#https://github.com/AlexKimov/RSE-file-formats/wiki/RSB-File-Format
-#https://github.com/AlexKimov/RSE-file-formats/blob/master/010Editor-templates/RSB.bt
-#RSB Version 0 required looking into the bt file directly as the wiki is not complete
-#Texture and surface data extraction to JSON file is not complete
+# Converts RSB files to png files and an acompanying JSON file with extra meta data
+# information for file format from here:
+# https://github.com/AlexKimov/RSE-file-formats/wiki/RSB-File-Format
+# https://github.com/AlexKimov/RSE-file-formats/blob/master/010Editor-templates/RSB.bt
+# RSB Version 0 required looking into the bt file directly as the wiki is not complete
+# Texture and surface data extraction to JSON file is not complete
+
+# On an i7-7700 conversion of the entire GOG copy of rainbow six takes around 4 minutes.
+# This process could be heavily optimised if array slicing is minimised and more care is
+# taken around memory copies, but since it's a once off process, I'm not to concerned with speed
 
 from PIL import Image
 import time
@@ -186,10 +190,10 @@ def isByteArrayLargeEnoughForPalette(bytearray):
 
 def convert_RSB(filename):
     print "Processing: " + filename
+
+    #read entire file
     f = open(filename, "rb")
-
     bytes_read = f.read()
-
     f.close()
 
     num_bytes_processed = 0
@@ -200,7 +204,9 @@ def convert_RSB(filename):
 
     image256 = None
 
-    #read information that only exists in file format version 0
+    #read information that only exists in file format version 0 under certain circumstances
+    #the 256 color image is only stored for textures that are used in game, not UI elements
+    #these simple condition checks are enough to accurately filter out all UI elements, the other option is filter based on folder
     if header.version == 0 and header.isPowerOf2() and isByteArrayLargeEnoughForPalette(bytes_read):
         #read palette
         palette = None
@@ -232,24 +238,24 @@ def convert_RSB(filename):
         pixels = newImg1.load()
         for x in range(newImg1.size[0]):    # for every col:
             for y in range(newImg1.size[1]):    # For every row
-                    pixel_index = header.width * y + x;
-                    pixel_data = image256.get_pixel(pixel_index);
-                    pixel_color = palette.get_color(ord(pixel_data))
-                    pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], 255) # set the colour accordingly, ignoring alpha
+                pixel_index = header.width * y + x
+                pixel_data = image256.get_pixel(pixel_index)
+                pixel_color = palette.get_color(ord(pixel_data))
+                pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], 255) # set the colour accordingly, ignoring alpha
                 
         newFilename = filename.replace(".RSB", "-256.PNG")
         newFilename = newFilename.replace(".rsb", "-256.PNG")
         newImg1.save(newFilename, "PNG")
-    
+
     #create and save png from full color image
     newImg2 = Image.new('RGBA', (header.width, header.height))
     pixels = newImg2.load()
     for x in range(newImg2.size[0]):    # for every col:
         for y in range(newImg2.size[1]):    # For every row
-                pixel_index = header.width * y + x;
-                pixel_data = imageFullColor.get_pixel(pixel_index)
-                pixel_color = read_bitmask_RGBA_color(pixel_data, header.bitDepthRed, header.bitDepthGreen, header.bitDepthBlue, header.bitDepthAlpha)
-                pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], pixel_color[3]) # set the colour accordingly, ignoring alpha
+            pixel_index = header.width * y + x
+            pixel_data = imageFullColor.get_pixel(pixel_index)
+            pixel_color = read_bitmask_RGBA_color(pixel_data, header.bitDepthRed, header.bitDepthGreen, header.bitDepthBlue, header.bitDepthAlpha)
+            pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], pixel_color[3]) # set the colour accordingly, ignoring alpha
     newFilename = filename.replace(".RSB", ".PNG")
     newFilename = newFilename.replace(".rsb", ".PNG")
     newImg2.save(newFilename, "PNG")
@@ -261,10 +267,9 @@ def convert_RSB(filename):
     meta.add_info("header", header)
     meta.writeJSON(newFilename)
 
-
-    print "Processed " + str(num_bytes_processed) + " bytes"
-    print "Length " + str(len(bytes_read)) + " bytes"
-    print str(len(bytes_read) - num_bytes_processed) + " unprocessed bytes"
+    print "Processed: " + str(num_bytes_processed) + " bytes"
+    print "Length: " + str(len(bytes_read)) + " bytes"
+    print "Unprocessed: " + str(len(bytes_read) - num_bytes_processed) + " bytes"
     print "Finished converting: " + filename
     print ""
 
