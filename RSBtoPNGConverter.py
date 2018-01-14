@@ -9,6 +9,9 @@
 # This process could be heavily optimised if array slicing is minimised and more care is
 # taken around memory copies, but since it's a once off process, I'm not to concerned with speed
 
+#Files with DXT compressed images don't recover the image, since i haven't worked on decompressing DXT images
+#Files with a format version later than 1 also store information after the image, currently this is discarded but can easily be added.
+
 from PIL import Image
 import time
 import os
