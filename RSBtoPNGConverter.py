@@ -51,6 +51,7 @@ class RSBHeader(object):
         return True
 
     def calculate_bytes_per_pixel(self):
+        """Calculates how many bytes per pixel are to be expected in the images"""
         if self.isDXT:
             if self.dxtType == 0:
                 return 1
@@ -81,6 +82,7 @@ class RSBHeader(object):
         print "DXT Type: " + str(self.dxtType)
 
     def read_bit_mask(self, bytearray):
+        """Reads the bitmask for each color channel. May be stored outside of the header in Version 0 files"""
         num_bytes_processed = 0
         #bit depth information
         self.bitDepthRed = bytes_to_uint(bytearray[num_bytes_processed:])
@@ -141,6 +143,7 @@ class RSBHeader(object):
         return num_bytes_processed
 
 class RSBPalette(object):
+    """Reads and stores the color palette of version 0 files"""
     def __init__(self):
         self.num_palette_entries = 256
         self.palette_entries = []
@@ -163,6 +166,7 @@ class RSBPalette(object):
         return num_bytes_processed
 
 class RSBImage(object):
+    """Reads and stores the image data of RSB files"""
     def __init__(self):
         self.image = []
         pass
@@ -241,6 +245,7 @@ def convert_RSB(filename):
                 pixel_index = header.width * y + x
                 pixel_data = image256.get_pixel(pixel_index)
                 pixel_color = palette.get_color(ord(pixel_data))
+                #alpha is ignored as it caused fully invisible PNGs
                 pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], 255) # set the colour accordingly, ignoring alpha
                 
         newFilename = filename.replace(".RSB", "-256.PNG")
@@ -287,9 +292,8 @@ def processAllFilesInFolder(folder):
     return
 
 def main():
-    """Main function that converts a test file"""
+    """Main function that converts test data files"""
     processAllFilesInFolder("Data/Test")
-    #processAllFilesInFolder("R6DataCopy")
     return
     processAllFilesInFolder("Data/R6")
     processAllFilesInFolder("Data/RSDemo")
