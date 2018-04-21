@@ -263,7 +263,7 @@ def convert_RSB(filename):
             pixel_index = header.width * y + x
             pixel_data = imageFullColor.get_pixel(pixel_index)
             pixel_color = read_bitmask_RGBA_color(pixel_data, header.bitDepthRed, header.bitDepthGreen, header.bitDepthBlue, header.bitDepthAlpha)
-            pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], pixel_color[3]) # set the colour accordingly, ignoring alpha
+            pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], pixel_color[3]) # set the colour accordingly
     newFilename = filename.replace(".RSB", ".PNG")
     newFilename = newFilename.replace(".rsb", ".PNG")
     newImg2.save(newFilename, "PNG")
@@ -294,6 +294,10 @@ def processAllFilesInFolder(folder):
     print ""
     return
 
+def profile():
+    import cProfile
+    cProfile.run('processAllFilesInFolder("Data/R6")')
+
 def main():
     """Main function that converts test data files"""
     processAllFilesInFolder("Data/Test")
@@ -303,3 +307,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    #profile()

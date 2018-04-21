@@ -192,6 +192,10 @@ def processAllFilesInFolder(folder):
     print ""
     return
 
+def profile():
+    import cProfile
+    cProfile.run('processAllFilesInFolder("Data/Test")')
+
 def main():
     """Main function that converts a test file"""
     processAllFilesInFolder("Data/Test")

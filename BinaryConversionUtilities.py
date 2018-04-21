@@ -34,34 +34,63 @@ def read_bgra_color(bytearray):
     color[2] = tempblue
     return color
 
+previousMasks = {}
+
+def calc_bitmasks_RGBA_color(bdR, bdG, bdB, bdA):
+    key = str(bdR) + str(bdG) + str(bdB) + str(bdA)
+    if key in previousMasks:
+        masks = previousMasks[key]
+        return masks
+    
+    redMask = 0
+    greenMask = 0
+    blueMask = 0
+    alphaMask = 0
+
+    for i in xrange(bdR):
+        redMask = (redMask << 1) + 1
+    redMask = redMask << (bdG + bdB + bdA)
+
+    greenMask = 0
+    for i in xrange(bdG):
+        greenMask = (greenMask << 1) + 1
+    greenMask = greenMask << (bdB + bdA)
+
+    blueMask = 0
+    for i in xrange(bdB):
+        blueMask = (blueMask << 1) + 1
+    blueMask = blueMask << (bdA)
+
+    if bdA > 0:
+        alphaMask = 0
+        for i in xrange(bdA):
+            alphaMask = (alphaMask << 1) + 1
+
+    masks = [redMask, greenMask, blueMask, alphaMask]
+    previousMasks[key] = masks
+    return masks
 
 def read_bitmask_RGBA_color(bytearray, bdR, bdG, bdB, bdA):
     """Reads an RGBA color with custom bit depths for each channel"""
     colorVal = bytes_to_shortint(bytearray)[0]
-    redMask = 0
-    for i in xrange(bdR):
-        redMask = (redMask << 1) + 1
-    redMask = redMask << (bdG + bdB + bdA)
+    masks = calc_bitmasks_RGBA_color(bdR, bdG, bdB, bdA)
+    redMask = masks[0]
+    greenMask = masks[1]
+    blueMask = masks[2]
+    alphaMask = masks[3]
+
     redColor = redMask & colorVal
     redColor = redColor >> (bdG + bdB + bdA)
     redMaxValue = 2 ** bdR
     #convert to full 255 range of color
     redColor = int((float(redColor) / float(redMaxValue)) * 255)
 
-    greenMask = 0
-    for i in xrange(bdG):
-        greenMask = (greenMask << 1) + 1
-    greenMask = greenMask << (bdB + bdA)
     greenColor = greenMask & colorVal
     greenColor = greenColor >> (bdB + bdA)
     greenMaxValue = 2 ** bdG
     #convert to full 255 range of color
     greenColor = int((float(greenColor) / float(greenMaxValue)) * 255)
 
-    blueMask = 0
-    for i in xrange(bdB):
-        blueMask = (blueMask << 1) + 1
-    blueMask = blueMask << (bdA)
     blueColor = blueMask & colorVal
     blueColor = blueColor >> (bdA)
     blueMaxValue = 2 ** bdB
@@ -70,9 +99,6 @@ def read_bitmask_RGBA_color(bytearray, bdR, bdG, bdB, bdA):
 
     alphaColor = 255
     if bdA > 0:
-        alphaMask = 0
-        for i in xrange(bdA):
-            alphaMask = (alphaMask << 1) + 1
         alphaColor = alphaMask & colorVal
         alphaMaxValue = 2 ** bdA
         #convert to full 255 range of color
