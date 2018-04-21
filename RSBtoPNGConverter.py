@@ -7,7 +7,7 @@
 
 # On an i7-7700 conversion of the entire GOG copy of rainbow six takes around 4 minutes.
 # This process could be heavily optimised if array slicing is minimised and more care is
-# taken around memory copies, but since it's a once off process, I'm not to concerned with speed
+# taken around memory copies, but since it's a once off process, I'm not too concerned with speed
 
 #Files with DXT compressed images don't recover the image, since i haven't worked on decompressing DXT images
 #Files with a format version later than 1 also store information after the image, currently this is discarded but can easily be added.
@@ -27,7 +27,7 @@ class RSBHeader(object):
         self.version = None
         self.width = None
         self.height = None
-        self.unknown1 = None
+        self.containsPalette = None
         self.unknown2 = None
         self.unknown3 = None
         self.unknown4 = None
@@ -76,7 +76,7 @@ class RSBHeader(object):
         print "BitDepthGreen: " + str(self.bitDepthGreen)
         print "BitDepthBlue: " + str(self.bitDepthBlue)
         print "BitDepthAlpha: " + str(self.bitDepthAlpha)
-        print "Unknown var1: " + str(self.unknown1)
+        print "containsPalette: " + str(self.containsPalette)
         print "Unknown var2: " + str(self.unknown2)
         print "Unknown var3: " + str(self.unknown3)
         print "Unknown var4: " + str(self.unknown4)
@@ -114,7 +114,7 @@ class RSBHeader(object):
         num_bytes_processed += 4
 
         if self.version == 0:
-            self.unknown1 = bytes_to_uint(bytearray[num_bytes_processed:])
+            self.containsPalette = bytes_to_uint(bytearray[num_bytes_processed:])
             num_bytes_processed += 4
 
         #num_bytes_processed += 1
@@ -214,7 +214,7 @@ def convert_RSB(filename):
     #read information that only exists in file format version 0 under certain circumstances
     #the 256 color image is only stored for textures that are used in game, not UI elements
     #these simple condition checks are enough to accurately filter out all UI elements, the other option is filter based on folder
-    if header.version == 0 and header.isPowerOf2() and isByteArrayLargeEnoughForPalette(bytes_read):
+    if header.version == 0 and header.containsPalette == 1:
         #read palette
         palette = None
         palette = RSBPalette()
