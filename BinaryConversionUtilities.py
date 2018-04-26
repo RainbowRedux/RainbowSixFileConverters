@@ -1,6 +1,62 @@
 import struct
 import json
 
+class BinaryFileReader(object):
+    """A wrapper for reading and conversion operations on binary file data."""
+    def __init__(self):
+        super(BinaryFileReader, self).__init__()
+
+    def openFile(self, path):
+        #read entire file
+        f = open(path, "rb")
+        self.bytes = f.read()
+        self.seekg = 0
+        f.close()
+
+    def read_bytes(self, size):
+        """Converts 2 bytes to a short integer"""
+        if len(self.bytes) < self.seekg + 4:
+            print("File not long enough, returning nothing")
+            return []
+        val = self.bytes[self.seekg:self.seekg+4]
+        self.seekg += 4
+        return val
+
+    def read_uint(self):
+        """Converts 4 bytes to an integer"""
+        #https://stackoverflow.com/a/444610
+        data = self.read_bytes(4)
+        if len(data) < 4:
+            print("Data read not long enough, returning 0")
+            return 0
+        return struct.unpack("<I", data)[0]
+    
+    def read_uint(self):
+        """Converts 4 bytes to an integer"""
+        #https://stackoverflow.com/a/444610
+        data = self.read_bytes(4)
+        if len(data) < 4:
+            print("Data read not long enough, returning 0")
+            return 0
+        return struct.unpack("<i", data)[0]
+
+    def read_shortint(self):
+        """Converts 2 bytes to a short integer"""
+        data = self.read_bytes(2)
+        if len(data) < 2:
+            print("Data read not long enough, returning 0")
+            return 0
+        return struct.unpack("H", data)[0]
+
+    def read_float(self):
+        """Converts 2 bytes to a short integer"""
+        data = self.read_bytes(4)
+        if len(data) < 4:
+            print("Data read not long enough, returning 0")
+            return 0
+        return struct.unpack("f", data)[0]
+        
+
 def bytes_to_int(bytearray):
     """Converts 4 bytes to an integer"""
     #https://stackoverflow.com/a/444610
@@ -27,7 +83,7 @@ def bytes_to_float(bytearray):
 def read_bgra_color(bytearray):
     """reads 4 bytes into a BGRA color, and then converts to RGBA"""
     color = []
-    for j in xrange(4):
+    for j in range(4):
         color.append(ord(bytearray[j:j + 1]))
     tempblue = color[0]
     color[0] = color[2]
@@ -47,23 +103,23 @@ def calc_bitmasks_RGBA_color(bdR, bdG, bdB, bdA):
     blueMask = 0
     alphaMask = 0
 
-    for i in xrange(bdR):
+    for i in range(bdR):
         redMask = (redMask << 1) + 1
     redMask = redMask << (bdG + bdB + bdA)
 
     greenMask = 0
-    for i in xrange(bdG):
+    for i in range(bdG):
         greenMask = (greenMask << 1) + 1
     greenMask = greenMask << (bdB + bdA)
 
     blueMask = 0
-    for i in xrange(bdB):
+    for i in range(bdB):
         blueMask = (blueMask << 1) + 1
     blueMask = blueMask << (bdA)
 
     if bdA > 0:
         alphaMask = 0
-        for i in xrange(bdA):
+        for i in range(bdA):
             alphaMask = (alphaMask << 1) + 1
 
     masks = [redMask, greenMask, blueMask, alphaMask]
@@ -108,7 +164,7 @@ def read_bitmask_RGBA_color(bytearray, bdR, bdG, bdB, bdA):
 
 def read_uint_array(bytearray, numelements):
     tempArray = []
-    for i in xrange(numelements):
+    for i in range(numelements):
         temp = bytes_to_uint(bytearray[i*4])
         tempArray.append(temp)
     return tempArray

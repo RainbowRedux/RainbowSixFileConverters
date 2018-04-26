@@ -62,27 +62,27 @@ class RSBHeader(object):
                 return 2
         else:
             bitDepthTotal = self.bitDepthRed + self.bitDepthGreen + self.bitDepthBlue + self.bitDepthAlpha
-            return bitDepthTotal / 8
+            return bitDepthTotal // 8
 
     def print_header_info(self):
-        print "RSB Version: " + str(self.version)
-        print "Image Width: " + str(self.width)
-        print "Image height: " + str(self.height)
+        print("RSB Version: " + str(self.version))
+        print("Image Width: " + str(self.width))
+        print("Image height: " + str(self.height))
         if self.bitDepthAlpha > 0:
-            print "Has Alpha?: True"
+            print("Has Alpha?: True")
         else:
-            print "Has Alpha?: False"
-        print "BitDepthRed: " + str(self.bitDepthRed)
-        print "BitDepthGreen: " + str(self.bitDepthGreen)
-        print "BitDepthBlue: " + str(self.bitDepthBlue)
-        print "BitDepthAlpha: " + str(self.bitDepthAlpha)
-        print "containsPalette: " + str(self.containsPalette)
-        print "Unknown var2: " + str(self.unknown2)
-        print "Unknown var3: " + str(self.unknown3)
-        print "Unknown var4: " + str(self.unknown4)
-        print "Unknown var5: " + str(self.unknown5)
-        print "isDXT: " + str(self.isDXT)
-        print "DXT Type: " + str(self.dxtType)
+            print("Has Alpha?: False")
+        print("BitDepthRed: " + str(self.bitDepthRed))
+        print("BitDepthGreen: " + str(self.bitDepthGreen))
+        print("BitDepthBlue: " + str(self.bitDepthBlue))
+        print("BitDepthAlpha: " + str(self.bitDepthAlpha))
+        print("containsPalette: " + str(self.containsPalette))
+        print("Unknown var2: " + str(self.unknown2))
+        print("Unknown var3: " + str(self.unknown3))
+        print("Unknown var4: " + str(self.unknown4))
+        print("Unknown var5: " + str(self.unknown5))
+        print("isDXT: " + str(self.isDXT))
+        print("DXT Type: " + str(self.dxtType))
 
     def read_bit_mask(self, bytearray):
         """Reads the bitmask for each color channel. May be stored outside of the header in Version 0 files"""
@@ -131,7 +131,7 @@ class RSBHeader(object):
 
         if self.version > 0:
             #bit depth information
-            print num_bytes_processed
+            print(num_bytes_processed)
             num_bytes_processed += self.read_bit_mask(bytearray[num_bytes_processed:])
 
         if self.version >= 9: 
@@ -157,12 +157,12 @@ class RSBPalette(object):
 
     def print_palette(self):
         for color in self.palette_entries:
-            print "R: " + str(color[0]) + "\tG: " + str(color[1]) + "\tB: " + str(color[2]) + "\tA: " + str(color[3])
+            print("R: " + str(color[0]) + "\tG: " + str(color[1]) + "\tB: " + str(color[2]) + "\tA: " + str(color[3]))
 
     def read_palette(self, bytearray):
         num_bytes_processed = 0
         self.palette_entries = []
-        for i in xrange(self.num_palette_entries):
+        for i in range(self.num_palette_entries):
             temp = read_bgra_color(bytearray[num_bytes_processed:])
             num_bytes_processed += 4
             self.palette_entries.append(temp)
@@ -176,14 +176,14 @@ class RSBImage(object):
     
     def get_pixel(self, index):
         if index >= len(self.image):
-            print "Invalid index: " + str(index)
+            print("Invalid index: " + str(index))
             return "0"
         return self.image[index]
 
     def read_image(self, width, height, bytes_per_pixel, bytearray):
         num_bytes_processed = 0
         self.image = []
-        for i in xrange(width*height):
+        for i in range(width*height):
             self.image.append(bytearray[num_bytes_processed : num_bytes_processed + bytes_per_pixel])
             num_bytes_processed += bytes_per_pixel
         return num_bytes_processed
@@ -196,7 +196,7 @@ def isByteArrayLargeEnoughForPalette(bytearray):
     return True
 
 def convert_RSB(filename):
-    print "Processing: " + filename
+    print("Processing: " + filename)
 
     #read entire file
     f = open(filename, "rb")
@@ -232,7 +232,7 @@ def convert_RSB(filename):
 
     header.print_header_info()
     if header.isValid() is False:
-        print "Header not valid, aborting"
+        print("Header not valid, aborting")
         return
 
     #read full color image
@@ -275,11 +275,11 @@ def convert_RSB(filename):
     meta.add_info("header", header)
     meta.writeJSON(newFilename)
 
-    print "Processed: " + str(num_bytes_processed) + " bytes"
-    print "Length: " + str(len(bytes_read)) + " bytes"
-    print "Unprocessed: " + str(len(bytes_read) - num_bytes_processed) + " bytes"
-    print "Finished converting: " + filename
-    print ""
+    print("Processed: " + str(num_bytes_processed) + " bytes")
+    print("Length: " + str(len(bytes_read)) + " bytes")
+    print("Unprocessed: " + str(len(bytes_read) - num_bytes_processed) + " bytes")
+    print("Finished converting: " + filename)
+    print("")
 
 def processAllFilesInFolder(folder):
     for root, dirs, files in os.walk(folder, topdown=True):
@@ -290,8 +290,8 @@ def processAllFilesInFolder(folder):
         for name in dirs:
             print("Walking directory: " + os.path.join(root, name))
 
-    print "Finished processing all data in folder"
-    print ""
+    print("Finished processing all data in folder")
+    print("")
     return
 
 def profile():
