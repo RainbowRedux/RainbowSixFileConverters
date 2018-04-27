@@ -1,6 +1,6 @@
 import BinaryConversionUtilities
 import PIL
-from BinaryConversionUtilities import bytes_to_uint, bytes_to_int, bytes_to_shortint, read_bgra_color, read_bitmask_ARGB_color
+from BinaryConversionUtilities import read_bitmask_ARGB_color
 
 class RSBImageFile(object):
     """Class to read full RSB files"""
@@ -176,7 +176,7 @@ class RSBPalette(object):
         num_bytes_processed = 0
         self.palette_entries = []
         for i in range(self.num_palette_entries):
-            temp = filereader.read_bgra_color()
+            temp = filereader.read_bgra_color_8bpp_byte()
             num_bytes_processed += 4
             self.palette_entries.append(temp)
         return num_bytes_processed

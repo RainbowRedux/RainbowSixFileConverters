@@ -84,5 +84,5 @@ def main():
     processAllFilesInFolder("Data/RSDemo")
 
 if __name__ == "__main__":
-    #main()
-    profile()
+    main()
+    #profile()
