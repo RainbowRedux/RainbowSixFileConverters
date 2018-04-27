@@ -19,7 +19,7 @@ from os.path import isfile, join
 import json
 
 import BinaryConversionUtilities
-from BinaryConversionUtilities import bytes_to_uint, bytes_to_int, bytes_to_shortint, read_bgra_color, read_bitmask_RGBA_color
+from BinaryConversionUtilities import bytes_to_uint, bytes_to_int, bytes_to_shortint, read_bgra_color, read_bitmask_ARGB_color
 
 class RSBHeader(object):
     """Class that matches the RSB file format header"""
@@ -38,12 +38,6 @@ class RSBHeader(object):
         self.bitDepthAlpha = None
         self.isDXT = False
         self.dxtType = None
-
-    def isPowerOf2(self):
-        """Checks if the dimensions of the image are power of 2, and therefore are likely to be gameplay textures with 256 colour versions stored"""
-        num1 = self.width != 0 and ((self.width & (self.width - 1)) == 0)
-        num2 = self.height != 0 and ((self.height & (self.height - 1)) == 0)
-        return num1 and num2
 
     def isValid(self):
         """Some images cause errors when converting, they seem to have invalid headers. Simple checks here identify bad headers"""
@@ -262,7 +256,7 @@ def convert_RSB(filename):
         for y in range(newImg2.size[1]):    # For every row
             pixel_index = header.width * y + x
             pixel_data = imageFullColor.get_pixel(pixel_index)
-            pixel_color = read_bitmask_RGBA_color(pixel_data, header.bitDepthRed, header.bitDepthGreen, header.bitDepthBlue, header.bitDepthAlpha)
+            pixel_color = read_bitmask_ARGB_color(pixel_data, header.bitDepthRed, header.bitDepthGreen, header.bitDepthBlue, header.bitDepthAlpha)
             pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], pixel_color[3]) # set the colour accordingly
     newFilename = filename.replace(".RSB", ".PNG")
     newFilename = newFilename.replace(".rsb", ".PNG")
@@ -300,6 +294,8 @@ def profile():
 
 def main():
     """Main function that converts test data files"""
+    processAllFilesInFolder("Data/Test/Textures/RS/alphatesting")
+    return
     processAllFilesInFolder("Data/Test")
     return
     processAllFilesInFolder("Data/R6")

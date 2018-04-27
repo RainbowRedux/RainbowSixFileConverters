@@ -90,10 +90,15 @@ def read_bgra_color(bytearray):
     color[2] = tempblue
     return color
 
+def isPowerOf2(number):
+    """Checks if a number is a power of 2"""
+    num1 = ((number & (number - 1)) == 0)
+    return num1
+
 previousMasks = {}
 
-def calc_bitmasks_RGBA_color(bdR, bdG, bdB, bdA):
-    key = str(bdR) + str(bdG) + str(bdB) + str(bdA)
+def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):
+    key = str(bdA) + str(bdR) + str(bdG) + str(bdB)
     if key in previousMasks:
         masks = previousMasks[key]
         return masks
@@ -103,62 +108,61 @@ def calc_bitmasks_RGBA_color(bdR, bdG, bdB, bdA):
     blueMask = 0
     alphaMask = 0
 
+    if bdA > 0:
+        for i in range(bdA):
+            alphaMask = (alphaMask << 1) + 1
+        alphaMask = alphaMask << (bdR + bdG + bdB)
+
     for i in range(bdR):
         redMask = (redMask << 1) + 1
-    redMask = redMask << (bdG + bdB + bdA)
+    redMask = redMask << (bdG + bdB)
 
     greenMask = 0
     for i in range(bdG):
         greenMask = (greenMask << 1) + 1
-    greenMask = greenMask << (bdB + bdA)
+    greenMask = greenMask << (bdB)
 
     blueMask = 0
     for i in range(bdB):
         blueMask = (blueMask << 1) + 1
-    blueMask = blueMask << (bdA)
-
-    if bdA > 0:
-        alphaMask = 0
-        for i in range(bdA):
-            alphaMask = (alphaMask << 1) + 1
 
     masks = [redMask, greenMask, blueMask, alphaMask]
     previousMasks[key] = masks
     return masks
 
-def read_bitmask_RGBA_color(bytearray, bdR, bdG, bdB, bdA):
-    """Reads an RGBA color with custom bit depths for each channel"""
+def read_bitmask_ARGB_color(bytearray, bdR, bdG, bdB, bdA):
+    """Reads an ARGB color with custom bit depths for each channel, returns in RGBA format"""
     colorVal = bytes_to_shortint(bytearray)[0]
-    masks = calc_bitmasks_RGBA_color(bdR, bdG, bdB, bdA)
+    masks = calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA)
     redMask = masks[0]
     greenMask = masks[1]
     blueMask = masks[2]
     alphaMask = masks[3]
 
+    alphaColor = 255  
+    if bdA > 0:
+        alphaColor = alphaMask & colorVal
+        alphaColor = alphaColor >> (bdR + bdG + bdB)
+        alphaMaxValue = 2 ** bdA
+        #convert to full 255 range of color
+        alphaColor = int((float(alphaColor) / float(alphaMaxValue)) * 255)
+
     redColor = redMask & colorVal
-    redColor = redColor >> (bdG + bdB + bdA)
+    redColor = redColor >> (bdG + bdB)
     redMaxValue = 2 ** bdR
     #convert to full 255 range of color
     redColor = int((float(redColor) / float(redMaxValue)) * 255)
 
     greenColor = greenMask & colorVal
-    greenColor = greenColor >> (bdB + bdA)
+    greenColor = greenColor >> (bdB)
     greenMaxValue = 2 ** bdG
     #convert to full 255 range of color
     greenColor = int((float(greenColor) / float(greenMaxValue)) * 255)
 
     blueColor = blueMask & colorVal
-    blueColor = blueColor >> (bdA)
     blueMaxValue = 2 ** bdB
     #convert to full 255 range of color
     blueColor = int((float(blueColor) / float(blueMaxValue)) * 255)
-
-    alphaColor = 255
-    if bdA > 0:
-        alphaColor = alphaMask & colorVal
-        alphaMaxValue = 2 ** bdA
-        #convert to full 255 range of color
-        alphaColor = int((float(alphaColor) / float(alphaMaxValue)) * 255)
 
     return [redColor, greenColor, blueColor, alphaColor]
 
