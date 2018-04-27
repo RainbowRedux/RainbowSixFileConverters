@@ -5,6 +5,10 @@ class BinaryFileReader(object):
     """A wrapper for reading and conversion operations on binary file data."""
     def __init__(self):
         super(BinaryFileReader, self).__init__()
+    
+    def __init__(self, path):
+        super(BinaryFileReader, self).__init__()
+        self.openFile(path)
 
     def openFile(self, path):
         #read entire file
@@ -15,11 +19,11 @@ class BinaryFileReader(object):
 
     def read_bytes(self, size):
         """Converts 2 bytes to a short integer"""
-        if len(self.bytes) < self.seekg + 4:
+        if len(self.bytes) < self.seekg + size:
             print("File not long enough, returning nothing")
             return []
-        val = self.bytes[self.seekg:self.seekg+4]
-        self.seekg += 4
+        val = self.bytes[self.seekg:self.seekg+size]
+        self.seekg += size
         return val
 
     def read_uint(self):
@@ -31,7 +35,7 @@ class BinaryFileReader(object):
             return 0
         return struct.unpack("<I", data)[0]
     
-    def read_uint(self):
+    def read_int(self):
         """Converts 4 bytes to an integer"""
         #https://stackoverflow.com/a/444610
         data = self.read_bytes(4)
@@ -55,6 +59,23 @@ class BinaryFileReader(object):
             print("Data read not long enough, returning 0")
             return 0
         return struct.unpack("f", data)[0]
+    
+    def read_bgra_color(self):
+        """reads 4 bytes into a BGRA color, and then converts to RGBA"""
+        bytearray = self.read_bytes(4)
+        color = []
+        for j in range(4):
+            color.append(ord(bytearray[j:j + 1]))
+        tempblue = color[0]
+        color[0] = color[2]
+        color[2] = tempblue
+        return color
+    
+    def get_length(self):
+        return len(self.bytes)
+
+    def get_seekg(self):
+        return self.seekg
         
 
 def bytes_to_int(bytearray):
