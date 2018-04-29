@@ -59,6 +59,18 @@ class BinaryFileReader(object):
             print("Data read not long enough, returning 0")
             return 0
         return struct.unpack("f", data)[0]
+
+    def read_vec_f(self, size):
+        vec = []
+        for i in range(size):
+            vec.append(self.read_float())
+        return vec
+
+    def read_vec_uint(self, size):
+        vec = []
+        for i in range(size):
+            vec.append(self.read_uint())
+        return vec
     
     def read_bgra_color_8bpp_byte(self):
         """reads 4 bytes into a BGRA color, and then converts to RGBA."""

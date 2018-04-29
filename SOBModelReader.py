@@ -1,9 +1,10 @@
 import BinaryConversionUtilities
-
+import pprint
 
 class SOBModelFile(object):
     """Class to read full SOB files"""
     def __init__(self):
+        super(SOBModelFile, self).__init__()
         pass
 
     def read_sob(self, filename):
@@ -13,18 +14,28 @@ class SOBModelFile(object):
         self.header.read_header(modelFile)
         self.header.print_header_info()
 
-        self.material_list_header = SOBMaterialListHeader()
-        self.material_list_header.read_header(modelFile)
-        self.material_list_header.print_header_info()
+        self.materialListHeader = SOBMaterialListHeader()
+        self.materialListHeader.read_header(modelFile)
+        self.materialListHeader.print_header_info()
 
         self.materials = []
-        for i in range(self.material_list_header.numMaterials):
+        for i in range(self.materialListHeader.numMaterials):
             newMaterial = SOBMaterialDefinition()
             newMaterial.read_material(modelFile)
             newMaterial.print_material_info()
 
             self.materials.append(newMaterial)
 
+        self.geometryListHeader = SOBGeometryListHeader()
+        self.geometryListHeader.read_header(modelFile)
+        self.geometryListHeader.print_header_info()
+
+        self.geometryObjects = []
+        for i in range(self.geometryListHeader.count):
+            newObj = SOBGeometryObject()
+            newObj.read_object(modelFile)
+            newObj.print_object_info()
+            self.geometryObjects.append(newObj)
         
         print("Processed: " + str(modelFile.get_seekg()) + " bytes")
         print("Length: " + str(modelFile.get_length()) + " bytes")
@@ -33,6 +44,7 @@ class SOBModelFile(object):
 
 class SOBHeader(object):
     def __init__(self):
+        super(SOBHeader, self).__init__()
         self.headerLength = 0
         self.headerBeginMessage = None
 
@@ -47,6 +59,7 @@ class SOBHeader(object):
 
 class SOBMaterialListHeader(object):
     def __init__(self):
+        super(SOBMaterialListHeader, self).__init__()
         pass
 
     def read_header(self, filereader):
@@ -67,6 +80,7 @@ class SOBMaterialListHeader(object):
 
 class SOBMaterialDefinition(object):
     def __init__(self):
+        super(SOBMaterialDefinition, self).__init__()
         pass
 
     def read_material(self, filereader):
@@ -101,7 +115,105 @@ class SOBMaterialDefinition(object):
         print("Material size: " + str(self.materialSize))
         print("ID: " + str(self.ID))
         print("Material Name Length: " + str(self.materialNameLength))
-        print("Material Name " + str(self.materialName))
+        print("Material Name " + str(self.materialName.decode("utf-8")))
         print("Texture Name Length: " + str(self.textureNameLength))
-        print("Texture Name: " + str(self.textureName))
+        print("Texture Name: " + str(self.textureName.decode("utf-8")))
         print("")
+
+class SOBGeometryListHeader(object):
+    def __init__(self):
+        super(SOBGeometryListHeader, self).__init__()
+
+    def read_header(self, filereader):
+        self.geometryListSize = filereader.read_uint()
+        self.ID = filereader.read_uint()
+        self.geometryListStringLength = filereader.read_uint()
+        self.geometryListString = filereader.read_bytes(self.geometryListStringLength)
+        self.count = filereader.read_uint()
+
+    def print_header_info(self):
+        pprint.pprint(vars(self))
+
+class SOBGeometryObject(object):
+    def __init__(self):
+        super(SOBGeometryObject, self).__init__()
+
+    def read_object(self, filereader):
+        self.objectSize = filereader.read_uint()
+        self.ID = filereader.read_uint()
+        self.versionStringLength = filereader.read_uint()
+        self.versionNumber = None
+        if self.versionStringLength == 8:
+            self.versionString = filereader.read_bytes(self.versionStringLength)
+            if self.versionString[:-1] == b'Version':
+                self.versionNumber = filereader.read_uint()
+                self.objectNameLength = filereader.read_uint()
+                self.objectNameString = filereader.read_bytes(self.objectNameLength)
+            self.unknown4 = filereader.read_uint()
+            self.unknown5 = filereader.read_uint()
+        else:
+            self.versionString = filereader.read_bytes(self.versionStringLength)
+        if self.versionNumber is None:
+            self.objectName = self.versionStringLength
+        
+        self.read_vertices(filereader)
+        self.read_vertex_params(filereader)
+        self.read_faces(filereader)
+        
+
+    def read_vertices(self, filereader):
+        self.vertexCount = filereader.read_uint()
+        self.vertices = []
+        for i in range(self.vertexCount):
+            self.vertices.append(filereader.read_vec_f(3))
+
+    def read_vertex_params(self, filereader):
+        self.vertexParamsCount = filereader.read_uint()
+        self.vertexParams = []
+        for i in range(self.vertexParamsCount):
+            newParams = SOBVertexParameterCollection()
+            newParams.read_params(filereader)
+            self.vertexParams.append(newParams)
+
+    def read_faces(self, filereader):
+        self.faceCount = filereader.read_uint()
+        self.faces = []
+        for i in range(self.faceCount):
+            newFace = SOBFaceDefinition()
+            newFace.read_face(filereader)
+            self.faces.append(newFace)
+
+    def print_object_info(self):
+        pprint.pprint(vars(self))
+
+class SOBVertexParameterCollection(object):
+    def __init__(self):
+        super(SOBVertexParameterCollection, self).__init__()
+    
+    def __repr__(self):
+        if False:
+            return pprint.pformat(vars(self))
+        else:
+            return super(SOBVertexParameterCollection, self).__repr__()
+
+    def read_params(self, filereader):
+        self.normal = filereader.read_vec_f(4)
+        self.UV = filereader.read_vec_f(2)
+        self.color = filereader.read_rgb_color_32bpp_uint()
+        pass
+
+class SOBFaceDefinition(object):
+    def __init__(self):
+        super(SOBFaceDefinition, self).__init__()
+
+    def __repr__(self):
+        if False:
+            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
+        else:
+            return super(SOBFaceDefinition, self).__repr__()
+
+    def read_face(self, filereader):
+        self.vertexIndices = filereader.read_vec_uint(3)
+        self.paramIndices = filereader.read_vec_uint(3)
+        self.faceNormal = filereader.read_vec_f(4)
+        self.materialIndex = filereader.read_uint()
