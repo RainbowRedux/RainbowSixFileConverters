@@ -225,6 +225,9 @@ class MetaInfo(object):
     def add_info(self, key, info):
         self.__setattr__(key, info)
 
+    def getJSON(self):
+        return json.dumps(self, cls=CustomJSONEncoder)
+
     def writeJSON(self, filename):
         fp = open(filename, "w")
         json.dump(self, fp, cls=CustomJSONEncoder, indent=4)
@@ -235,4 +238,7 @@ class CustomJSONEncoder(json.JSONEncoder):
     """A quick and  dirty custom JSON encoder that allows serialization of custom objects"""
     #https://code.tutsplus.com/tutorials/serialization-and-deserialization-of-python-objects-part-1--cms-26183
     def default(self, o):
-        return  o.__dict__
+        if hasattr(o, '__dict__'):
+            return o.__dict__
+        else:
+            return str(o)

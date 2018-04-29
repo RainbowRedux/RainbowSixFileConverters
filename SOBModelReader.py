@@ -12,29 +12,29 @@ class SOBModelFile(object):
 
         self.header = SOBHeader()
         self.header.read_header(modelFile)
-        self.header.print_header_info()
+        #self.header.print_header_info()
 
         self.materialListHeader = SOBMaterialListHeader()
         self.materialListHeader.read_header(modelFile)
-        self.materialListHeader.print_header_info()
+        #self.materialListHeader.print_header_info()
 
         self.materials = []
         for i in range(self.materialListHeader.numMaterials):
             newMaterial = SOBMaterialDefinition()
             newMaterial.read_material(modelFile)
-            newMaterial.print_material_info()
+            #newMaterial.print_material_info()
 
             self.materials.append(newMaterial)
 
         self.geometryListHeader = SOBGeometryListHeader()
         self.geometryListHeader.read_header(modelFile)
-        self.geometryListHeader.print_header_info()
+        #self.geometryListHeader.print_header_info()
 
         self.geometryObjects = []
         for i in range(self.geometryListHeader.count):
             newObj = SOBGeometryObject()
             newObj.read_object(modelFile)
-            newObj.print_object_info()
+            #newObj.print_object_info()
             self.geometryObjects.append(newObj)
         
         print("Processed: " + str(modelFile.get_seekg()) + " bytes")
@@ -191,6 +191,7 @@ class SOBVertexParameterCollection(object):
         super(SOBVertexParameterCollection, self).__init__()
     
     def __repr__(self):
+        #a toggle for verbose information or not
         if False:
             return pprint.pformat(vars(self))
         else:
@@ -207,6 +208,7 @@ class SOBFaceDefinition(object):
         super(SOBFaceDefinition, self).__init__()
 
     def __repr__(self):
+        #a toggle for verbose information or not
         if False:
             return pprint.pformat(vars(self), indent=1, width=80, depth=2)
         else:

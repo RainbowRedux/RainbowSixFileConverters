@@ -23,6 +23,12 @@ def convert_SOB(filename):
 
     num_bytes_processed = 0
 
+    meta = BinaryConversionUtilities.MetaInfo()
+    meta.add_info("filecontents", modelFile)
+    meta.add_info("filename", filename)
+    newFilename = filename + ".JSON"
+    meta.writeJSON(newFilename)
+
     print("===============================================")
 
     return
