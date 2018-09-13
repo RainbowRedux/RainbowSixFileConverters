@@ -1,4 +1,4 @@
-from . import BinaryConversionUtilities
+from RainbowFileReaders import BinaryConversionUtilities
 import pprint
 
 class SOBModelFile(object):
