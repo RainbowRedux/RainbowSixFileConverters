@@ -14,6 +14,7 @@ import json
 import BinaryConversionUtilities
 
 from SOBModelReader import SOBModelFile
+from OBJModelWriter import OBJModelWriter
 
 def convert_SOB(filename):
     print("Processing: " + filename)
@@ -21,45 +22,32 @@ def convert_SOB(filename):
     modelFile = SOBModelFile()
     modelFile.read_sob(filename)
 
-    num_bytes_processed = 0
-
     meta = BinaryConversionUtilities.MetaInfo()
     meta.add_info("filecontents", modelFile)
     meta.add_info("filename", filename)
     newFilename = filename + ".JSON"
     meta.writeJSON(newFilename)
 
+    writeOBJ(filename + ".obj", modelFile)
+
     print("===============================================")
 
-    return
-
-    print(str(num_bytes_processed))
-    if matHeader.numMaterials > 1:
-        num_bytes_processed += 20
-
-    print(str(num_bytes_processed))
-
-    materials = []
-
-    for i in xrange(matHeader.numMaterials):
-        matDef = MaterialDefinition()
-        num_bytes_processed += matDef.read_material(bytes_read[num_bytes_processed:])
-        matDef.print_material_info()
-        materials.append(matDef)
-
-    #header.print_header_info()
-
-    newFilename = filename.replace(".SOB", ".JSON")
-    newFilename = newFilename.replace(".sob", ".JSON")
-    meta = BinaryConversionUtilities.MetaInfo()
-    meta.setFilename(os.path.basename(filename))
-    meta.add_info("header", header)
-    meta.add_info("materialSectionHeader", matHeader)
-    meta.add_info("materials", materials)
-    meta.writeJSON(newFilename)
-
-    print("Finished!")
-    print("")
+def writeOBJ(filename, SOBObject):
+    writer = OBJModelWriter()
+    writer.open_file(filename)
+    for geoObject in SOBObject.geometryObjects:
+        writer.begin_new_object(geoObject.objectName)
+        for i in range(len(geoObject.vertices)):
+            vertex = geoObject.vertices[i]
+            writer.write_vertex(vertex)
+        for i in range(len(geoObject.vertexParams)):
+            normal = geoObject.vertexParams[i].normal
+            writer.write_normal(normal)
+            UV = geoObject.vertexParams[i].UV
+            writer.write_texture_coordinate(UV)
+        for face in geoObject.faces:
+            writer.write_face(face.vertexIndices,face.paramIndices, face.paramIndices)
+    writer.close_file()
 
 def processAllFilesInFolder(folder):
     for root, dirs, files in os.walk(folder, topdown=True):
