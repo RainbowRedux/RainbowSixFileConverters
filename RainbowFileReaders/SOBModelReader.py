@@ -5,10 +5,12 @@ class SOBModelFile(object):
     """Class to read full SOB files"""
     def __init__(self):
         super(SOBModelFile, self).__init__()
+        self.header = None
         self.materialListHeader = None
         self.materials = []
         self.geometryListHeader = None
         self.geometryObjects = []
+        self.footer = None
 
     def read_sob(self, filename):
         modelFile = BinaryConversionUtilities.BinaryFileReader(filename)
@@ -38,6 +40,10 @@ class SOBModelFile(object):
             newObj.read_object(modelFile)
             #newObj.print_object_info()
             self.geometryObjects.append(newObj)
+
+        print("Geometry objects not finished, not reading footer in the meantime")
+        #self.footer = SOBFooterDefinition()
+        #self.footer.read_footer(modelFile)
         
         print("Processed: " + str(modelFile.get_seekg()) + " bytes")
         print("Length: " + str(modelFile.get_length()) + " bytes")
@@ -173,6 +179,14 @@ class SOBGeometryObject(object):
         self.objectName = None
         self.unknown4 = None
         self.unknown5 = None
+        self.vertexCount = None
+        self.vertices = None
+        self.vertexParamsCount = None
+        self.vertexParams = None
+        self.faceCount = None
+        self.faces = None
+        self.meshCount = None
+        self.meshes = None
 
     def read_object(self, filereader):
         self.objectSize = filereader.read_uint()
@@ -199,6 +213,7 @@ class SOBGeometryObject(object):
         self.read_vertices(filereader)
         self.read_vertex_params(filereader)
         self.read_faces(filereader)
+        self.read_meshes(filereader)
         
 
     def read_vertices(self, filereader):
@@ -222,6 +237,16 @@ class SOBGeometryObject(object):
             newFace = SOBFaceDefinition()
             newFace.read_face(filereader)
             self.faces.append(newFace)
+
+    def read_meshes(self, filereader):
+        print("Unfinished. Aborting mesh read")
+        return
+        self.meshCount = filereader.read_uint()
+        self.meshes = []
+        for i in range(self.meshCount):
+            newMesh = SOBMeshDefinition()
+            newMesh.read_mesh(filereader)
+            self.meshes.append(newMesh)
 
     def print_object_info(self):
         pprint.pprint(vars(self))
@@ -261,6 +286,40 @@ class SOBFaceDefinition(object):
         self.paramIndices = filereader.read_vec_uint(3)
         self.faceNormal = filereader.read_vec_f(4)
         self.materialIndex = filereader.read_uint()
+
+
+class SOBMeshDefinition(object):
+    """Unfinished"""
+    def __init__(self):
+        super(SOBMeshDefinition, self).__init__()
+
+    def __repr__(self):
+        #a toggle for verbose information or not
+        if False:
+            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
+        else:
+            return super(SOBMeshDefinition, self).__repr__()
+
+    def read_mesh(self, filereader):
+        self.numFaces = filereader.read_uint()
+        self.faceIndices = filereader.read_vec_uint(self.numFaces)
+
+
+class SOBFooterDefinition(object):
+    """Unfinished"""
+    def __init__(self):
+        super(SOBFooterDefinition, self).__init__()
+
+    def __repr__(self):
+        #a toggle for verbose information or not
+        if False:
+            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
+        else:
+            return super(SOBFooterDefinition, self).__repr__()
+
+    def read_footer(self, filereader):
+        self.EndModelLength = filereader.read_uint()
+        self.EndModelString = filereader.read_bytes(self.EndModelLength)
 
 if __name__ == "__main__":
     test = SOBModelFile()
