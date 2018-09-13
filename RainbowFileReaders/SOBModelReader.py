@@ -26,7 +26,6 @@ class SOBModelFile(object):
             newMaterial = SOBMaterialDefinition()
             newMaterial.read_material(modelFile)
             #newMaterial.print_material_info()
-
             self.materials.append(newMaterial)
 
         self.geometryListHeader = SOBGeometryListHeader()
@@ -117,9 +116,13 @@ class SOBMaterialDefinition(object):
             if self.versionString[:-1] == b'Version':
                 self.versionNumber = filereader.read_uint()
                 self.materialNameLength = filereader.read_uint()
-        if self.versionNumber is None:
+                self.materialName = filereader.read_bytes(self.materialNameLength)
+            else:
+                self.materialNameLength = self.versionStringLength
+                self.materialName = self.versionString
+        else:
             self.materialNameLength = self.versionStringLength
-        self.materialName = filereader.read_bytes(self.materialNameLength)
+            self.materialName = filereader.read_bytes(self.materialNameLength)
 
         self.textureNameLength = filereader.read_uint()
         self.textureName = filereader.read_bytes(self.textureNameLength)
@@ -138,7 +141,7 @@ class SOBMaterialDefinition(object):
         print("Material size: " + str(self.materialSize))
         print("ID: " + str(self.ID))
         print("Material Name Length: " + str(self.materialNameLength))
-        print("Material Name " + str(self.materialName.decode("utf-8")))
+        print("Material Name: " + str(self.materialName.decode("utf-8")))
         print("Texture Name Length: " + str(self.textureNameLength))
         print("Texture Name: " + str(self.textureName.decode("utf-8")))
         print("")
