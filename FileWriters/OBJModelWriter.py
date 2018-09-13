@@ -1,5 +1,3 @@
-import BinaryConversionUtilities
-
 class OBJModelWriter(object):
     def __init__(self):
         pass

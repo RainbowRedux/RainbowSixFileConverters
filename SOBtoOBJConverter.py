@@ -11,18 +11,16 @@ import os
 from os.path import isfile, join
 import json
 
-import BinaryConversionUtilities
-
-from SOBModelReader import SOBModelFile
-from OBJModelWriter import OBJModelWriter
+from RainbowFileReaders import SOBModelReader
+from FileWriters import JSONMetaInfo, OBJModelWriter
 
 def convert_SOB(filename):
     print("Processing: " + filename)
 
-    modelFile = SOBModelFile()
+    modelFile = SOBModelReader.SOBModelFile()
     modelFile.read_sob(filename)
 
-    meta = BinaryConversionUtilities.MetaInfo()
+    meta = JSONMetaInfo.JSONMetaInfo()
     meta.add_info("filecontents", modelFile)
     meta.add_info("filename", filename)
     newFilename = filename + ".JSON"
@@ -33,7 +31,7 @@ def convert_SOB(filename):
     print("===============================================")
 
 def writeOBJ(filename, SOBObject):
-    writer = OBJModelWriter()
+    writer = OBJModelWriter.OBJModelWriter()
     writer.open_file(filename)
     for geoObject in SOBObject.geometryObjects:
         writer.begin_new_object(geoObject.objectName)

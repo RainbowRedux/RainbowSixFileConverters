@@ -18,9 +18,8 @@ import os
 from os.path import isfile, join
 import json
 
-import BinaryConversionUtilities
-from BinaryConversionUtilities import read_bitmask_ARGB_color
-from RSBImageReader import RSBImageFile
+from RainbowFileReaders.RSBImageReader import RSBImageFile
+from FileWriters import JSONMetaInfo
 
 def isByteArrayLargeEnoughForPalette(bytearray):
     paletteSize = 4 * 256
@@ -49,7 +48,7 @@ def convert_RSB(filename):
 
     #save meta data to JSON file
     newFilename = newFilename.replace(".PNG", ".JSON")
-    meta = BinaryConversionUtilities.MetaInfo()
+    meta = JSONMetaInfo.JSONMetaInfo()
     meta.setFilename(os.path.basename(filename))
     meta.add_info("header", imageFile.header)
     meta.writeJSON(newFilename)

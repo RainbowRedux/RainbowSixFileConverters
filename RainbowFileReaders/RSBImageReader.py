@@ -1,5 +1,5 @@
-import BinaryConversionUtilities
 import PIL
+from . import BinaryConversionUtilities
 from BinaryConversionUtilities import read_bitmask_ARGB_color
 
 class RSBImageFile(object):

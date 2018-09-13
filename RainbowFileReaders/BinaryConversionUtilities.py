@@ -1,5 +1,4 @@
 import struct
-import json
 
 class BinaryFileReader(object):
     """A wrapper for reading and conversion operations on binary file data."""
@@ -213,32 +212,3 @@ def read_uint_array(bytearray, numelements):
         tempArray.append(temp)
     return tempArray
 
-class MetaInfo(object):
-    """Lazy wrapper to allow quick serialization of meta data"""
-
-    def __init__(self):
-        pass
-
-    def setFilename(self, filename):
-        self.filename = filename
-
-    def add_info(self, key, info):
-        self.__setattr__(key, info)
-
-    def getJSON(self):
-        return json.dumps(self, cls=CustomJSONEncoder)
-
-    def writeJSON(self, filename):
-        fp = open(filename, "w")
-        json.dump(self, fp, cls=CustomJSONEncoder, indent=4)
-        fp.close()
-
-
-class CustomJSONEncoder(json.JSONEncoder):
-    """A quick and  dirty custom JSON encoder that allows serialization of custom objects"""
-    #https://code.tutsplus.com/tutorials/serialization-and-deserialization-of-python-objects-part-1--cms-26183
-    def default(self, o):
-        if hasattr(o, '__dict__'):
-            return o.__dict__
-        else:
-            return str(o)

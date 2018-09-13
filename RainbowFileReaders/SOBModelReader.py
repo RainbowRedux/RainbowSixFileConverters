@@ -1,4 +1,4 @@
-import BinaryConversionUtilities
+from . import BinaryConversionUtilities
 import pprint
 
 class SOBModelFile(object):
@@ -258,3 +258,6 @@ class SOBFaceDefinition(object):
         self.paramIndices = filereader.read_vec_uint(3)
         self.faceNormal = filereader.read_vec_f(4)
         self.materialIndex = filereader.read_uint()
+
+if __name__ == "__main__":
+    test = SOBModelFile()
