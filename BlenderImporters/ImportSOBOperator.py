@@ -97,6 +97,7 @@ def ImportSOB(context, filepath, use_some_setting):
 def CreateMaterial(materialSpecification):
     # set new material to variable
     newMaterial = bpy.data.materials.new(name=materialSpecification.materialName)
+    # Generate random material diffuse colour for now, to aid debugging.
     r = random.uniform(0, 1)
     g = random.uniform(0, 1)
     b = random.uniform(0, 1)
