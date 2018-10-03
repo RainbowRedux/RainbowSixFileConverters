@@ -26,28 +26,31 @@ def convert_SOB(filename):
     newFilename = filename + ".JSON"
     meta.writeJSON(newFilename)
 
-    writeOBJ(filename + ".obj", modelFile)
+    write_OBJ(filename + ".obj", modelFile)
 
     print("===============================================")
 
-def writeOBJ(filename, SOBObject):
+def write_OBJ(filename, SOBObject):
     writer = OBJModelWriter.OBJModelWriter()
     writer.open_file(filename)
     for geoObject in SOBObject.geometryObjects:
         writer.begin_new_object(geoObject.objectName)
+        #write vertices
         for i in range(len(geoObject.vertices)):
             vertex = geoObject.vertices[i]
             writer.write_vertex(vertex)
+        #write vertex parameters
         for i in range(len(geoObject.vertexParams)):
             normal = geoObject.vertexParams[i].normal
             writer.write_normal(normal)
             UV = geoObject.vertexParams[i].UV
             writer.write_texture_coordinate(UV)
+        #write face definitions
         for face in geoObject.faces:
             writer.write_face(face.vertexIndices,face.paramIndices, face.paramIndices)
     writer.close_file()
 
-def processAllFilesInFolder(folder):
+def process_all_files_in_folder(folder):
     for root, dirs, files in os.walk(folder, topdown=True):
         for name in files:
             #print(os.path.join(root, name))
@@ -66,7 +69,7 @@ def profile():
 
 def main():
     """Main function that converts a test file"""
-    processAllFilesInFolder("Data/Test")
+    process_all_files_in_folder("Data/Test")
     return
 if __name__ == "__main__":
     main()
