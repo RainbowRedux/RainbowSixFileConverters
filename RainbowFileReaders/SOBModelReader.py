@@ -97,11 +97,13 @@ class SOBMaterialDefinition(object):
         self.ID = None
         self.versionStringLength = None
         self.versionNumber = None
-        self.versionString = None
+        self.versionStringRaw = None
         self.materialNameLength = None
         self.materialName = None
+        self.materialNameRaw = None
         self.textureNameLength = None
         self.textureName = None
+        self.textureNameRaw = None
         self.opacity = None
         self.unknown2 = None
         self.unknown3 = None
@@ -118,20 +120,20 @@ class SOBMaterialDefinition(object):
         self.versionStringLength = filereader.read_uint()
         self.versionNumber = None
         if self.versionStringLength == 8:
-            self.versionString = filereader.read_bytes(self.versionStringLength)
-            if self.versionString[:-1] == b'Version':
+            self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
+            if self.versionStringRaw[:-1] == b'Version':
                 self.versionNumber = filereader.read_uint()
                 self.materialNameLength = filereader.read_uint()
-                self.materialName = filereader.read_bytes(self.materialNameLength)
+                self.materialNameRaw = filereader.read_bytes(self.materialNameLength)
             else:
                 self.materialNameLength = self.versionStringLength
-                self.materialName = self.versionString
+                self.materialNameRaw = self.versionStringRaw
         else:
             self.materialNameLength = self.versionStringLength
-            self.materialName = filereader.read_bytes(self.materialNameLength)
+            self.materialNameRaw = filereader.read_bytes(self.materialNameLength)
 
         self.textureNameLength = filereader.read_uint()
-        self.textureName = filereader.read_bytes(self.textureNameLength)
+        self.textureNameRaw = filereader.read_bytes(self.textureNameLength)
 
         self.opacity = filereader.read_float()
         self.unknown2 = filereader.read_float()
@@ -141,6 +143,9 @@ class SOBMaterialDefinition(object):
         self.specular = filereader.read_rgb_color_32bpp_uint()
         self.specularLevel = filereader.read_float()
         self.twoSided = filereader.read_bytes(1)
+
+        self.textureName = self.textureNameRaw[:-1].decode("utf-8")
+        self.materialName = self.materialNameRaw[:-1].decode("utf-8")
 
 
     def print_material_info(self):
@@ -175,7 +180,7 @@ class SOBGeometryObject(object):
         self.versionNumber = None
         self.versionString = None
         self.objectNameLength = None
-        self.objectNameString = None
+        self.objectNameRaw = None
         self.objectName = None
         self.unknown4 = None
         self.unknown5 = None
@@ -194,21 +199,21 @@ class SOBGeometryObject(object):
         self.versionStringLength = filereader.read_uint()
         self.versionNumber = None
         if self.versionStringLength == 8:
-            self.versionString = filereader.read_bytes(self.versionStringLength)
-            if self.versionString[:-1] == b'Version':
+            self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
+            if self.versionStringRaw[:-1] == b'Version':
                 self.versionNumber = filereader.read_uint()
                 self.objectNameLength = filereader.read_uint()
-                self.objectNameString = filereader.read_bytes(self.objectNameLength)
+                self.objectNameRaw = filereader.read_bytes(self.objectNameLength)
             self.unknown4 = filereader.read_uint()
             self.unknown5 = filereader.read_uint()
         else:
-            self.versionString = filereader.read_bytes(self.versionStringLength)
-        if self.objectNameString is None: # differs from spec in AlexKimovs repo
+            self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
+        if self.objectNameRaw is None: # differs from spec in AlexKimovs repo
             print("Warning: This code is untested")
             self.objectNameLength = self.versionStringLength
-            self.objectNameString = self.versionString
+            self.objectNameRaw = self.versionStringRaw
         
-        self.objectName = self.objectNameString[:-1].decode("utf-8")
+        self.objectName = self.objectNameRaw[:-1].decode("utf-8")
 
         self.read_vertices(filereader)
         self.read_vertex_params(filereader)
@@ -239,7 +244,7 @@ class SOBGeometryObject(object):
             self.faces.append(newFace)
 
     def read_meshes(self, filereader):
-        print("Unfinished. Aborting mesh read")
+        print("Unfinished code. Feature not implemented. Aborting mesh read")
         return
         self.meshCount = filereader.read_uint()
         self.meshes = []
