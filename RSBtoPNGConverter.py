@@ -56,7 +56,7 @@ def convert_RSB(filename):
     print("Finished converting: " + filename)
     print("")
 
-def processAllFilesInFolder(folder):
+def process_all_files_in_folder(folder):
     for root, dirs, files in os.walk(folder, topdown=True):
         for name in files:
             #print(os.path.join(root, name))
@@ -75,12 +75,14 @@ def profile():
 
 def main():
     """Main function that converts test data files"""
-    #processAllFilesInFolder("Data/Test/Textures/RS/alphatesting")
-    #return
-    processAllFilesInFolder("Data/Test")
-    return
-    processAllFilesInFolder("Data/R6")
-    processAllFilesInFolder("Data/RSDemo")
+    paths = []
+    paths.append("Data/Test")
+    #paths.append("Data/R6")
+    #paths.append("Data/RSDemo")
+
+    for path in paths:
+        path = os.path.normpath(path)
+        process_all_files_in_folder(path)
 
 if __name__ == "__main__":
     main()

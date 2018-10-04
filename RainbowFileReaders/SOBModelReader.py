@@ -12,38 +12,44 @@ class SOBModelFile(object):
         self.geometryObjects = []
         self.footer = None
 
-    def read_sob(self, filename):
+    def read_sob(self, filename, verboseOutput=False):
         modelFile = BinaryConversionUtilities.BinaryFileReader(filename)
 
         self.header = SOBHeader()
         self.header.read_header(modelFile)
-        #self.header.print_header_info()
+        if verboseOutput:
+            self.header.print_header_info()
 
         self.materialListHeader = SOBMaterialListHeader()
         self.materialListHeader.read_header(modelFile)
-        #self.materialListHeader.print_header_info()
+        if verboseOutput:
+            self.materialListHeader.print_header_info()
 
         self.materials = []
         for i in range(self.materialListHeader.numMaterials):
             newMaterial = SOBMaterialDefinition()
             newMaterial.read_material(modelFile)
-            #newMaterial.print_material_info()
             self.materials.append(newMaterial)
+            if verboseOutput:
+                newMaterial.print_material_info()
 
         self.geometryListHeader = SOBGeometryListHeader()
         self.geometryListHeader.read_header(modelFile)
-        #self.geometryListHeader.print_header_info()
+        if verboseOutput:
+            self.geometryListHeader.print_header_info()
 
         self.geometryObjects = []
         for i in range(self.geometryListHeader.count):
             newObj = SOBGeometryObject()
             newObj.read_object(modelFile)
-            #newObj.print_object_info()
             self.geometryObjects.append(newObj)
+            if verboseOutput:
+                newObj.print_object_info()
 
         print("Geometry objects not finished, not reading footer in the meantime")
         #self.footer = SOBFooterDefinition()
-        #self.footer.read_footer(modelFile)
+        #if verboseOutput:
+        #    self.footer.read_footer(modelFile)
         
         print("Processed: " + str(modelFile.get_seekg()) + " bytes")
         print("Length: " + str(modelFile.get_length()) + " bytes")

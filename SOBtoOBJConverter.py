@@ -69,7 +69,12 @@ def profile():
 
 def main():
     """Main function that converts a test file"""
-    process_all_files_in_folder("Data/Test")
-    return
+    paths = []
+    paths.append("Data/Test")
+    for path in paths:
+        path = os.path.normpath(path)
+        process_all_files_in_folder(path)
+
+
 if __name__ == "__main__":
     main()
