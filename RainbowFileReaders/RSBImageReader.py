@@ -175,7 +175,7 @@ class RSBPalette(object):
     def read_palette(self, filereader):
         num_bytes_processed = 0
         self.palette_entries = []
-        for i in range(self.num_palette_entries):
+        for _ in range(self.num_palette_entries):
             temp = filereader.read_bgra_color_8bpp_byte()
             num_bytes_processed += 4
             self.palette_entries.append(temp)
@@ -195,5 +195,5 @@ class RSBImage(object):
 
     def read_image(self, width, height, bytes_per_pixel, filereader):
         self.image = []
-        for i in range(width*height):
+        for _ in range(width*height):
             self.image.append(filereader.read_bytes(bytes_per_pixel))

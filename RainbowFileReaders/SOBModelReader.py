@@ -26,7 +26,7 @@ class SOBModelFile(object):
             self.materialListHeader.print_header_info()
 
         self.materials = []
-        for i in range(self.materialListHeader.numMaterials):
+        for _ in range(self.materialListHeader.numMaterials):
             newMaterial = SOBMaterialDefinition()
             newMaterial.read_material(modelFile)
             self.materials.append(newMaterial)
@@ -39,7 +39,7 @@ class SOBModelFile(object):
             self.geometryListHeader.print_header_info()
 
         self.geometryObjects = []
-        for i in range(self.geometryListHeader.count):
+        for _ in range(self.geometryListHeader.count):
             newObj = SOBGeometryObject()
             newObj.read_object(modelFile)
             self.geometryObjects.append(newObj)
@@ -230,13 +230,13 @@ class SOBGeometryObject(object):
     def read_vertices(self, filereader):
         self.vertexCount = filereader.read_uint()
         self.vertices = []
-        for i in range(self.vertexCount):
+        for _ in range(self.vertexCount):
             self.vertices.append(filereader.read_vec_f(3))
 
     def read_vertex_params(self, filereader):
         self.vertexParamsCount = filereader.read_uint()
         self.vertexParams = []
-        for i in range(self.vertexParamsCount):
+        for _ in range(self.vertexParamsCount):
             newParams = SOBVertexParameterCollection()
             newParams.read_params(filereader)
             self.vertexParams.append(newParams)
@@ -244,7 +244,7 @@ class SOBGeometryObject(object):
     def read_faces(self, filereader):
         self.faceCount = filereader.read_uint()
         self.faces = []
-        for i in range(self.faceCount):
+        for _ in range(self.faceCount):
             newFace = SOBFaceDefinition()
             newFace.read_face(filereader)
             self.faces.append(newFace)
@@ -254,7 +254,7 @@ class SOBGeometryObject(object):
         return
         self.meshCount = filereader.read_uint()
         self.meshes = []
-        for i in range(self.meshCount):
+        for _ in range(self.meshCount):
             newMesh = SOBMeshDefinition()
             newMesh.read_mesh(filereader)
             self.meshes.append(newMesh)
