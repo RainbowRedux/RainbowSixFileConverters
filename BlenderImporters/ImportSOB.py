@@ -5,6 +5,7 @@ import sys
 import bpy
 
 sys.path.insert(0, 'C:/Users/philipedwards/Dropbox/Development/RainbowSixFileConverters')
+sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/RainbowSixFileConverters')
 from RainbowFileReaders import SOBModelReader
 
 def import_SOB_to_scene(filename):
@@ -109,4 +110,4 @@ def create_material_from_SOB_specification(materialSpecification, gameDataPath):
 
 if __name__ == "__main__":
     #this is used when running this python file as a headless task
-    import_SOB_to_scene("C:\\Users\\philipedwards\\Dropbox\\Development\\RainbowSixFileConverters\\Data\\R6\\data\\model\\cessna.sob")
+    import_SOB_to_scene(sys.argv[-1])

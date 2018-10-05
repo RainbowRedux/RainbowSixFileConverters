@@ -4,12 +4,22 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Blender: Headless SOB Import",
+            "label": "Blender-Win: Headless SOB Import",
             "type": "shell",
             "command": "C:\\Program Files\\Blender Foundation\\Blender\\blender.exe",
             "args":["--background",
                 "--python",
-                "${workspaceRoot}\\BlenderImporters\\ImportSOB.py"]
+                "${workspaceRoot}\\BlenderImporters\\ImportSOB.py",
+                "${workspaceRoot}/Data/R6/data/model/cessna.sob"]
+        },
+        {
+            "label": "Blender-Mac: Headless SOB Import",
+            "type": "shell",
+            "command": "/Applications/Blender/blender.app/Contents/MacOS/blender",
+            "args":["--background",
+                "--python",
+                "${workspaceRoot}/BlenderImporters/ImportSOB.py",
+                "${workspaceRoot}/Data/R6/data/model/cessna.sob"]
         }
     ]
 }
