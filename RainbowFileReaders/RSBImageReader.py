@@ -1,6 +1,6 @@
 import PIL
 from  RainbowFileReaders import BinaryConversionUtilities
-from BinaryConversionUtilities import read_bitmask_ARGB_color
+from RainbowFileReaders.BinaryConversionUtilities import read_bitmask_ARGB_color
 
 class RSBImageFile(object):
     """Class to read full RSB files"""

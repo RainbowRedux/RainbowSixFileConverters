@@ -101,5 +101,6 @@ ENV/
 # data folders which contain copyrighted files
 Data/
 Information/
-.vscode/
 wiki/
+
+#.vscode/
