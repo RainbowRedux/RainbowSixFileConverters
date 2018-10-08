@@ -76,9 +76,9 @@ def profile():
 def main():
     """Main function that converts test data files"""
     paths = []
-    paths.append("Data/Test")
-    #paths.append("Data/R6")
-    #paths.append("Data/RSDemo")
+    paths.append("../Data/Test")
+    #paths.append("../Data/R6")
+    #paths.append("../Data/RSDemo")
 
     for path in paths:
         path = os.path.normpath(path)

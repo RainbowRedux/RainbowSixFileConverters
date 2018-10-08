@@ -5,8 +5,9 @@ import os.path
 import os
 
 # TODO: find a better way to load this module from Blender.
-sys.path.insert(0, 'C:/Users/philipedwards/Dropbox/Development/RainbowSixFileConverters')
-sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/RainbowSixFileConverters')
+sys.path.insert(0, 'C:/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
+sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
+sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 from BlenderImporters import ImportSOB
 
 def import_SOB(context, filename, use_some_setting):

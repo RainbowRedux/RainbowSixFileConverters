@@ -4,8 +4,9 @@ import sys
 
 import bpy
 
-sys.path.insert(0, 'C:/Users/philipedwards/Dropbox/Development/RainbowSixFileConverters')
-sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/RainbowSixFileConverters')
+sys.path.insert(0, 'C:/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
+sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
+sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 from RainbowFileReaders import SOBModelReader
 
 def import_SOB_to_scene(filename):
