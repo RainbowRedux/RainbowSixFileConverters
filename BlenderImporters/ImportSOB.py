@@ -158,6 +158,11 @@ def find_texture(filename, dataPath):
         print("Failed to find texture: " + newfilename)
     return result
 
+def normalize_color(color):
+    normColor = []
+    for el in color:
+        normColor.append(el / 255)
+    return tuple(normColor)
 
 def create_material_from_SOB_specification(materialSpecification, gameDataPath):
     """Creates a material from an SOB specification.
@@ -185,30 +190,41 @@ def create_material_from_SOB_specification(materialSpecification, gameDataPath):
         texImage = bpy.data.images.load(texToLoad)
         # Create texture from image
         newTexture = bpy.data.textures.new('ColorTex', type = 'IMAGE')
-        newTexture.use_alpha = materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Solid
         newTexture.image = texImage
 
         # Add texture slot for color texture
         textureSlot = newMaterial.texture_slots.add()
         textureSlot.texture = newTexture
 
-        textureSlot.use_map_color_diffuse = True 
-        textureSlot.use_map_alpha = True
-        textureSlot.alpha_factor = materialSpecification.opacity
+        textureSlot.use_map_color_diffuse = True
         textureSlot.texture_coords = 'UV'
 
-    newMaterial.use_transparency = materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Solid
-    newMaterial.alpha = 0.0
-    #Blenders material transparency method is different to how masked alpha would work in a game engine,
-    # this still provides alpha blending, but if you use Z method the transparent part of the surface
-    # still has specular properties. In this instance, MASK provides expected results
-    newMaterial.transparency_method = 'MASK'
+        if materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Solid:
+            newTexture.use_alpha = True
+            textureSlot.use_map_alpha = True
+            textureSlot.alpha_factor = materialSpecification.opacity
+
+    if materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Solid:
+        print(materialSpecification.materialName)
+        print(str(materialSpecification.alphaMethod))
+        print(str(SOBAlphaMethod.SAM_Solid))
+        newMaterial.use_transparency = True
+        #Blenders material transparency method is different to how masked alpha would work in a game engine,
+        # this still provides alpha blending, but if you use Z method the transparent part of the surface
+        # still has specular properties. In this instance, MASK provides expected results
+        newMaterial.transparency_method = 'MASK'
+
+        if texToLoad is not None:
+            newMaterial.alpha = 0.0
+        else:
+            #TODO: Check that opacity is not used when alphaMethod == 1 or SAM_Solid
+            newMaterial.alpha = materialSpecification.opacity
 
     # TODO: work out if materialSpecification.ambient should be averaged and applied
     # to newMaterial.ambient, or if it's for the lighting model that might be
     # specified in materialSpecification.unknown2
-    newMaterial.diffuse_color = materialSpecification.diffuse  # change color
-    newMaterial.specular_color = materialSpecification.specular
+    newMaterial.diffuse_color = normalize_color(materialSpecification.diffuse)  # change color
+    newMaterial.specular_color = normalize_color(materialSpecification.specular)
     newMaterial.specular_intensity = materialSpecification.specularLevel
 
 
