@@ -2,9 +2,9 @@ from RainbowFileReaders import BinaryConversionUtilities
 from RainbowFileReaders import R6Settings
 
 import pprint
-from enum import Enum
 
-class SOBAlphaMethod(Enum):
+#decided to not use Enum for python2.7 compatibility
+class SOBAlphaMethod(object):
     SAM_Solid       = 1
     SAM_Masked      = 2 # A guess
     SAM_AlphaBlend  = 3

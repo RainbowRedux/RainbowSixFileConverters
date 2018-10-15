@@ -2,7 +2,7 @@
 These collection of python scripts will allow you to extract data from Rainbow Six, Eagle Watch and Rogue Spear.
 
 # Requirements
-- Python 2.7 or Python 3.6
+- Python 3.6 & 3.7 (Python 3.6-3.7 is the target, Python 2.7 should work, but is not regularly tested)
 - Pillow 5.0 is required for the RSB conversion utility
 
 # Notes on file formats and code
