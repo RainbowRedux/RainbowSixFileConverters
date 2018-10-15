@@ -1,4 +1,5 @@
 from RainbowFileReaders import BinaryConversionUtilities
+from RainbowFileReaders import R6Settings
 import pprint
 
 class SOBModelFile(object):
@@ -144,9 +145,9 @@ class SOBMaterialDefinition(object):
         self.opacity = filereader.read_float()
         self.unknown2 = filereader.read_float()
         self.unknown3 = filereader.read_uint()
-        self.ambient = filereader.read_rgb_color_32bpp_uint()
-        self.diffuse = filereader.read_rgb_color_32bpp_uint()
-        self.specular = filereader.read_rgb_color_32bpp_uint()
+        self.ambient = filereader.read_rgb_color_24bpp_uint()
+        self.diffuse = filereader.read_rgb_color_24bpp_uint()
+        self.specular = filereader.read_rgb_color_24bpp_uint()
         self.specularLevel = filereader.read_float()
         self.twoSided = filereader.read_bytes(1)
 
@@ -279,7 +280,7 @@ class SOBVertexParameterCollection(object):
     def read_params(self, filereader):
         self.normal = filereader.read_vec_f(4)
         self.UV = filereader.read_vec_f(2)
-        self.color = filereader.read_rgb_color_32bpp_uint()
+        self.color = filereader.read_rgb_color_24bpp_uint()
 
 class SOBFaceDefinition(object):
     def __init__(self):

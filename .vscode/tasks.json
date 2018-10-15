@@ -10,7 +10,7 @@
             "args":["--background",
                 "--python",
                 "${workspaceRoot}\\BlenderImporters\\ImportSOB.py",
-                "${workspaceRoot}/../Data/R6/data/model/cessna.sob"]
+                "${workspaceRoot}/../Data/R6GOG/data/model/cessna.sob"]
         },
         {
             "label": "Blender-Mac: Headless SOB Import",
@@ -19,7 +19,7 @@
             "args":["--background",
                 "--python",
                 "${workspaceRoot}/BlenderImporters/ImportSOB.py",
-                "${workspaceRoot}/../Data/R6/data/model/cessna.sob"]
+                "${workspaceRoot}/../Data/R6GOG/data/model/cessna.sob"]
         },
         {
             "label": "Blender-Lin: Headless SOB Import",
@@ -28,7 +28,7 @@
             "args":["--background",
                 "--python",
                 "${workspaceRoot}/BlenderImporters/ImportSOB.py",
-                "${workspaceRoot}/../Data/R6/data/model/cessna.sob"]
+                "${workspaceRoot}/../Data/R6GOG/data/model/cessna.sob"]
         }
     ]
 }

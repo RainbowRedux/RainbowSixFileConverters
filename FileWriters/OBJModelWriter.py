@@ -31,26 +31,21 @@ class OBJModelWriter(object):
 
     def sanitize_float(self, inFloat):
         return "{0:.8f}".format(inFloat)
-        return str(inFloat)
 
     def write_vertex(self, vertex):
         newline = "v "
-        newline += self.sanitize_float(vertex[self.AxisOrdering[0]])
-        newline += " "
-        newline += self.sanitize_float(vertex[self.AxisOrdering[1]])
-        newline += " "
-        newline += self.sanitize_float(vertex[self.AxisOrdering[2]])
+        for index in range(len(vertex)):
+            newline += self.sanitize_float(vertex[self.AxisOrdering[index]])
+            newline += " "
+        newline.strip()
         self.write_line(newline)
 
     def write_normal(self, normal):
         newline = "vn "
-        newline += self.sanitize_float(normal[self.AxisOrdering[0]])
-        newline += " "
-        newline += self.sanitize_float(normal[self.AxisOrdering[1]])
-        newline += " "
-        newline += self.sanitize_float(normal[self.AxisOrdering[2]])
-        newline += " "
-        newline += self.sanitize_float(normal[self.AxisOrdering[3]])
+        for index in range(len(normal)):
+            newline += self.sanitize_float(normal[self.AxisOrdering[index]])
+            newline += " "
+        newline.strip()
         self.write_line(newline)
 
     def write_texture_coordinate(self, UV):
@@ -64,29 +59,13 @@ class OBJModelWriter(object):
         newline = "f "
         #Vertex index ordering should match the cardinal axis ordering specified in write_vertex
         #if this is not matched then face winding will be incorrect
-        newline += str(vertex_indices[self.AxisOrdering[0]] + 1)
-        newline += "/"
-        newline += str(texture_coord_indices[self.AxisOrdering[0]] + 1)
-        newline += "/"
-        newline += str(normal_indices[self.AxisOrdering[0]] + 1)
+        for index in range(3):
+            newline += str(vertex_indices[self.AxisOrdering[index]] + 1)
+            newline += "/"
+            newline += str(texture_coord_indices[self.AxisOrdering[index]] + 1)
+            newline += "/"
+            newline += str(normal_indices[self.AxisOrdering[index]] + 1)
 
+            newline += " "
 
-        newline += " "
-
-
-        newline += str(vertex_indices[self.AxisOrdering[1]] + 1)
-        newline += "/"
-        newline += str(texture_coord_indices[self.AxisOrdering[1]] + 1)
-        newline += "/"
-        newline += str(normal_indices[self.AxisOrdering[1]] + 1)
-
-
-        newline += " "
-
-        
-        newline += str(vertex_indices[self.AxisOrdering[2]] + 1)
-        newline += "/"
-        newline += str(texture_coord_indices[self.AxisOrdering[2]] + 1)
-        newline += "/"
-        newline += str(normal_indices[self.AxisOrdering[2]] + 1)
         self.write_line(newline)

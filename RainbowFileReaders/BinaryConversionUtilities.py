@@ -82,10 +82,17 @@ class BinaryFileReader(object):
         color[2] = tempblue
         return color
     
-    def read_rgb_color_32bpp_uint(self):
+    def read_rgb_color_24bpp_uint(self):
         """Reads 3 uints"""
         color = []
         for i in range(3):
+            color.append(self.read_uint())
+        return color
+    
+    def read_rgba_color_32bpp_uint(self):
+        """Reads 4 uints"""
+        color = []
+        for _ in range(4):
             color.append(self.read_uint())
         return color
     
