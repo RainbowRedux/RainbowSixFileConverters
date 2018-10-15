@@ -1,6 +1,13 @@
 from RainbowFileReaders import BinaryConversionUtilities
 from RainbowFileReaders import R6Settings
+
 import pprint
+from enum import Enum
+
+class SOBAlphaMethod(Enum):
+    SAM_Solid       = 1
+    SAM_Masked      = 2 # A guess
+    SAM_AlphaBlend  = 3
 
 class SOBModelFile(object):
     """Class to read full SOB files"""
@@ -111,7 +118,7 @@ class SOBMaterialDefinition(object):
         self.textureNameRaw = None
         self.opacity = None
         self.unknown2 = None
-        self.unknown3 = None
+        self.alphaMethod = None
         self.ambient = None
         self.diffuse = None
         self.specular = None
@@ -142,7 +149,7 @@ class SOBMaterialDefinition(object):
 
         self.opacity = filereader.read_float()
         self.unknown2 = filereader.read_float() # Full lit?
-        self.unknown3 = filereader.read_uint() # Smoothing?
+        self.alphaMethod = filereader.read_uint() # Smoothing according to AK? Transparency method? Best guess at the moment is transparency method. 1 = SOLID, 2 = MASKED, 3 = ALPHA_BLEND
         self.ambient = filereader.read_rgb_color_24bpp_uint()
         self.diffuse = filereader.read_rgb_color_24bpp_uint()
         self.specular = filereader.read_rgb_color_24bpp_uint()

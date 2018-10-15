@@ -9,6 +9,7 @@ sys.path.insert(0, 'C:/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSi
 sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 from RainbowFileReaders import SOBModelReader
+from RainbowFileReaders.SOBModelReader import SOBAlphaMethod
 from RainbowFileReaders import R6Settings
 
 def sanitize_float(inFloat):
@@ -70,7 +71,7 @@ def import_SOB_to_scene(filename):
         newMesh.update(calc_edges=True)
 
         ########################################
-        # Copy to bmesh
+        # Copy to bmesh from mesh
         ########################################
 
         newBmesh = bmesh.new()
@@ -86,56 +87,36 @@ def import_SOB_to_scene(filename):
         ########################################
 
         # Cobbled together from : https://blender.stackexchange.com/a/60730
-        #newBmesh = bmesh.new()   # create an empty BMesh
-        #newBmesh.from_mesh(newMesh)
-        #color_layer = newBmesh.loops.layers.color.new("color")
-
-        print("Number of vertices: " + str(len(newBmesh.verts)))
-
-        max_loop = 0
         for face_index, face in enumerate(newBmesh.faces):
             if face is None:
                 continue
             importedParamIndices = geoObj.faces[face_index].paramIndices
             for vert_index, vert in enumerate(face.loops):
-                if vert_index > max_loop:
-                    max_loop = vert_index
                 importedColor = geoObj.vertexParams[importedParamIndices[vert_index]].color
                 for i in range(len(importedColor)):
                     importedColor[i] = importedColor[i] / 255.0
                 vert[color_layer] = importedColor
 
-        print("Max loop index: " + str(max_loop))
-        #newBmesh.to_mesh(newMesh)
-
         ########################################
         # Apply UV Mapping
         ########################################
         # Cobbled together from https://docs.blender.org/api/blender_python_api_2_67_release/bmesh.html#customdata-access
-        # Create Bmesh
-        #newBmesh = bmesh.new()   # create an empty BMesh
-        #newBmesh.from_mesh(newMesh)
-        #uv_layer = newBmesh.loops.layers.uv.verify()
-        #newBmesh.faces.layers.tex.verify()  # currently blender needs both layers.
-
-        uniqueVerts = []
-
         for face_index, face in enumerate(newBmesh.faces):
-        #for face_index, face in enumerate(createdFaces):
             if face is None:
                 continue
             importedParamIndices = geoObj.faces[face_index].paramIndices
             for vert_index, vert in enumerate(face.loops):
-                if vert not in uniqueVerts:
-                    uniqueVerts.append(vert)
                 importedUV = geoObj.vertexParams[importedParamIndices[vert_index]].UV
                 vert[uv_layer].uv.x = importedUV[0]
                 # This coord seems to be inverted, this seems to look correct.
                 vert[uv_layer].uv.y = importedUV[1] * -1
+        
+        ########################################
+        # Copy from bmesh back to mesh
+        ########################################
+        
         newBmesh.to_mesh(newMesh)
         newMesh.update(calc_edges=True)
-
-        print("Number of vertex uv params: " + str(len(uniqueVerts)))
 
         ########################################
         # Apply Materials per face
@@ -145,8 +126,6 @@ def import_SOB_to_scene(filename):
             faceProperties = geoObj.faces[i]
             if faceProperties.materialIndex != R6Settings.UINT_MAX:
                 poly.material_index = faceProperties.materialIndex
-
-        #newBmesh.to_mesh(newMesh)
 
 
         # TODO: Import normals
@@ -181,6 +160,15 @@ def find_texture(filename, dataPath):
 
 
 def create_material_from_SOB_specification(materialSpecification, gameDataPath):
+    """Creates a material from an SOB specification.
+    This does ignore some values that don't map well to PBR and don't influence model behaviour much.
+    Materials will be more finely tuned in the game engine.
+    
+    materialSpecification is an SOBMaterialDefinition as read by SOBModelReader
+
+    gameDataPath is meant to be the Data folder within the games installation
+        directory, as that directory structure is used when loading textures"""
+
     # set new material to variable
     newMaterial = bpy.data.materials.new(name=materialSpecification.materialName)
     
@@ -197,26 +185,33 @@ def create_material_from_SOB_specification(materialSpecification, gameDataPath):
         texImage = bpy.data.images.load(texToLoad)
         # Create texture from image
         newTexture = bpy.data.textures.new('ColorTex', type = 'IMAGE')
+        newTexture.use_alpha = materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Solid
         newTexture.image = texImage
-        # TODO: Revisit opacity specification for diffuse mat?
-        newTexture.use_alpha = materialSpecification.opacity < 1.0
 
         # Add texture slot for color texture
         textureSlot = newMaterial.texture_slots.add()
         textureSlot.texture = newTexture
 
         textureSlot.use_map_color_diffuse = True 
+        textureSlot.use_map_alpha = True
+        textureSlot.alpha_factor = materialSpecification.opacity
         textureSlot.texture_coords = 'UV'
 
-    #newMaterial.use_shadeless = True
-    
-    #TODO import other properties such as alpha testing
+    newMaterial.use_transparency = materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Solid
+    newMaterial.alpha = 0.0
+    #Blenders material transparency method is different to how masked alpha would work in a game engine,
+    # this still provides alpha blending, but if you use Z method the transparent part of the surface
+    # still has specular properties. In this instance, MASK provides expected results
+    newMaterial.transparency_method = 'MASK'
 
-    # Generate random material diffuse colour for now, to aid debugging.
-    #r = random.uniform(0, 1)
-    #g = random.uniform(0, 1)
-    #b = random.uniform(0, 1)
-    #newMaterial.diffuse_color = (r, g, b)  # change color
+    # TODO: work out if materialSpecification.ambient should be averaged and applied
+    # to newMaterial.ambient, or if it's for the lighting model that might be
+    # specified in materialSpecification.unknown2
+    newMaterial.diffuse_color = materialSpecification.diffuse  # change color
+    newMaterial.specular_color = materialSpecification.specular
+    newMaterial.specular_intensity = materialSpecification.specularLevel
+
+
     return newMaterial
 
 if __name__ == "__main__":
