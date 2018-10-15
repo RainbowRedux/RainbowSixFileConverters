@@ -2,12 +2,10 @@ import struct
 
 class BinaryFileReader(object):
     """A wrapper for reading and conversion operations on binary file data."""
-    def __init__(self):
+    def __init__(self, path=None):
         super(BinaryFileReader, self).__init__()
-    
-    def __init__(self, path):
-        super(BinaryFileReader, self).__init__()
-        self.openFile(path)
+        if path is not None:
+            self.openFile(path)
 
     def openFile(self, path):
         #read entire file
@@ -61,13 +59,13 @@ class BinaryFileReader(object):
 
     def read_vec_f(self, size):
         vec = []
-        for i in range(size):
+        for _ in range(size):
             vec.append(self.read_float())
         return vec
 
     def read_vec_uint(self, size):
         vec = []
-        for i in range(size):
+        for _ in range(size):
             vec.append(self.read_uint())
         return vec
     
@@ -85,7 +83,7 @@ class BinaryFileReader(object):
     def read_rgb_color_24bpp_uint(self):
         """Reads 3 uints"""
         color = []
-        for i in range(3):
+        for _ in range(3):
             color.append(self.read_uint())
         return color
     
@@ -155,21 +153,21 @@ def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):
     alphaMask = 0
 
     if bdA > 0:
-        for i in range(bdA):
+        for _ in range(bdA):
             alphaMask = (alphaMask << 1) + 1
         alphaMask = alphaMask << (bdR + bdG + bdB)
 
-    for i in range(bdR):
+    for _ in range(bdR):
         redMask = (redMask << 1) + 1
     redMask = redMask << (bdG + bdB)
 
     greenMask = 0
-    for i in range(bdG):
+    for _ in range(bdG):
         greenMask = (greenMask << 1) + 1
     greenMask = greenMask << (bdB)
 
     blueMask = 0
-    for i in range(bdB):
+    for _ in range(bdB):
         blueMask = (blueMask << 1) + 1
 
     masks = [redMask, greenMask, blueMask, alphaMask]

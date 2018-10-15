@@ -141,8 +141,8 @@ class SOBMaterialDefinition(object):
         self.textureNameRaw = filereader.read_bytes(self.textureNameLength)
 
         self.opacity = filereader.read_float()
-        self.unknown2 = filereader.read_float()
-        self.unknown3 = filereader.read_uint()
+        self.unknown2 = filereader.read_float() # Full lit?
+        self.unknown3 = filereader.read_uint() # Smoothing?
         self.ambient = filereader.read_rgb_color_24bpp_uint()
         self.diffuse = filereader.read_rgb_color_24bpp_uint()
         self.specular = filereader.read_rgb_color_24bpp_uint()
@@ -205,6 +205,7 @@ class SOBGeometryObject(object):
         self.versionNumber = None
         if self.versionStringLength == 8:
             self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
+            #If the version string was actually set to version, then a version number is stored, along with object name
             if self.versionStringRaw[:-1] == b'Version':
                 self.versionNumber = filereader.read_uint()
                 self.objectNameLength = filereader.read_uint()
@@ -213,6 +214,7 @@ class SOBGeometryObject(object):
             self.unknown5 = filereader.read_uint()
         else:
             self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
+        #If an object name was not read, then the version string is actually the name
         if self.objectNameRaw is None: # differs from spec in AlexKimovs repo
             self.objectNameLength = self.versionStringLength
             self.objectNameRaw = self.versionStringRaw
@@ -274,8 +276,9 @@ class SOBVertexParameterCollection(object):
             return super(SOBVertexParameterCollection, self).__repr__()
 
     def read_params(self, filereader):
-        self.normal = filereader.read_vec_f(4)
+        self.normal = filereader.read_vec_f(3)
         self.UV = filereader.read_vec_f(2)
+        self.unknown10 = filereader.read_float() # no idea?
         self.color = filereader.read_rgb_color_24bpp_uint()
 
 class SOBFaceDefinition(object):
@@ -347,7 +350,7 @@ class SOBMeshDefinition(object):
 
         #read unknown8
         self.unknown8Length = filereader.read_uint()
-        self.unknown8Raw = filereader.read_bytes(self.unknown7Length)
+        self.unknown8Raw = filereader.read_bytes(self.unknown8Length)
 
         #read unknown9
         self.unknown9 = filereader.read_uint()

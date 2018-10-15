@@ -27,6 +27,8 @@ def import_SOB_to_scene(filename):
     gameDataPath = os.path.split(filepath)[0]
     print("Assuming gamepath is: " + gameDataPath)
 
+    #TODO Add step for converting from LHS to RHS, and probably rotating to having another axis as the up axis
+
     for geoObj in SOBObject.geometryObjects:
         name = geoObj.objectName
 
@@ -51,8 +53,6 @@ def import_SOB_to_scene(filename):
             newMaterial = create_material_from_SOB_specification(materialSpec, gameDataPath)
             newObject.data.materials.append(newMaterial)
             blenderMaterials.append(newMaterial)
-        
-        # TODO: Import textures
 
         ########################################
         # Define vertices & faces
@@ -129,14 +129,9 @@ def import_SOB_to_scene(filename):
                 if vert not in uniqueVerts:
                     uniqueVerts.append(vert)
                 importedUV = geoObj.vertexParams[importedParamIndices[vert_index]].UV
-                if importedUV[0] > 1.0 or importedUV[0] < -1.0:
-                    pass
-                    #print("x uv coord fucked: " + sanitize_float(importedUV[0]))
-                if importedUV[1] > 1.0 or importedUV[1] < -1.0:
-                    pass
-                    #print("y uv coord fucked: " + sanitize_float(importedUV[1]))
                 vert[uv_layer].uv.x = importedUV[0]
-                vert[uv_layer].uv.y = importedUV[1]
+                # This coord seems to be inverted, this seems to look correct.
+                vert[uv_layer].uv.y = importedUV[1] * -1
         newBmesh.to_mesh(newMesh)
         newMesh.update(calc_edges=True)
 
@@ -213,8 +208,9 @@ def create_material_from_SOB_specification(materialSpecification, gameDataPath):
         textureSlot.use_map_color_diffuse = True 
         textureSlot.texture_coords = 'UV'
 
-    newMaterial.use_shadeless = True
+    #newMaterial.use_shadeless = True
     
+    #TODO import other properties such as alpha testing
 
     # Generate random material diffuse colour for now, to aid debugging.
     #r = random.uniform(0, 1)
