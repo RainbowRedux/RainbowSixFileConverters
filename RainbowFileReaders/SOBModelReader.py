@@ -47,10 +47,8 @@ class SOBModelFile(object):
             if verboseOutput:
                 newObj.print_object_info()
 
-        print("Geometry objects not finished, not reading footer in the meantime")
-        #self.footer = SOBFooterDefinition()
-        #if verboseOutput:
-        #    self.footer.read_footer(modelFile)
+        self.footer = SOBFooterDefinition()
+        self.footer.read_footer(modelFile)
         
         print("Processed: " + str(modelFile.get_seekg()) + " bytes")
         print("Length: " + str(modelFile.get_length()) + " bytes")
@@ -216,7 +214,6 @@ class SOBGeometryObject(object):
         else:
             self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
         if self.objectNameRaw is None: # differs from spec in AlexKimovs repo
-            print("Warning: This code is untested")
             self.objectNameLength = self.versionStringLength
             self.objectNameRaw = self.versionStringRaw
         
@@ -251,9 +248,8 @@ class SOBGeometryObject(object):
             self.faces.append(newFace)
 
     def read_meshes(self, filereader):
-        print("Unfinished code. Feature not implemented. Aborting mesh read")
-        return
         self.meshCount = filereader.read_uint()
+        print("Mesh count: " + str(self.meshCount))
         self.meshes = []
         for _ in range(self.meshCount):
             newMesh = SOBMeshDefinition()
@@ -304,6 +300,24 @@ class SOBMeshDefinition(object):
     """Unfinished"""
     def __init__(self):
         super(SOBMeshDefinition, self).__init__()
+        self.unknown6 = 0
+
+        self.meshNameLength = 0
+        self.meshName = None
+        self.meshNameRaw = None
+
+        self.numVertexIndices = 0
+        self.vertexIndices = []
+
+        self.numFaceIndices = 0
+        self.faceIndices = []
+
+        self.unknown7 = 0
+
+        self.unknown8Length = 0
+        self.unknown8Raw = []
+
+        self.unknown9 = 0
 
     def __repr__(self):
         #a toggle for verbose information or not
@@ -313,8 +327,30 @@ class SOBMeshDefinition(object):
             return super(SOBMeshDefinition, self).__repr__()
 
     def read_mesh(self, filereader):
-        self.numFaces = filereader.read_uint()
-        self.faceIndices = filereader.read_vec_uint(self.numFaces)
+        self.unknown6 = filereader.read_uint()
+
+        #read header
+        self.meshNameLength = filereader.read_uint()
+        self.meshNameRaw = filereader.read_bytes(self.meshNameLength)
+        self.meshName = self.meshNameRaw[:-1].decode("utf-8")
+
+        #read vertices
+        self.numVertexIndices = filereader.read_uint()
+        self.vertexIndices = filereader.read_vec_uint(self.numVertexIndices)
+
+        #read faces
+        self.numFaceIndices = filereader.read_uint()
+        self.faceIndices = filereader.read_vec_uint(self.numFaceIndices)
+
+        #read unknown7
+        self.unknown7 = filereader.read_uint()
+
+        #read unknown8
+        self.unknown8Length = filereader.read_uint()
+        self.unknown8Raw = filereader.read_bytes(self.unknown7Length)
+
+        #read unknown9
+        self.unknown9 = filereader.read_uint()
 
 
 class SOBFooterDefinition(object):
