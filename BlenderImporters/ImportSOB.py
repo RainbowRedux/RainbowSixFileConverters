@@ -11,10 +11,7 @@ sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFi
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders.SOBModelReader import SOBAlphaMethod
 from RainbowFileReaders import R6Settings
-
-def sanitize_float(inFloat):
-    return "{0:.8f}".format(inFloat)
-    return str(inFloat)
+from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
 
 def import_SOB_to_scene(filename):
     SOBObject = SOBModelReader.SOBModelFile()
@@ -93,8 +90,7 @@ def import_SOB_to_scene(filename):
             importedParamIndices = geoObj.faces[face_index].paramIndices
             for vert_index, vert in enumerate(face.loops):
                 importedColor = geoObj.vertexParams[importedParamIndices[vert_index]].color
-                for i in range(len(importedColor)):
-                    importedColor[i] = importedColor[i] / 255.0
+                importedColor = normalize_color(importedColor)
                 vert[color_layer] = importedColor
 
         ########################################
@@ -124,6 +120,7 @@ def import_SOB_to_scene(filename):
         for i in range(len(newMesh.polygons)):
             poly = newMesh.polygons[i]
             faceProperties = geoObj.faces[i]
+            #Do not assign a material if index is UINT_MAX
             if faceProperties.materialIndex != R6Settings.UINT_MAX:
                 poly.material_index = faceProperties.materialIndex
 
@@ -157,12 +154,6 @@ def find_texture(filename, dataPath):
     if result is None:
         print("Failed to find texture: " + newfilename)
     return result
-
-def normalize_color(color):
-    normColor = []
-    for el in color:
-        normColor.append(el / 255)
-    return tuple(normColor)
 
 def create_material_from_SOB_specification(materialSpecification, gameDataPath):
     """Creates a material from an SOB specification.

@@ -1,0 +1,5 @@
+RSB - Red Storm Bitmap
+ASS - Ambient Sound Sources?
+SHT - Collision Data?
+STP - Material to physical property mapping?
+MAP - Map file, geo, materials, portals

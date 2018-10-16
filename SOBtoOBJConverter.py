@@ -13,6 +13,7 @@ import json
 
 from RainbowFileReaders import SOBModelReader
 from FileWriters import JSONMetaInfo, OBJModelWriter
+from RainbowFileReaders.MathHelpers import is_vector_normal
 
 def convert_SOB(filename):
     print("Processing: " + filename)
@@ -25,6 +26,18 @@ def convert_SOB(filename):
     meta.add_info("filename", filename)
     newFilename = filename + ".JSON"
     meta.writeJSON(newFilename)
+
+    countBadNormals = 0
+    countGoodNormals = 0
+    for geoObj in modelFile.geometryObjects:
+        for vertexParam in geoObj.vertexParams:
+            if is_vector_normal(vertexParam.normal):
+                countGoodNormals += 1
+            else:
+                countBadNormals += 1
+            
+    print("Num bad normals: " + str(countBadNormals))
+    print("Num good normals: " + str(countGoodNormals))
 
     write_OBJ(filename + ".obj", modelFile)
 
@@ -74,7 +87,6 @@ def main():
     for path in paths:
         path = os.path.normpath(path)
         process_all_files_in_folder(path)
-
 
 if __name__ == "__main__":
     main()
