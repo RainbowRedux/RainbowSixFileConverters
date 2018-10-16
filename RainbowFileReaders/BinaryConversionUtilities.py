@@ -93,6 +93,13 @@ class BinaryFileReader(object):
         for _ in range(4):
             color.append(self.read_uint())
         return color
+
+    def read_rgba_color_32bpp_float(self):
+        """Reads 4 uints"""
+        color = []
+        for _ in range(4):
+            color.append(self.read_float())
+        return color
     
     def get_length(self):
         return len(self.bytes)

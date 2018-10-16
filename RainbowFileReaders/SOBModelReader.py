@@ -9,6 +9,10 @@ class SOBAlphaMethod(object):
     SAM_Masked      = 2 # A guess
     SAM_AlphaBlend  = 3
 
+class RSEFormatConstants(object):
+    RSE_MATERIAL_SIZE_NO_STRINGS_ROGUE_SPEAR = 42
+    RSE_MATERIAL_SIZE_NO_STRINGS_RAINBOW_SIX = 73
+
 class SOBModelFile(object):
     """Class to read full SOB files"""
     def __init__(self):
@@ -28,14 +32,14 @@ class SOBModelFile(object):
         if verboseOutput:
             self.header.print_header_info()
 
-        self.materialListHeader = SOBMaterialListHeader()
+        self.materialListHeader = RSEMaterialListHeader()
         self.materialListHeader.read_header(modelFile)
         if verboseOutput:
             self.materialListHeader.print_header_info()
 
         self.materials = []
         for _ in range(self.materialListHeader.numMaterials):
-            newMaterial = SOBMaterialDefinition()
+            newMaterial = RSEMaterialDefinition()
             newMaterial.read_material(modelFile)
             self.materials.append(newMaterial)
             if verboseOutput:
@@ -52,7 +56,8 @@ class SOBModelFile(object):
             newObj.read_object(modelFile)
             self.geometryObjects.append(newObj)
             if verboseOutput:
-                newObj.print_object_info()
+                pass
+                #newObj.print_object_info()
 
         self.footer = SOBFooterDefinition()
         self.footer.read_footer(modelFile)
@@ -77,34 +82,36 @@ class SOBHeader(object):
         print("Header message: " + str(self.headerBeginMessage))
         print("")
 
-class SOBMaterialListHeader(object):
+class RSEMaterialListHeader(object):
     def __init__(self):
-        super(SOBMaterialListHeader, self).__init__()
+        super(RSEMaterialListHeader, self).__init__()
         self.materialListSize = None
         self.unknown1 = None
-        self.materialBeginMessageLength = None
-        self.materialBeginMessage = None
+        self.materialListBeginMessageLength = None
+        self.materialListBeginMessageRaw = None
+        self.materialListBeginMessage = None
         self.numMaterials = None
 
     def read_header(self, filereader):
         self.materialListSize = filereader.read_uint()
         self.unknown1 = filereader.read_uint()
-        self.materialBeginMessageLength = filereader.read_uint()
-        self.materialBeginMessage = filereader.read_bytes(self.materialBeginMessageLength)
+        self.materialListBeginMessageLength = filereader.read_uint()
+        self.materialListBeginMessageRaw = filereader.read_bytes(self.materialListBeginMessageLength)
+        self.materialListBeginMessage = self.materialListBeginMessageRaw[:-1].decode("utf-8")
         self.numMaterials = filereader.read_uint()
 
     def print_header_info(self):
         print("Material list size: " + str(self.materialListSize))
         print("unknown1: " + str(self.unknown1))
         print("Number of materials: " + str(self.numMaterials))
-        print("Begin message length: " + str(self.materialBeginMessageLength))
-        print("Begin message: " + str(self.materialBeginMessage))
+        print("Begin message length: " + str(self.materialListBeginMessageLength))
+        print("Begin message: " + str(self.materialListBeginMessage))
         print("")
 
 
-class SOBMaterialDefinition(object):
+class RSEMaterialDefinition(object):
     def __init__(self):
-        super(SOBMaterialDefinition, self).__init__()
+        super(RSEMaterialDefinition, self).__init__()
         self.materialSize = None
         self.ID = None
         self.versionStringLength = None
@@ -126,6 +133,7 @@ class SOBMaterialDefinition(object):
         self.twoSided = None
 
     def read_material(self, filereader):
+        print("Reading new material")
         self.materialSize = filereader.read_uint()
         self.ID = filereader.read_uint()
 
@@ -150,9 +158,23 @@ class SOBMaterialDefinition(object):
         self.opacity = filereader.read_float()
         self.unknown2 = filereader.read_float() # Full lit?
         self.alphaMethod = filereader.read_uint() # Smoothing according to AK? Transparency method? Best guess at the moment is transparency method. 1 = SOLID, 2 = MASKED, 3 = ALPHA_BLEND
-        self.ambient = filereader.read_rgb_color_24bpp_uint()
-        self.diffuse = filereader.read_rgb_color_24bpp_uint()
-        self.specular = filereader.read_rgb_color_24bpp_uint()
+        sizeWithoutStrings = self.materialSize
+        sizeWithoutStrings -= self.materialNameLength
+        sizeWithoutStrings -= self.versionStringLength
+        sizeWithoutStrings -= self.textureNameLength
+
+        #check if it's a rainbow six file, or rogue spear file
+        if sizeWithoutStrings == RSEFormatConstants.RSE_MATERIAL_SIZE_NO_STRINGS_RAINBOW_SIX or self.versionNumber is None:
+            # Rainbow Six files typically have material sizes this size, or contain no version number
+            self.ambient = filereader.read_rgb_color_24bpp_uint()
+            self.diffuse = filereader.read_rgb_color_24bpp_uint()
+            self.specular = filereader.read_rgb_color_24bpp_uint()
+        else:
+            #It's probably a Rogue Spear file
+            self.ambient = filereader.read_rgba_color_32bpp_float()
+            self.diffuse = filereader.read_rgba_color_32bpp_float()
+            self.specular = filereader.read_rgba_color_32bpp_float()
+            
         self.specularLevel = filereader.read_float()
         self.twoSided = filereader.read_bytes(1)
 
@@ -161,12 +183,7 @@ class SOBMaterialDefinition(object):
 
 
     def print_material_info(self):
-        print("Material size: " + str(self.materialSize))
-        print("ID: " + str(self.ID))
-        print("Material Name Length: " + str(self.materialNameLength))
-        print("Material Name: " + str(self.materialName.decode("utf-8")))
-        print("Texture Name Length: " + str(self.textureNameLength))
-        print("Texture Name: " + str(self.textureName.decode("utf-8")))
+        pprint.pprint(vars(self))
         print("")
 
 class SOBGeometryListHeader(object):
@@ -305,9 +322,8 @@ class SOBFaceDefinition(object):
         self.faceNormal = filereader.read_vec_f(4)
         self.materialIndex = filereader.read_uint()
 
-
+#TODO: Check if this is actually smoothing groups
 class SOBMeshDefinition(object):
-    """Unfinished"""
     def __init__(self):
         super(SOBMeshDefinition, self).__init__()
         self.unknown6 = 0
@@ -364,7 +380,6 @@ class SOBMeshDefinition(object):
 
 
 class SOBFooterDefinition(object):
-    """Unfinished"""
     def __init__(self):
         super(SOBFooterDefinition, self).__init__()
 

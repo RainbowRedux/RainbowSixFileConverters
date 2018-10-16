@@ -160,7 +160,7 @@ def create_material_from_SOB_specification(materialSpecification, gameDataPath):
     This does ignore some values that don't map well to PBR and don't influence model behaviour much.
     Materials will be more finely tuned in the game engine.
     
-    materialSpecification is an SOBMaterialDefinition as read by SOBModelReader
+    materialSpecification is an RSEMaterialDefinition as read by SOBModelReader
 
     gameDataPath is meant to be the Data folder within the games installation
         directory, as that directory structure is used when loading textures"""
