@@ -10,7 +10,7 @@ class SOBAlphaMethod(object):
     SAM_AlphaBlend  = 3
 
 class RSEFormatConstants(object):
-    RSE_MATERIAL_SIZE_NO_STRINGS_ROGUE_SPEAR = 42
+    RSE_MATERIAL_SIZE_NO_STRINGS_ROGUE_SPEAR = 69 #Usually accurate if you only remove texturename string length
     RSE_MATERIAL_SIZE_NO_STRINGS_RAINBOW_SIX = 73
 
 class SOBModelFile(object):
@@ -45,7 +45,7 @@ class SOBModelFile(object):
             if verboseOutput:
                 newMaterial.print_material_info()
 
-        self.geometryListHeader = SOBGeometryListHeader()
+        self.geometryListHeader = RSEGeometryListHeader()
         self.geometryListHeader.read_header(modelFile)
         if verboseOutput:
             self.geometryListHeader.print_header_info()
@@ -130,10 +130,11 @@ class RSEMaterialDefinition(object):
         self.diffuse = None
         self.specular = None
         self.specularLevel = None
+        self.twoSidedRaw = None
         self.twoSided = None
+        self.normalizedColors = None
 
     def read_material(self, filereader):
-        print("Reading new material")
         self.materialSize = filereader.read_uint()
         self.ID = filereader.read_uint()
 
@@ -169,14 +170,24 @@ class RSEMaterialDefinition(object):
             self.ambient = filereader.read_rgb_color_24bpp_uint()
             self.diffuse = filereader.read_rgb_color_24bpp_uint()
             self.specular = filereader.read_rgb_color_24bpp_uint()
+            self.normalizedColors = False
         else:
             #It's probably a Rogue Spear file
+            #Material sizes in rogue spear files seem to be very inconsistent, so there needs to be a better detection method for future versions of the file
+            #Actually, material sizes in rogue spear appear consistently as 69 if you just remove the texturename string length
+            sizeWithoutStrings = self.materialSize
+            sizeWithoutStrings -= self.textureNameLength
             self.ambient = filereader.read_rgba_color_32bpp_float()
             self.diffuse = filereader.read_rgba_color_32bpp_float()
             self.specular = filereader.read_rgba_color_32bpp_float()
+            self.normalizedColors = True
             
         self.specularLevel = filereader.read_float()
-        self.twoSided = filereader.read_bytes(1)
+        self.twoSidedRaw = filereader.read_bytes(1)
+        self.twoSidedRaw = int.from_bytes(self.twoSidedRaw, byteorder='little')
+        self.twoSided = False
+        if self.twoSidedRaw > 0:
+            self.twoSided = True
 
         self.textureName = self.textureNameRaw[:-1].decode("utf-8")
         self.materialName = self.materialNameRaw[:-1].decode("utf-8")
@@ -186,16 +197,18 @@ class RSEMaterialDefinition(object):
         pprint.pprint(vars(self))
         print("")
 
-class SOBGeometryListHeader(object):
+class RSEGeometryListHeader(object):
     def __init__(self):
-        super(SOBGeometryListHeader, self).__init__()
+        super(RSEGeometryListHeader, self).__init__()
 
     def read_header(self, filereader):
         self.geometryListSize = filereader.read_uint()
         self.ID = filereader.read_uint()
         self.geometryListStringLength = filereader.read_uint()
-        self.geometryListString = filereader.read_bytes(self.geometryListStringLength)
+        self.geometryListStringRaw = filereader.read_bytes(self.geometryListStringLength)
         self.count = filereader.read_uint()
+
+        self.geometryListString = self.geometryListStringRaw[:-1].decode("utf-8")
 
     def print_header_info(self):
         pprint.pprint(vars(self))
