@@ -85,7 +85,7 @@ class SOBHeader(object):
 class RSEMaterialListHeader(object):
     def __init__(self):
         super(RSEMaterialListHeader, self).__init__()
-        self.materialListSize = None
+        self.size = None
         self.unknown1 = None
         self.materialListBeginMessageLength = None
         self.materialListBeginMessageRaw = None
@@ -93,7 +93,7 @@ class RSEMaterialListHeader(object):
         self.numMaterials = None
 
     def read_header(self, filereader):
-        self.materialListSize = filereader.read_uint()
+        self.size = filereader.read_uint()
         self.unknown1 = filereader.read_uint()
         self.materialListBeginMessageLength = filereader.read_uint()
         self.materialListBeginMessageRaw = filereader.read_bytes(self.materialListBeginMessageLength)
@@ -101,7 +101,7 @@ class RSEMaterialListHeader(object):
         self.numMaterials = filereader.read_uint()
 
     def print_header_info(self):
-        print("Material list size: " + str(self.materialListSize))
+        print("Material list size: " + str(self.size))
         print("unknown1: " + str(self.unknown1))
         print("Number of materials: " + str(self.numMaterials))
         print("Begin message length: " + str(self.materialListBeginMessageLength))
@@ -112,7 +112,7 @@ class RSEMaterialListHeader(object):
 class RSEMaterialDefinition(object):
     def __init__(self):
         super(RSEMaterialDefinition, self).__init__()
-        self.materialSize = None
+        self.size = None
         self.ID = None
         self.versionStringLength = None
         self.versionNumber = None
@@ -135,7 +135,7 @@ class RSEMaterialDefinition(object):
         self.normalizedColors = None
 
     def read_material(self, filereader):
-        self.materialSize = filereader.read_uint()
+        self.size = filereader.read_uint()
         self.ID = filereader.read_uint()
 
         self.versionStringLength = filereader.read_uint()
@@ -159,7 +159,7 @@ class RSEMaterialDefinition(object):
         self.opacity = filereader.read_float()
         self.unknown2 = filereader.read_float() # Full lit?
         self.alphaMethod = filereader.read_uint() # Smoothing according to AK? Transparency method? Best guess at the moment is transparency method. 1 = SOLID, 2 = MASKED, 3 = ALPHA_BLEND
-        sizeWithoutStrings = self.materialSize
+        sizeWithoutStrings = self.size
         sizeWithoutStrings -= self.materialNameLength
         sizeWithoutStrings -= self.versionStringLength
         sizeWithoutStrings -= self.textureNameLength
@@ -175,7 +175,7 @@ class RSEMaterialDefinition(object):
             #It's probably a Rogue Spear file
             #Material sizes in rogue spear files seem to be very inconsistent, so there needs to be a better detection method for future versions of the file
             #Actually, material sizes in rogue spear appear consistently as 69 if you just remove the texturename string length
-            sizeWithoutStrings = self.materialSize
+            sizeWithoutStrings = self.size
             sizeWithoutStrings -= self.textureNameLength
             self.ambient = filereader.read_rgba_color_32bpp_float()
             self.diffuse = filereader.read_rgba_color_32bpp_float()
@@ -216,7 +216,7 @@ class RSEGeometryListHeader(object):
 class SOBGeometryObject(object):
     def __init__(self):
         super(SOBGeometryObject, self).__init__()
-        self.objectSize = None
+        self.size = None
         self.ID = None
         self.versionStringLength = None
         self.versionNumber = None
@@ -236,7 +236,7 @@ class SOBGeometryObject(object):
         self.meshes = None
 
     def read_object(self, filereader):
-        self.objectSize = filereader.read_uint()
+        self.size = filereader.read_uint()
         self.ID = filereader.read_uint()
         self.versionStringLength = filereader.read_uint()
         self.versionNumber = None
