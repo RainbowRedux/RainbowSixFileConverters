@@ -8,7 +8,7 @@
 from PIL import Image
 import time
 import os
-from os.path import isfile, join
+import DirectoryProcessor
 import json
 
 from RainbowFileReaders import SOBModelReader
@@ -19,7 +19,7 @@ def convert_SOB(filename):
     print("Processing: " + filename)
 
     modelFile = SOBModelReader.SOBModelFile()
-    modelFile.read_sob(filename, verboseOutput=True)
+    modelFile.read_sob(filename, verboseOutput=False)
 
     meta = JSONMetaInfo.JSONMetaInfo()
     meta.add_info("filecontents", modelFile)
@@ -63,30 +63,22 @@ def write_OBJ(filename, SOBObject):
             writer.write_face(face.vertexIndices,face.paramIndices, face.paramIndices)
     writer.close_file()
 
-def process_all_files_in_folder(folder):
-    for root, dirs, files in os.walk(folder, topdown=True):
-        for name in files:
-            #print(os.path.join(root, name))
-            if name.upper().endswith(".SOB"):
-                convert_SOB(join(root, name))
-        for name in dirs:
-            print("Walking directory: " + os.path.join(root, name))
-
-    print("Finished processing all data in folder")
-    print("")
-    return
-
-def profile():
-    import cProfile
-    cProfile.run('processAllFilesInFolder("Data/Test")')
-
 def main():
     """Main function that converts a test file"""
+    """Main function that converts test data files"""
     paths = []
     paths.append("../Data/Test")
-    for path in paths:
-        path = os.path.normpath(path)
-        process_all_files_in_folder(path)
+    paths.append("../Data/R6GOG")
+    paths.append("../Data/RSDemo")
+
+    fp = DirectoryProcessor.DirectoryProcessor()
+    fp.paths = fp.paths + paths
+    fp.fileExt = ".SOB"
+
+    fp.processFunction = convert_SOB
+
+    #fp.run_sequential()
+    fp.run_async()
 
 if __name__ == "__main__":
     main()

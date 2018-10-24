@@ -41,13 +41,21 @@ class BinaryFileReader(object):
             return 0
         return struct.unpack("<i", data)[0]
 
-    def read_shortint(self):
+    def read_short_int(self):
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(2)
         if len(data) < 2:
             print("Data read not long enough, returning 0")
             return 0
-        return struct.unpack("H", data)[0]
+        return struct.unpack("<H", data)[0]
+
+    def read_short_uint(self):
+        """Converts 2 bytes to a short integer"""
+        data = self.read_bytes(2)
+        if len(data) < 2:
+            print("Data read not long enough, returning 0")
+            return 0
+        return struct.unpack("<h", data)[0]
 
     def read_float(self):
         """Converts 2 bytes to a short integer"""
@@ -67,6 +75,12 @@ class BinaryFileReader(object):
         vec = []
         for _ in range(size):
             vec.append(self.read_uint())
+        return vec
+
+    def read_vec_short_uint(self, size):
+        vec = []
+        for _ in range(size):
+            vec.append(self.read_short_uint())
         return vec
     
     def read_bgra_color_8bpp_byte(self):

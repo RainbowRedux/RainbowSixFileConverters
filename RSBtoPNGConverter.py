@@ -13,19 +13,12 @@
 #Files with a format version later than 1 also store information after the image, currently this is discarded but can easily be added.
 
 from PIL import Image
-import time
-import os
-from os.path import isfile, join
 import json
+import os
 
 from RainbowFileReaders.RSBImageReader import RSBImageFile
 from FileWriters import JSONMetaInfo
-
-def isByteArrayLargeEnoughForPalette(bytearray):
-    paletteSize = 4 * 256
-    if len(bytearray) < paletteSize:
-        return False
-    return True
+import DirectoryProcessor
 
 def convert_RSB(filename):
     print("Processing: " + filename)
@@ -56,33 +49,26 @@ def convert_RSB(filename):
     print("Finished converting: " + filename)
     print("")
 
-def process_all_files_in_folder(folder):
-    for root, dirs, files in os.walk(folder, topdown=True):
-        for name in files:
-            #print(os.path.join(root, name))
-            if name.upper().endswith(".RSB"):
-                convert_RSB(join(root, name))
-        for name in dirs:
-            print("Walking directory: " + os.path.join(root, name))
+def convert_RSBs(paths):
+    for path in paths:
+        convert_RSB(path)
 
-    print("Finished processing all data in folder")
-    print("")
-    return
-
-def profile():
-    import cProfile
-    cProfile.run('processAllFilesInFolder("Data/R6")')
 
 def main():
     """Main function that converts test data files"""
     paths = []
     paths.append("../Data/Test")
-    #paths.append("../Data/R6GOG")
-    #paths.append("../Data/RSDemo")
+    paths.append("../Data/R6GOG")
+    paths.append("../Data/RSDemo")
 
-    for path in paths:
-        path = os.path.normpath(path)
-        process_all_files_in_folder(path)
+    fp = DirectoryProcessor.DirectoryProcessor()
+    fp.paths = fp.paths + paths
+    fp.fileExt = ".RSB"
+
+    fp.processFunction = convert_RSB
+
+    #fp.run_sequential()
+    fp.run_async()
 
 if __name__ == "__main__":
     main()
