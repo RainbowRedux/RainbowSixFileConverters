@@ -1,7 +1,6 @@
 from PIL import Image
 import time
-import os
-from os.path import isfile, join
+import DirectoryProcessor
 import json
 
 from RainbowFileReaders import MAPLevelReader
@@ -22,31 +21,21 @@ def convert_MAP(filename):
 
     print("===============================================")
 
-def process_all_files_in_folder(folder):
-    for root, dirs, files in os.walk(folder, topdown=True):
-        for name in files:
-            #print(os.path.join(root, name))
-            if name.upper().endswith(".MAP"):
-                convert_MAP(join(root, name))
-        for name in dirs:
-            print("Walking directory: " + os.path.join(root, name))
-
-    print("Finished processing all data in folder")
-    print("")
-    return
-
-def profile():
-    import cProfile
-    cProfile.run('processAllFilesInFolder("Data/Test/R6")')
-
 def main():
     """Main function that converts a test file"""
     paths = []
-    #paths.append("../Data/Test/Maps/RS")
-    paths.append("../Data/Test/")
-    for path in paths:
-        path = os.path.normpath(path)
-        process_all_files_in_folder(path)
+    #paths.append("../Data/Test")
+    paths.append("../Data/R6GOG")
+    #paths.append("../Data/RSDemo")
+
+    fp = DirectoryProcessor.DirectoryProcessor()
+    fp.paths = fp.paths + paths
+    fp.fileExt = ".MAP"
+
+    fp.processFunction = convert_MAP
+
+    #fp.run_sequential()
+    fp.run_async()
 
 if __name__ == "__main__":
     main()

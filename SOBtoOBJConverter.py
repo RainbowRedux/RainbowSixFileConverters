@@ -64,7 +64,6 @@ def write_OBJ(filename, SOBObject):
     writer.close_file()
 
 def main():
-    """Main function that converts a test file"""
     """Main function that converts test data files"""
     paths = []
     paths.append("../Data/Test")
