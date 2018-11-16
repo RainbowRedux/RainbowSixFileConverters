@@ -13,6 +13,11 @@ class RSEFormatConstants(object):
     RSE_MATERIAL_SIZE_NO_STRINGS_ROGUE_SPEAR = 69 #Usually accurate if you only remove texturename string length
     RSE_MATERIAL_SIZE_NO_STRINGS_RAINBOW_SIX = 73
 
+class RSEGameVersions(object):
+    RAINBOW_SIX = "R6"
+    ROGUE_SPEAR = "RS"
+    UNKNOWN = "??"
+
 class SOBModelFile(object):
     """Class to read full SOB files"""
     def __init__(self):
@@ -134,6 +139,29 @@ class RSEMaterialDefinition(object):
         self.twoSided = None
         self.normalizedColors = None
 
+    def get_material_game_version(self):
+        """Returns the game this type of material is used in"""
+        sizeWithoutStrings = self.size
+        sizeWithoutStrings -= self.materialNameLength
+        sizeWithoutStrings -= self.versionStringLength
+        sizeWithoutStrings -= self.textureNameLength
+
+        #check if it's a rainbow six file, or rogue spear file
+        if sizeWithoutStrings == RSEFormatConstants.RSE_MATERIAL_SIZE_NO_STRINGS_RAINBOW_SIX or self.versionNumber is None:
+            # Rainbow Six files typically have material sizes this size, or contain no version number
+            return RSEGameVersions.RAINBOW_SIX
+        else:
+            #It's probably a Rogue Spear file
+            #Material sizes in rogue spear files seem to be very inconsistent, so there needs to be a better detection method for future versions of the file
+            #Actually, material sizes in rogue spear appear consistently as 69 if you just remove the texturename string length
+            sizeWithoutStrings = self.size
+            sizeWithoutStrings -= self.textureNameLength
+            if sizeWithoutStrings == RSEFormatConstants.RSE_MATERIAL_SIZE_NO_STRINGS_ROGUE_SPEAR:
+                return RSEGameVersions.ROGUE_SPEAR
+            
+        return RSEGameVersions.UNKNOWN
+        pass
+
     def read_material(self, filereader):
         self.size = filereader.read_uint()
         self.ID = filereader.read_uint()
@@ -159,28 +187,24 @@ class RSEMaterialDefinition(object):
         self.opacity = filereader.read_float()
         self.unknown2 = filereader.read_float() # Full lit?
         self.alphaMethod = filereader.read_uint() # Smoothing according to AK? Transparency method? Best guess at the moment is transparency method. 1 = SOLID, 2 = MASKED, 3 = ALPHA_BLEND
-        sizeWithoutStrings = self.size
-        sizeWithoutStrings -= self.materialNameLength
-        sizeWithoutStrings -= self.versionStringLength
-        sizeWithoutStrings -= self.textureNameLength
+
+        gameVer = self.get_material_game_version()
 
         #check if it's a rainbow six file, or rogue spear file
-        if sizeWithoutStrings == RSEFormatConstants.RSE_MATERIAL_SIZE_NO_STRINGS_RAINBOW_SIX or self.versionNumber is None:
+        if gameVer == RSEGameVersions.RAINBOW_SIX:
             # Rainbow Six files typically have material sizes this size, or contain no version number
             self.ambient = filereader.read_rgb_color_24bpp_uint()
             self.diffuse = filereader.read_rgb_color_24bpp_uint()
             self.specular = filereader.read_rgb_color_24bpp_uint()
             self.normalizedColors = False
-        else:
+        elif gameVer == RSEGameVersions.ROGUE_SPEAR:
             #It's probably a Rogue Spear file
-            #Material sizes in rogue spear files seem to be very inconsistent, so there needs to be a better detection method for future versions of the file
-            #Actually, material sizes in rogue spear appear consistently as 69 if you just remove the texturename string length
-            sizeWithoutStrings = self.size
-            sizeWithoutStrings -= self.textureNameLength
             self.ambient = filereader.read_rgba_color_32bpp_float()
             self.diffuse = filereader.read_rgba_color_32bpp_float()
             self.specular = filereader.read_rgba_color_32bpp_float()
             self.normalizedColors = True
+        else:
+            print("Unhandled case")
             
         self.specularLevel = filereader.read_float()
         self.twoSidedRaw = filereader.read_bytes(1)
