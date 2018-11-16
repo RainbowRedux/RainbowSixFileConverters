@@ -54,7 +54,7 @@ class MAPLevelFile(object):
             self.geometryObjects.append(newObj)
             if verboseOutput:
                 pass
-                #newObj.print_object_info()
+                newObj.print_object_info()
         
         return
 
@@ -109,11 +109,16 @@ class RSMAPExpandedGeometryObject(object):
         self.nameStringRaw = filereader.read_bytes(self.nameLength)
         self.nameString = self.nameStringRaw[:-1].decode("utf-8")
 
+        print("Reading geometry header")
+        print("Byte Address: " + str(filereader.get_seekg()))
         self.geometryObjectHeader = RSMAPGeometryObjectHeader()
         self.geometryObjectHeader.read_header(filereader)
-
+        print("Read geometry header")
 
         pass
+
+    def print_object_info(self):
+        pprint.pprint(vars(self))
 
 
 class RSMAPGeometryObjectHeader(object):
@@ -133,6 +138,7 @@ class RSMAPGeometryObjectHeader(object):
         self.id = filereader.read_uint()
         
         self.versionLength = filereader.read_uint()
+
         self.versionStringRaw = filereader.read_bytes(self.versionLength)
         self.versionString = self.versionStringRaw[:-1].decode("utf-8")
 
@@ -140,12 +146,14 @@ class RSMAPGeometryObjectHeader(object):
 
         self.nameLength = filereader.read_uint()
         self.nameStringRaw = filereader.read_bytes(self.nameLength)
-        print(str(self.nameStringRaw))
         self.nameString = self.nameStringRaw[:-1].decode("utf-8")
+        print("objectName: " + self.nameString)
 
         self.read_vertices(filereader)
 
-        self.read_faces(filereader)
+        self.read_face_groups(filereader)
+
+        #self.read_faces(filereader)
 
         print("==================================")
 
@@ -155,53 +163,81 @@ class RSMAPGeometryObjectHeader(object):
         for _ in range(self.vertexCount):
             self.vertices.append(filereader.read_vec_f(3))
 
-        print(str(len(self.vertices)))
+        print("Number of vertices read: " + str(len(self.vertices)))
 
-    def read_faces(self, filereader):
-        self.faceCount = filereader.read_uint()
-        #self.faces = []
-        self.faceNormals = []
-        self.faceDistances = []
-        for _ in range(self.faceCount):
-            #newFace = RSMAPFaceDefinition()
-            #newFace.read_face(filereader)
-            newFaceNormal = filereader.read_vec_f(3)
-            self.faceNormals.append(newFaceNormal)
+    def read_face_groups(self, filereader):
+        self.faceGroupCount = filereader.read_uint()
+        self.faceGroups = []
 
-            newFaceDistance = filereader.read_float()
-            self.faceDistances.append(newFaceDistance)
-        
-        self.faceVertexIndices = []
-        for _ in range(self.faceCount):
-            #hardcoded to 3 vertices per face
-            newFaceVertIndices = filereader.read_vec_short_uint(3)
-            self.faceVertexIndices.append(newFaceVertIndices)
-
-        self.faceParamIndices = []
-        for _ in range(self.faceCount):
-            #hardcoded to 3 vertices per face
-            newFaceParamIndices = filereader.read_vec_short_uint(3)
-            self.faceParamIndices.append(newFaceParamIndices)
-
-        self.vertexParamsCount = filereader.read_uint()
-        self.vertexParams = []
-        for _ in range(self.vertexParamsCount):
-            pass
+        for _ in range(self.faceGroupCount):
+            newFaceGroup = RSMAPFaceGroup()
+            newFaceGroup.read_face_group(filereader)
+            self.faceGroups.append(newFaceGroup)
 
 
-class R(object):
+class RSMAPFaceGroup(object):
     def __init__(self):
-        super(RSMAPFaceDefinition, self).__init__()
+        super(RSMAPFaceGroup, self).__init__()
 
     def __repr__(self):
         #a toggle for verbose information or not
         if False:
             return pprint.pformat(vars(self), indent=1, width=80, depth=2)
         else:
-            return super(RSMAPFaceDefinition, self).__repr__()
+            return super(RSMAPFaceGroup, self).__repr__()
 
-    def read_face(self, filereader):
-        self.vertexIndices = filereader.read_vec_uint(3)
-        self.paramIndices = filereader.read_vec_uint(3)
-        self.faceNormal = filereader.read_vec_f(4)
-        self.materialIndex = filereader.read_uint()
+    def read_face_group(self, filereader):
+        self.unknown1 = filereader.read_uint()
+
+        self.faceCount = filereader.read_uint()
+        
+        self.faceNormals = []
+        self.faceDistancesFromOrigin = []
+
+        for _ in range(self.faceCount):
+            self.faceNormals.append(filereader.read_vec_f(3))
+            self.faceDistancesFromOrigin.append(filereader.read_float())
+
+        self.faceVertexIndices = []
+        for _ in range(self.faceCount):
+            self.faceVertexIndices.append(filereader.read_vec_short_uint(3))
+
+        self.faceVertexParamIndices = []
+        for _ in range(self.faceCount):
+            self.faceVertexParamIndices.append(filereader.read_vec_short_uint(3))
+
+        self.vertexParams = RSMAPVertexParameterCollection()
+        self.vertexParams.read_params(filereader)
+
+        from pprint import pprint
+        pprint(self.__dict__)
+
+class RSMAPVertexParameterCollection(object):
+    def __init__(self):
+        super(RSMAPVertexParameterCollection, self).__init__()
+        self.normal = None
+        self.UV = None
+        self.color = None
+    
+    def __repr__(self):
+        #a toggle for verbose information or not
+        if False:
+            return pprint.pformat(vars(self))
+        else:
+            return super(RSMAPVertexParameterCollection, self).__repr__()
+
+    def read_params(self, filereader):
+        self.vertexCount = filereader.read_uint()
+        print("Number of vertex params: " + str(self.vertexCount))
+
+        self.normals = []
+        for _ in range(self.vertexCount):
+            self.normals.append(filereader.read_vec_f(3))
+
+        self.UVs = []
+        for _ in range(self.vertexCount):
+            self.UVs.append(filereader.read_vec_f(2))
+        
+        self.colors = []
+        for _ in range(self.vertexCount):
+            self.colors.append(filereader.read_vec_f(4))
