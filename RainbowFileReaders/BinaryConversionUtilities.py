@@ -17,6 +17,7 @@ class BinaryFileReader(object):
     def read_bytes(self, size):
         """Converts 2 bytes to a short integer"""
         if len(self.bytes) < self._seekg + size:
+            raise ValueError("File not long enough to read " + str(size) + " bytes")
             print("File not long enough, returning nothing")
             return []
         val = self.bytes[self._seekg:self._seekg+size]
