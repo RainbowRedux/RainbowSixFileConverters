@@ -1,8 +1,8 @@
 from RainbowFileReaders import BinaryConversionUtilities
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
-from RainbowFileReaders.SOBModelReader import RSEMaterialListHeader, RSEGeometryListHeader, SOBGeometryObject
-from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
+from RainbowFileReaders.SOBModelReader import RSEGeometryListHeader, SOBGeometryObject
+from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 
 import pprint
 
@@ -65,7 +65,7 @@ class MAPLevelFile(object):
                 if verboseOutput:
                     pass
 
-        print("==================================")
+        print("== Finished Processing: " + str(filename))
 
         return
 

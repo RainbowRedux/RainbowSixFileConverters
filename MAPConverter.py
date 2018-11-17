@@ -11,15 +11,13 @@ def convert_MAP(filename):
     print("Processing: " + filename)
 
     modelFile = MAPLevelReader.MAPLevelFile()
-    modelFile.read_map(filename, True)
+    modelFile.read_map(filename, False)
 
     meta = JSONMetaInfo.JSONMetaInfo()
     meta.add_info("filecontents", modelFile)
     meta.add_info("filename", filename)
     newFilename = filename + ".JSON"
     meta.writeJSON(newFilename)
-
-    print("===============================================")
 
 def main():
     """Main function that converts a test file"""

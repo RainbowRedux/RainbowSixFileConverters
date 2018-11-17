@@ -80,32 +80,6 @@ class SOBHeader(object):
         print("Header message: " + str(self.headerBeginMessage))
         print("")
 
-class RSEMaterialListHeader(object):
-    def __init__(self):
-        super(RSEMaterialListHeader, self).__init__()
-        self.size = None
-        self.unknown1 = None
-        self.materialListBeginMessageLength = None
-        self.materialListBeginMessageRaw = None
-        self.materialListBeginMessage = None
-        self.numMaterials = None
-
-    def read_header(self, filereader):
-        self.size = filereader.read_uint()
-        self.unknown1 = filereader.read_uint()
-        self.materialListBeginMessageLength = filereader.read_uint()
-        self.materialListBeginMessageRaw = filereader.read_bytes(self.materialListBeginMessageLength)
-        self.materialListBeginMessage = self.materialListBeginMessageRaw[:-1].decode("utf-8")
-        self.numMaterials = filereader.read_uint()
-
-    def print_header_info(self):
-        print("Material list size: " + str(self.size))
-        print("unknown1: " + str(self.unknown1))
-        print("Number of materials: " + str(self.numMaterials))
-        print("Begin message length: " + str(self.materialListBeginMessageLength))
-        print("Begin message: " + str(self.materialListBeginMessage))
-        print("")
-
 class RSEGeometryListHeader(object):
     def __init__(self):
         super(RSEGeometryListHeader, self).__init__()
@@ -197,7 +171,6 @@ class SOBGeometryObject(object):
 
     def read_meshes(self, filereader):
         self.meshCount = filereader.read_uint()
-        print("Mesh count: " + str(self.meshCount))
         self.meshes = []
         for _ in range(self.meshCount):
             newMesh = SOBMeshDefinition()
