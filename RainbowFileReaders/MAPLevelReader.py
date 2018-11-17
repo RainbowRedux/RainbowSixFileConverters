@@ -111,10 +111,9 @@ class RSMAPGeometryObject(object):
         self.nameStringRaw = filereader.read_bytes(self.nameLength)
         self.nameString = self.nameStringRaw[:-1].decode("utf-8")
 
-        self.geometryObjectHeader = RSMAPGeometryData()
-        self.geometryObjectHeader.read_header(filereader)
+        self.geometryData = RSMAPGeometryData()
+        self.geometryData.read_header(filereader)
 
-        pass
 
     def print_object_info(self):
         pprint.pprint(vars(self))
@@ -143,9 +142,9 @@ class RSMAPGeometryData(object):
 
         self.versionNumber = filereader.read_uint()
 
-        self.nameLength = filereader.read_uint()
-        self.nameStringRaw = filereader.read_bytes(self.nameLength)
-        self.nameString = self.nameStringRaw[:-1].decode("utf-8")
+        self.objectNameLength = filereader.read_uint()
+        self.objectNameRaw = filereader.read_bytes(self.objectNameLength)
+        self.objectName = self.objectNameRaw[:-1].decode("utf-8")
 
         self.read_vertices(filereader)
 
