@@ -5,12 +5,13 @@ import sys
 import bpy
 import bmesh
 
-sys.path.insert(0, 'C:/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
+sys.path.insert(0, 'E:/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders.SOBModelReader import SOBAlphaMethod
 from RainbowFileReaders import R6Settings
+from RainbowFileReaders import R6Constants
 from RainbowFileReaders.R6Constants import UINT_MAX
 from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
 
@@ -122,7 +123,7 @@ def import_SOB_to_scene(filename):
             poly = newMesh.polygons[i]
             faceProperties = geoObj.faces[i]
             #Do not assign a material if index is UINT_MAX
-            if faceProperties.materialIndex != R6Settings.UINT_MAX:
+            if faceProperties.materialIndex != R6Constants.UINT_MAX:
                 poly.material_index = faceProperties.materialIndex
 
 
