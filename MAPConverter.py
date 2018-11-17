@@ -24,7 +24,7 @@ def main():
     paths = []
     #paths.append("../Data/Test")
     paths.append("../Data/R6GOG")
-    #paths.append("../Data/RSDemo")
+    paths.append("../Data/RSDemo")
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths

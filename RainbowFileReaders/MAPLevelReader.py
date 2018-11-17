@@ -43,7 +43,7 @@ class MAPLevelFile(object):
                 #newMaterial.print_material_info()
 
         if len(self.materials) > 0:
-            self.gameVersion = self.materials[0].get_material_game_version
+            self.gameVersion = self.materials[0].get_material_game_version()
 
         self.geometryListHeader = RSEGeometryListHeader()
         self.geometryListHeader.read_header(mapFile)
