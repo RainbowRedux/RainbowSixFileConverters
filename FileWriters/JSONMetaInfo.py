@@ -16,8 +16,9 @@ class JSONMetaInfo(object):
         return json.dumps(self, cls=CustomJSONEncoder)
 
     def writeJSON(self, filename):
+        jsonString = json.dumps(self, cls=CustomJSONEncoder, indent=4)
         fp = open(filename, "w")
-        json.dump(self, fp, cls=CustomJSONEncoder, indent=4)
+        fp.write(jsonString)
         fp.close()
 
 
