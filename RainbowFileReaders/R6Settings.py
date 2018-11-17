@@ -51,6 +51,3 @@ paths["MissionSplashBitmapPath"] = "splash"
 paths["DataPath"] = "data"
 paths["ModsPath"] = "mods"
 paths["UserPath"] = ""
-
-
-UINT_MAX = 4294967295

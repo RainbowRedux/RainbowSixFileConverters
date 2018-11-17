@@ -1,11 +1,10 @@
 from RainbowFileReaders import BinaryConversionUtilities
 from RainbowFileReaders import R6Settings
-from RainbowFileReaders.SOBModelReader import RSEMaterialListHeader, RSEMaterialDefinition, RSEGeometryListHeader, SOBGeometryObject
+from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
+from RainbowFileReaders.SOBModelReader import RSEMaterialListHeader, RSEGeometryListHeader, SOBGeometryObject
+from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
 
 import pprint
-
-
-#from RainbowFileReaders.SOBModelReader import SOBVertexParameterCollection
 
 from datetime import datetime
 
@@ -19,6 +18,7 @@ class MAPLevelFile(object):
         self.geometryListHeader = None
         self.geometryObjects = []
         self.footer = None
+        self.gameVersion = None
 
     def read_map(self, filename, verboseOutput=False):
         mapFile = BinaryConversionUtilities.BinaryFileReader(filename)
@@ -42,6 +42,9 @@ class MAPLevelFile(object):
                 pass
                 #newMaterial.print_material_info()
 
+        if len(self.materials) > 0:
+            self.gameVersion = self.materials[0].get_material_game_version
+
         self.geometryListHeader = RSEGeometryListHeader()
         self.geometryListHeader.read_header(mapFile)
         if verboseOutput:
@@ -49,13 +52,19 @@ class MAPLevelFile(object):
 
         self.geometryObjects = []
         for _ in range(self.geometryListHeader.count):
-            newObj = RSMAPGeometryObject()
-            newObj.read_object(mapFile)
-            self.geometryObjects.append(newObj)
-            if verboseOutput:
-                pass
-                #newObj.print_object_info()
-        
+            if self.gameVersion == RSEGameVersions.ROGUE_SPEAR:
+                newObj = RSMAPGeometryObject()
+                newObj.read_object(mapFile)
+                self.geometryObjects.append(newObj)
+                if verboseOutput:
+                    pass
+            else:
+                newObj = SOBGeometryObject()
+                newObj.read_object(mapFile)
+                self.geometryObjects.append(newObj)
+                if verboseOutput:
+                    pass
+
         print("==================================")
 
         return

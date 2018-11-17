@@ -11,6 +11,7 @@ sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFi
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders.SOBModelReader import SOBAlphaMethod
 from RainbowFileReaders import R6Settings
+from RainbowFileReaders.R6Constants import UINT_MAX
 from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
 
 def import_SOB_to_scene(filename):
