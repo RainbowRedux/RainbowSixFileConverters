@@ -49,13 +49,15 @@ class MAPLevelFile(object):
 
         self.geometryObjects = []
         for _ in range(self.geometryListHeader.count):
-            newObj = RSMAPExpandedGeometryObject()
+            newObj = RSMAPGeometryObject()
             newObj.read_object(mapFile)
             self.geometryObjects.append(newObj)
             if verboseOutput:
                 pass
-                newObj.print_object_info()
+                #newObj.print_object_info()
         
+        print("==================================")
+
         return
 
         self.footer = SOBFooterDefinition()
@@ -91,9 +93,9 @@ class MAPHeader(object):
         print("Saved time: " + str(self.time.strftime('%d/%m/%Y %H:%M:%S')))
         print("")
 
-class RSMAPExpandedGeometryObject(object):
+class RSMAPGeometryObject(object):
     def __init__(self):
-        super(RSMAPExpandedGeometryObject, self).__init__()
+        super(RSMAPGeometryObject, self).__init__()
     
     def read_object(self, filereader):
         self.size = filereader.read_uint()
@@ -109,11 +111,8 @@ class RSMAPExpandedGeometryObject(object):
         self.nameStringRaw = filereader.read_bytes(self.nameLength)
         self.nameString = self.nameStringRaw[:-1].decode("utf-8")
 
-        print("Reading geometry header")
-        print("Byte Address: " + str(filereader.get_seekg()))
-        self.geometryObjectHeader = RSMAPGeometryObjectHeader()
+        self.geometryObjectHeader = RSMAPGeometryData()
         self.geometryObjectHeader.read_header(filereader)
-        print("Read geometry header")
 
         pass
 
@@ -121,9 +120,9 @@ class RSMAPExpandedGeometryObject(object):
         pprint.pprint(vars(self))
 
 
-class RSMAPGeometryObjectHeader(object):
+class RSMAPGeometryData(object):
     def __init__(self):
-        super(RSMAPGeometryObjectHeader, self).__init__()
+        super(RSMAPGeometryData, self).__init__()
         self.size = None
         self.ID = None
         self.versionStringLength = None
@@ -147,23 +146,22 @@ class RSMAPGeometryObjectHeader(object):
         self.nameLength = filereader.read_uint()
         self.nameStringRaw = filereader.read_bytes(self.nameLength)
         self.nameString = self.nameStringRaw[:-1].decode("utf-8")
-        print("objectName: " + self.nameString)
 
         self.read_vertices(filereader)
 
         self.read_face_groups(filereader)
 
-        #self.read_faces(filereader)
+        self.collisionInformation = RSMAP2DCollisionInformation()
+        self.collisionInformation.read(filereader)
 
-        print("==================================")
+        self.unknownDataStructure = RSMAPUnknownGeometryDataSection()
+        self.unknownDataStructure.read(filereader)
 
     def read_vertices(self, filereader):
         self.vertexCount = filereader.read_uint()
         self.vertices = []
         for _ in range(self.vertexCount):
             self.vertices.append(filereader.read_vec_f(3))
-
-        print("Number of vertices read: " + str(len(self.vertices)))
 
     def read_face_groups(self, filereader):
         self.faceGroupCount = filereader.read_uint()
@@ -209,8 +207,6 @@ class RSMAPFaceGroup(object):
         self.vertexParams = RSMAPVertexParameterCollection()
         self.vertexParams.read_params(filereader)
 
-        from pprint import pprint
-        pprint(self.__dict__)
 
 class RSMAPVertexParameterCollection(object):
     def __init__(self):
@@ -228,7 +224,6 @@ class RSMAPVertexParameterCollection(object):
 
     def read_params(self, filereader):
         self.vertexCount = filereader.read_uint()
-        print("Number of vertex params: " + str(self.vertexCount))
 
         self.normals = []
         for _ in range(self.vertexCount):
@@ -241,3 +236,74 @@ class RSMAPVertexParameterCollection(object):
         self.colors = []
         for _ in range(self.vertexCount):
             self.colors.append(filereader.read_vec_f(4))
+
+class RSMAP2DCollisionInformation(object):
+    def __init__(self):
+        super(RSMAP2DCollisionInformation, self).__init__()
+
+    def __repr__(self):
+        #a toggle for verbose information or not
+        if False:
+            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
+        else:
+            return super(RSMAP2DCollisionInformation, self).__repr__()
+
+    def read(self, filereader):
+        self.vertexCount = filereader.read_uint()
+
+        self.vertices = []
+        for _ in range(self.vertexCount):
+            self.vertices.append(filereader.read_vec_f(3))
+
+        self.faceCount = filereader.read_uint()
+
+        self.faceNormals = []
+        self.faceDistancesFromOrigin = []
+
+        for _ in range(self.faceCount):
+            self.faceNormals.append(filereader.read_vec_f(3))
+            self.faceDistancesFromOrigin.append(filereader.read_float())
+
+class RSMAPUnknownGeometryDataSection(object):
+    def __init__(self):
+        super(RSMAPUnknownGeometryDataSection, self).__init__()
+
+    def __repr__(self):
+        #a toggle for verbose information or not
+        if False:
+            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
+        else:
+            return super(RSMAPUnknownGeometryDataSection, self).__repr__()
+
+    def read(self, filereader):
+        self.unknown2Count = filereader.read_uint()
+        self.unknown2IndexCollection = []
+        for _ in range(self.unknown2Count):
+            self.unknown2IndexCollection.append(filereader.read_vec_short_uint(8))
+        
+        self.unknownDataObjectCount = filereader.read_uint()
+        self.unknownDataObjects = []
+        for _ in range(self.unknownDataObjectCount):
+            dataObject = RSMAPUnknownGeometryDataObject()
+            dataObject.read(filereader)
+        
+class RSMAPUnknownGeometryDataObject(object):
+    def __init__(self):
+        super(RSMAPUnknownGeometryDataObject, self).__init__()
+
+    def __repr__(self):
+        #a toggle for verbose information or not
+        if False:
+            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
+        else:
+            return super(RSMAPUnknownGeometryDataObject, self).__repr__()
+    
+    def read(self, filereader):
+        self.nameLength = filereader.read_uint()
+        self.nameStringRaw = filereader.read_bytes(self.nameLength)
+        self.nameString = self.nameStringRaw[:-1].decode("utf-8")
+
+        self.unknown4 = filereader.read_uint()
+
+        self.unknown5Count = filereader.read_uint()
+        self.unknown5Indices = filereader.read_vec_short_uint(self.unknown5Count)
