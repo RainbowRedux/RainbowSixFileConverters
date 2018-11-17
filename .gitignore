@@ -104,4 +104,5 @@ Information/
 wiki/
 
 #.vscode/
+.vscode/settings.json
 .wakatime-project
