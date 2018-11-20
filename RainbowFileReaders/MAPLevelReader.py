@@ -71,6 +71,9 @@ class MAPLevelFile(FileFormatReader):
         self.portalList = RSEMAPPortalList()
         self.portalList.read(fileReader)
 
+        self.lightList = RSEMAPLightList()
+        self.lightList.read(fileReader)
+
         return
 
         self.footer = SOBFooterDefinition()
@@ -329,3 +332,67 @@ class RSEMAPPortal(BinaryFileDataStructure):
         self.roomA = filereader.read_uint()
         self.roomB = filereader.read_uint()
 
+
+class RSEMAPLightList(BinaryFileDataStructure):
+    def __init__(self):
+        super(RSEMAPLightList, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.read_header_info(filereader)
+        self.read_lights(filereader)
+
+    def read_header_info(self, filereader):
+        self.lightListSize = filereader.read_uint()
+        self.ID = filereader.read_uint()
+
+        self.read_section_string(filereader)
+
+    def read_lights(self, filereader):
+        self.lightCount = filereader.read_uint()
+
+        self.lights = []
+        for _ in range(self.lightCount):
+            newLight = RSEMAPLight()
+            newLight.read(filereader)
+            self.lights.append(newLight)
+
+
+
+class RSEMAPLight(BinaryFileDataStructure):
+    def __init__(self):
+        super(RSEMAPLight, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+        
+        self.lightSize = filereader.read_uint()
+        self.ID = filereader.read_uint()
+
+        #Some maps store a version string, others don't, not quite sure why. Also makes unknown6 quite unclear as to whether they are separate fields or not
+        self.read_name_string(filereader)
+        print(self.nameString)
+        if self.nameString == "Version":
+            self.versionString = self.nameString
+            self.versionStringRaw = self.nameStringRaw
+            self.versionStringLength = self.nameStringLength
+            self.versionNumber = filereader.read_uint()
+
+            self.read_name_string(filereader)
+            self.unknown6 = filereader.read_uint()
+        else:
+            self.unknown6 = filereader.read_bytes(3)
+
+        #3x3 matrix = 9 elements
+        self.transformMatrix = filereader.read_vec_f(9)
+
+        self.position = filereader.read_vec_f(3)
+        self.color = filereader.read_vec_uint(3)
+        self.unknown7 = filereader.read_float()
+        self.unknown8 = filereader.read_uint()
+        self.unknown9 = filereader.read_float()
+        #maybe?
+        self.falloff = filereader.read_float()
+        self.attenuation = filereader.read_float()
+        self.type = filereader.read_bytes(1)[0]

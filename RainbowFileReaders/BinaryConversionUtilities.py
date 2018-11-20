@@ -138,7 +138,7 @@ class FileFormatReader(object):
     def print_structure_info(self):
         pprint.pprint(vars(self))
 
-    def read_file(self, filepath, verboseOutput=False):
+    def read_file(self, filepath, verboseOutput=True):
         self.filepath = filepath
         self.verboseOutput = verboseOutput
         if self.verboseOutput:
@@ -167,6 +167,21 @@ class BinaryFileDataStructure(object):
             return pprint.pformat(vars(self), indent=1, width=80, depth=2)
         else:
             return super(BinaryFileDataStructure, self).__repr__()
+
+    def read_section_string(self, filereader):
+        self.sectionStringLength = filereader.read_uint()
+        self.sectionStringRaw = filereader.read_bytes(self.sectionStringLength)
+        self.sectionString = self.sectionStringRaw[:-1].decode("utf-8")
+
+    def read_name_string(self, filereader):
+        self.nameStringLength = filereader.read_uint()
+        self.nameStringRaw = filereader.read_bytes(self.nameStringLength)
+        self.nameString = self.nameStringRaw[:-1].decode("utf-8")
+
+    def read_version_string(self, filereader):
+        self.versionStringLength = filereader.read_uint()
+        self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
+        self.versionString = self.versionStringRaw[:-1].decode("utf-8")
 
     def read(self, filereader):
         pass
