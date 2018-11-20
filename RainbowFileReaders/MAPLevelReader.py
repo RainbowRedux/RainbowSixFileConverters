@@ -10,7 +10,7 @@ import pprint
 from datetime import datetime
 
 class MAPLevelFile(FileFormatReader):
-    """Class to read full SOB files"""
+    """Class to read full MAP files"""
     def __init__(self):
         super(MAPLevelFile, self).__init__()
         self.header = None
@@ -67,6 +67,9 @@ class MAPLevelFile(FileFormatReader):
                 self.geometryObjects.append(newObj)
                 if self.verboseOutput:
                     pass
+
+        self.portalList = RSEMAPPortalList()
+        self.portalList.read(fileReader)
 
         return
 
@@ -150,16 +153,10 @@ class RSMAPGeometryData(BinaryFileDataStructure):
         self.size = filereader.read_uint()
         self.id = filereader.read_uint()
         
-        self.versionLength = filereader.read_uint()
-
-        self.versionStringRaw = filereader.read_bytes(self.versionLength)
-        self.versionString = self.versionStringRaw[:-1].decode("utf-8")
-
+        self.read_version_string(filereader)
         self.versionNumber = filereader.read_uint()
 
-        self.objectNameLength = filereader.read_uint()
-        self.objectNameRaw = filereader.read_bytes(self.objectNameLength)
-        self.objectName = self.objectNameRaw[:-1].decode("utf-8")
+        self.read_name_string(filereader)
 
     def read_vertices(self, filereader):
         self.vertexCount = filereader.read_uint()
@@ -278,9 +275,7 @@ class RSMAPUnknownGeometryDataObject(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.nameLength = filereader.read_uint()
-        self.nameStringRaw = filereader.read_bytes(self.nameLength)
-        self.nameString = self.nameStringRaw[:-1].decode("utf-8")
+        self.read_name_string(filereader)
 
         self.unknown4 = filereader.read_uint()
 
@@ -290,3 +285,47 @@ class RSMAPUnknownGeometryDataObject(BinaryFileDataStructure):
 class RSEMAPPortalList(BinaryFileDataStructure):
     def __init__(self):
         super(RSEMAPPortalList, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.read_header_info(filereader)
+        self.read_portals(filereader)
+
+    def read_header_info(self, filereader):
+        self.portalListSize = filereader.read_uint()
+        self.ID = filereader.read_uint()
+
+        self.read_section_string(filereader)
+
+    def read_portals(self, filereader):
+        self.portalCount = filereader.read_uint()
+        self.portals = []
+        for _ in range(self.portalCount):
+            newPortal = RSEMAPPortal()
+            newPortal.read(filereader)
+            self.portals.append(newPortal)
+
+class RSEMAPPortal(BinaryFileDataStructure):
+    def __init__(self):
+        super(RSEMAPPortal, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.portalSize = filereader.read_uint()
+        self.ID = filereader.read_uint()
+
+        self.read_version_string(filereader)
+        self.versionNumber = filereader.read_uint()
+
+        self.read_name_string(filereader)
+
+        self.vertexCount = filereader.read_uint()
+        self.vertices = []
+        for _ in range(self.vertexCount):
+            self.vertices.append(filereader.read_vec_f(3))
+
+        self.roomA = filereader.read_uint()
+        self.roomB = filereader.read_uint()
+
