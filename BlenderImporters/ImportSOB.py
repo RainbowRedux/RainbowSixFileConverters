@@ -17,7 +17,7 @@ from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
 
 def import_SOB_to_scene(filename):
     SOBObject = SOBModelReader.SOBModelFile()
-    SOBObject.read_sob(filename)
+    SOBObject.read_file(filename)
     filepath = os.path.dirname(filename)
     
     print("")

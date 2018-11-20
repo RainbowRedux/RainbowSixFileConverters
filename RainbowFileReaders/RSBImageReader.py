@@ -40,7 +40,7 @@ class RSBImageFile(FileFormatReader):
         
         #read full color image
         self.imageFullColor = RSBImage()
-        self.imageFullColor.read_image(self.header.width, self.header.height, self.header.calculate_bytes_per_pixel(), imagefile)
+        self.imageFullColor.read_image(self.header.width, self.header.height, self.header.calculate_bytes_per_pixel(), fileReader)
 
     def convert_palette_image(self):
         newImage = PIL.Image.new('RGBA', (self.header.width, self.header.height))

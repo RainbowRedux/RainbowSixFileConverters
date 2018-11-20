@@ -19,7 +19,7 @@ def convert_SOB(filename):
     print("Processing: " + filename)
 
     modelFile = SOBModelReader.SOBModelFile()
-    modelFile.read_file(filename, verboseOutput=False)
+    modelFile.read_file(filename)
 
     meta = JSONMetaInfo.JSONMetaInfo()
     meta.add_info("filecontents", modelFile)
