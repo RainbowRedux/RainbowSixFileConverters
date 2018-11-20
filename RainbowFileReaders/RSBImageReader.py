@@ -13,26 +13,26 @@ class RSBImageFile(FileFormatReader):
     def read_data(self):
         super().read_data()
         
-        imagefile = self._filereader
+        fileReader = self._filereader
 
         #read header
         self.header = RSBHeader()
-        self.header.read(imagefile)
+        self.header.read(fileReader)
 
         self.image256 = None
         if self.header.version == 0 and self.header.containsPalette == 1:
             #read palette
             self.palette = RSBPalette()
-            self.palette.read(imagefile)
+            self.palette.read(fileReader)
 
             #read 256 color image
             self.image256 = RSBImage()
             bytesPerPixel = 1
-            self.image256.read_image(self.header.width, self.header.height, bytesPerPixel, imagefile)
+            self.image256.read_image(self.header.width, self.header.height, bytesPerPixel, fileReader)
 
         #in version 0 files, the bit mask is stored after the palette version of the image
         if self.header.version == 0:
-            self.header.read_bit_mask(imagefile)
+            self.header.read_bit_mask(fileReader)
 
         if self.header.is_valid() is False:
             print("Header not valid, aborting")

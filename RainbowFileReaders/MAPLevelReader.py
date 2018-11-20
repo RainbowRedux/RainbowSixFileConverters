@@ -1,5 +1,5 @@
 from RainbowFileReaders import BinaryConversionUtilities
-from RainbowFileReaders.BinaryConversionUtilities import BinaryFileDataStructure
+from RainbowFileReaders.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
 from RainbowFileReaders.SOBModelReader import RSEGeometryListHeader, SOBGeometryObject
@@ -9,7 +9,7 @@ import pprint
 
 from datetime import datetime
 
-class MAPLevelFile(BinaryFileDataStructure):
+class MAPLevelFile(FileFormatReader):
     """Class to read full SOB files"""
     def __init__(self):
         super(MAPLevelFile, self).__init__()
@@ -21,25 +21,27 @@ class MAPLevelFile(BinaryFileDataStructure):
         self.footer = None
         self.gameVersion = None
 
-    def read_map(self, filename, verboseOutput=False):
-        mapFile = BinaryConversionUtilities.BinaryFileReader(filename)
+    def read_data(self):
+        super().read_data()
+
+        fileReader = self._filereader
 
         self.header = MAPHeader()
-        self.header.read(mapFile)
-        if verboseOutput:
+        self.header.read(fileReader)
+        if self.verboseOutput:
             self.header.print_structure_info()
 
         self.materialListHeader = RSEMaterialListHeader()
-        self.materialListHeader.read(mapFile)
-        if verboseOutput:
+        self.materialListHeader.read(fileReader)
+        if self.verboseOutput:
             self.materialListHeader.print_structure_info()
 
         self.materials = []
         for _ in range(self.materialListHeader.numMaterials):
             newMaterial = RSEMaterialDefinition()
-            newMaterial.read(mapFile)
+            newMaterial.read(fileReader)
             self.materials.append(newMaterial)
-            if verboseOutput:
+            if self.verboseOutput:
                 pass
                 #newMaterial.print_structure_info()
 
@@ -47,35 +49,29 @@ class MAPLevelFile(BinaryFileDataStructure):
             self.gameVersion = self.materials[0].get_material_game_version()
 
         self.geometryListHeader = RSEGeometryListHeader()
-        self.geometryListHeader.read(mapFile)
-        if verboseOutput:
+        self.geometryListHeader.read(fileReader)
+        if self.verboseOutput:
             self.geometryListHeader.print_structure_info()
 
         self.geometryObjects = []
         for _ in range(self.geometryListHeader.count):
             if self.gameVersion == RSEGameVersions.ROGUE_SPEAR:
                 newObj = RSMAPGeometryObject()
-                newObj.read(mapFile)
+                newObj.read(fileReader)
                 self.geometryObjects.append(newObj)
-                if verboseOutput:
+                if self.verboseOutput:
                     pass
             else:
                 newObj = SOBGeometryObject()
-                newObj.read(mapFile)
+                newObj.read(fileReader)
                 self.geometryObjects.append(newObj)
-                if verboseOutput:
+                if self.verboseOutput:
                     pass
-
-        print("== Finished Processing: " + str(filename))
 
         return
 
         self.footer = SOBFooterDefinition()
         self.footer.read_footer(mapFile)
-        
-        print("Processed: " + str(mapFile.get_seekg()) + " bytes")
-        print("Length: " + str(mapFile.get_length()) + " bytes")
-        print("Unprocessed: " + str(mapFile.get_length() - mapFile.get_seekg()) + " bytes")
 
 
 class MAPHeader(BinaryFileDataStructure):

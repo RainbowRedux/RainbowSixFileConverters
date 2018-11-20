@@ -126,7 +126,7 @@ class BinaryFileReader(object):
 class FileFormatReader(object):
     def __init__(self):
         super(FileFormatReader, self).__init__()
-        self.path = None
+        self.filepath = None
 
     def __repr__(self):
         #a toggle for verbose information or not
@@ -138,16 +138,20 @@ class FileFormatReader(object):
     def print_structure_info(self):
         pprint.pprint(vars(self))
 
-    def read_file(self, filepath):
+    def read_file(self, filepath, verboseOutput=False):
         self.filepath = filepath
+        self.verboseOutput = verboseOutput
+        if self.verboseOutput:
+            print("== Processing: " + str(self.filepath))
         self._filereader = BinaryFileReader(filepath)
 
         self.read_data()
 
-        print("Processed: " + str(self._filereader.get_seekg()) + " bytes")
-        print("Length: " + str(self._filereader.get_length()) + " bytes")
-        print("Unprocessed: " + str(self._filereader.get_length() - self._filereader.get_seekg()) + " bytes")
-        pass
+        if self.verboseOutput:
+            print("== Finished Processing: " + str(self.filepath))
+            print("Processed: " + str(self._filereader.get_seekg()) + " bytes")
+            print("Length: " + str(self._filereader.get_length()) + " bytes")
+            print("Unprocessed: " + str(self._filereader.get_length() - self._filereader.get_seekg()) + " bytes")
 
     def read_data(self):
         pass

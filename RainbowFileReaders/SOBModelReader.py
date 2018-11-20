@@ -1,5 +1,5 @@
 from RainbowFileReaders import BinaryConversionUtilities
-from RainbowFileReaders.BinaryConversionUtilities import BinaryFileDataStructure
+from RainbowFileReaders.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
@@ -12,7 +12,7 @@ class SOBAlphaMethod(object):
     SAM_Masked      = 2 # A guess
     SAM_AlphaBlend  = 3
 
-class SOBModelFile(BinaryFileDataStructure):
+class SOBModelFile(FileFormatReader):
     """Class to read full SOB files"""
     def __init__(self):
         super(SOBModelFile, self).__init__()
@@ -23,47 +23,45 @@ class SOBModelFile(BinaryFileDataStructure):
         self.geometryObjects = []
         self.footer = None
 
-    def read_sob(self, filename, verboseOutput=False):
-        modelFile = BinaryConversionUtilities.BinaryFileReader(filename)
+    def read_data(self):
+        super().read_data()
+
+        fileReader = self._filereader
 
         self.header = SOBHeader()
-        self.header.read(modelFile)
-        if verboseOutput:
+        self.header.read(fileReader)
+        if self.verboseOutput:
             self.header.print_structure_info()
 
         self.materialListHeader = RSEMaterialListHeader()
-        self.materialListHeader.read(modelFile)
-        if verboseOutput:
+        self.materialListHeader.read(fileReader)
+        if self.verboseOutput:
             self.materialListHeader.print_structure_info()
 
         self.materials = []
         for _ in range(self.materialListHeader.numMaterials):
             newMaterial = RSEMaterialDefinition()
-            newMaterial.read(modelFile)
+            newMaterial.read(fileReader)
             self.materials.append(newMaterial)
-            if verboseOutput:
+            if self.verboseOutput:
                 newMaterial.print_structure_info()
 
         self.geometryListHeader = RSEGeometryListHeader()
-        self.geometryListHeader.read(modelFile)
-        if verboseOutput:
+        self.geometryListHeader.read(fileReader)
+        if self.verboseOutput:
             self.geometryListHeader.print_structure_info()
 
         self.geometryObjects = []
         for _ in range(self.geometryListHeader.count):
             newObj = SOBGeometryObject()
-            newObj.read(modelFile)
+            newObj.read(fileReader)
             self.geometryObjects.append(newObj)
-            if verboseOutput:
+            if self.verboseOutput:
                 pass
                 #newObj.print_structure_info()
 
         self.footer = SOBFooterDefinition()
-        self.footer.read(modelFile)
-        
-        print("Processed: " + str(modelFile.get_seekg()) + " bytes")
-        print("Length: " + str(modelFile.get_length()) + " bytes")
-        print("Unprocessed: " + str(modelFile.get_length() - modelFile.get_seekg()) + " bytes")
+        self.footer.read(fileReader)
 
 
 class SOBHeader(BinaryFileDataStructure):
