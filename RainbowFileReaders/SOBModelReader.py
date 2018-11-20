@@ -29,7 +29,7 @@ class SOBModelFile(BinaryFileDataStructure):
         self.header = SOBHeader()
         self.header.read(modelFile)
         if verboseOutput:
-            self.header.print_header_info()
+            self.header.print_structure_info()
 
         self.materialListHeader = RSEMaterialListHeader()
         self.materialListHeader.read(modelFile)
@@ -47,7 +47,7 @@ class SOBModelFile(BinaryFileDataStructure):
         self.geometryListHeader = RSEGeometryListHeader()
         self.geometryListHeader.read(modelFile)
         if verboseOutput:
-            self.geometryListHeader.print_header_info()
+            self.geometryListHeader.print_structure_info()
 
         self.geometryObjects = []
         for _ in range(self.geometryListHeader.count):
@@ -78,11 +78,6 @@ class SOBHeader(BinaryFileDataStructure):
         self.headerLength = filereader.read_uint()
         self.headerBeginMessage = filereader.read_bytes(self.headerLength)
 
-    def print_header_info(self):
-        print("Header length: " + str(self.headerLength))
-        print("Header message: " + str(self.headerBeginMessage))
-        print("")
-
 class RSEGeometryListHeader(BinaryFileDataStructure):
     def __init__(self):
         super(RSEGeometryListHeader, self).__init__()
@@ -97,9 +92,6 @@ class RSEGeometryListHeader(BinaryFileDataStructure):
         self.count = filereader.read_uint()
 
         self.geometryListString = self.geometryListStringRaw[:-1].decode("utf-8")
-
-    def print_header_info(self):
-        pprint.pprint(vars(self))
 
 class SOBGeometryObject(BinaryFileDataStructure):
     def __init__(self):

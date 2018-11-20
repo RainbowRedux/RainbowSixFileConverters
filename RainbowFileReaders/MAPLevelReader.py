@@ -27,7 +27,7 @@ class MAPLevelFile(BinaryFileDataStructure):
         self.header = MAPHeader()
         self.header.read(mapFile)
         if verboseOutput:
-            self.header.print_header_info()
+            self.header.print_structure_info()
 
         self.materialListHeader = RSEMaterialListHeader()
         self.materialListHeader.read(mapFile)
@@ -41,7 +41,7 @@ class MAPLevelFile(BinaryFileDataStructure):
             self.materials.append(newMaterial)
             if verboseOutput:
                 pass
-                #newMaterial.print_material_info()
+                #newMaterial.print_structure_info()
 
         if len(self.materials) > 0:
             self.gameVersion = self.materials[0].get_material_game_version()
@@ -49,7 +49,7 @@ class MAPLevelFile(BinaryFileDataStructure):
         self.geometryListHeader = RSEGeometryListHeader()
         self.geometryListHeader.read(mapFile)
         if verboseOutput:
-            self.geometryListHeader.print_header_info()
+            self.geometryListHeader.print_structure_info()
 
         self.geometryObjects = []
         for _ in range(self.geometryListHeader.count):
@@ -99,12 +99,6 @@ class MAPHeader(BinaryFileDataStructure):
         else:
             self.time = datetime.fromtimestamp(self.timePOSIXRaw)
 
-    def print_header_info(self):
-        print("Header length: " + str(self.headerLength))
-        print("Header message: " + str(self.headerBeginMessage))
-        print("Saved time: " + str(self.time.strftime('%d/%m/%Y %H:%M:%S')))
-        print("")
-
 class RSMAPGeometryObject(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAPGeometryObject, self).__init__()
@@ -127,10 +121,6 @@ class RSMAPGeometryObject(BinaryFileDataStructure):
 
         self.geometryData = RSMAPGeometryData()
         self.geometryData.read(filereader)
-
-
-    def print_object_info(self):
-        pprint.pprint(vars(self))
 
 
 class RSMAPGeometryData(BinaryFileDataStructure):
