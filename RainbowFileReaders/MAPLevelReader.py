@@ -74,6 +74,9 @@ class MAPLevelFile(FileFormatReader):
         self.lightList = RSEMAPLightList()
         self.lightList.read(fileReader)
 
+        self.objectList = RSEMAPObjectList()
+        self.objectList.read(fileReader)
+
         return
 
         self.footer = SOBFooterDefinition()
@@ -396,3 +399,58 @@ class RSEMAPLight(BinaryFileDataStructure):
         self.falloff = filereader.read_float()
         self.attenuation = filereader.read_float()
         self.type = filereader.read_bytes(1)[0]
+
+class RSEMAPObjectList(BinaryFileDataStructure):
+    def __init__(self):
+        super(RSEMAPObjectList, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.read_header_info(filereader)
+        self.read_objects(filereader)
+
+    def read_header_info(self, filereader):
+        self.objectListSize = filereader.read_uint()
+        self.ID = filereader.read_uint()
+        self.read_section_string(filereader)
+
+    def read_objects(self, filereader):
+        self.objectCount = filereader.read_uint()
+
+        self.objects = []
+        for i in range(self.objectCount):
+            print(str(i))
+            newObject = RSEMAPObject()
+            newObject.read(filereader)
+            self.objects.append(newObject)
+
+class RSEMAPObject(BinaryFileDataStructure):
+    def __init__(self):
+        super(RSEMAPObject, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.objectSize = filereader.read_uint()
+        if self.objectSize == 72:
+            self.bytes = filereader.read_bytes(107)
+        else:
+            self.bytes = filereader.read_bytes(self.objectSize)
+        return
+        self.objectType = filereader.read_uint()
+
+        self.read_version_string(filereader)
+        self.versionNumber = filereader.read_uint()
+
+        self.read_name_string(filereader)
+        self.read_named_string(filereader, "filenameString")
+
+        #3x3 matrix = 9 elements
+        self.transformMatrix = filereader.read_vec_f(9)
+
+        self.position = filereader.read_vec_f(3)
+
+        self.read_named_string(filereader, "unknownString")
+        self.read_named_string(filereader, "hitsoundAssetString")
+        self.read_named_string(filereader, "debrisParticleAssetString")

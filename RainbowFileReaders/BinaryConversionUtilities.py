@@ -183,6 +183,15 @@ class BinaryFileDataStructure(object):
         self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
         self.versionString = self.versionStringRaw[:-1].decode("utf-8")
 
+    def read_named_string(self, filereader, stringName):
+        newStringLength = filereader.read_uint()
+        newStringRaw = filereader.read_bytes(newStringLength)
+        newString = newStringRaw[:-1].decode("utf-8")
+        self.__setattr__(stringName + "Length", newStringLength)
+        self.__setattr__(stringName + "Raw", newStringRaw)
+        self.__setattr__(stringName, newString)
+
+
     def read(self, filereader):
         pass
 
