@@ -1,7 +1,8 @@
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEMaterialFormatConstants
+from RainbowFileReaders.BinaryConversionUtilities import BinaryFileDataStructure
 import pprint
 
-class RSEMaterialListHeader(object):
+class RSEMaterialListHeader(BinaryFileDataStructure):
     def __init__(self):
         super(RSEMaterialListHeader, self).__init__()
         self.size = None
@@ -11,7 +12,9 @@ class RSEMaterialListHeader(object):
         self.materialListBeginMessage = None
         self.numMaterials = None
 
-    def read_header(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+
         self.size = filereader.read_uint()
         self.unknown1 = filereader.read_uint()
         self.materialListBeginMessageLength = filereader.read_uint()
@@ -19,16 +22,8 @@ class RSEMaterialListHeader(object):
         self.materialListBeginMessage = self.materialListBeginMessageRaw[:-1].decode("utf-8")
         self.numMaterials = filereader.read_uint()
 
-    def print_header_info(self):
-        print("Material list size: " + str(self.size))
-        print("unknown1: " + str(self.unknown1))
-        print("Number of materials: " + str(self.numMaterials))
-        print("Begin message length: " + str(self.materialListBeginMessageLength))
-        print("Begin message: " + str(self.materialListBeginMessage))
-        print("")
 
-
-class RSEMaterialDefinition(object):
+class RSEMaterialDefinition(BinaryFileDataStructure):
     def __init__(self):
         super(RSEMaterialDefinition, self).__init__()
         self.size = None
@@ -75,7 +70,9 @@ class RSEMaterialDefinition(object):
             
         return RSEGameVersions.UNKNOWN
 
-    def read_material(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+
         self.size = filereader.read_uint()
         self.ID = filereader.read_uint()
 
@@ -128,8 +125,3 @@ class RSEMaterialDefinition(object):
 
         self.textureName = self.textureNameRaw[:-1].decode("utf-8")
         self.materialName = self.materialNameRaw[:-1].decode("utf-8")
-
-
-    def print_material_info(self):
-        pprint.pprint(vars(self))
-        print("")

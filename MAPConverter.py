@@ -11,7 +11,7 @@ def convert_MAP(filename):
     print("Processing: " + filename)
 
     modelFile = MAPLevelReader.MAPLevelFile()
-    modelFile.read_map(filename, False)
+    modelFile.read_map(filename, verboseOutput=False)
 
     meta = JSONMetaInfo.JSONMetaInfo()
     meta.add_info("filecontents", modelFile)

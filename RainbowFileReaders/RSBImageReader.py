@@ -1,24 +1,29 @@
 import PIL
 from  RainbowFileReaders import BinaryConversionUtilities
-from RainbowFileReaders.BinaryConversionUtilities import read_bitmask_ARGB_color
+from RainbowFileReaders.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader
 
-class RSBImageFile(object):
+class RSBImageFile(FileFormatReader):
     """Class to read full RSB files"""
     def __init__(self):
-        pass
+        super(RSBImageFile, self).__init__()
+        self.header = None
+        self.image256 = None
+        self.imageFullColor = None
     
-    def read_RSB(self, filename):
-        imagefile = BinaryConversionUtilities.BinaryFileReader(filename)
+    def read_data(self):
+        super().read_data()
+        
+        imagefile = self._filereader
 
         #read header
         self.header = RSBHeader()
-        self.header.read_header(imagefile)
+        self.header.read(imagefile)
 
         self.image256 = None
         if self.header.version == 0 and self.header.containsPalette == 1:
             #read palette
             self.palette = RSBPalette()
-            self.palette.read_palette(imagefile)
+            self.palette.read(imagefile)
 
             #read 256 color image
             self.image256 = RSBImage()
@@ -36,10 +41,6 @@ class RSBImageFile(object):
         #read full color image
         self.imageFullColor = RSBImage()
         self.imageFullColor.read_image(self.header.width, self.header.height, self.header.calculate_bytes_per_pixel(), imagefile)
-
-        print("Processed: " + str(imagefile.get_seekg()) + " bytes")
-        print("Length: " + str(imagefile.get_length()) + " bytes")
-        print("Unprocessed: " + str(imagefile.get_length() - imagefile.get_seekg()) + " bytes")
 
     def convert_palette_image(self):
         newImage = PIL.Image.new('RGBA', (self.header.width, self.header.height))
@@ -66,9 +67,10 @@ class RSBImageFile(object):
         return newImage
     
 
-class RSBHeader(object):
+class RSBHeader(BinaryFileDataStructure):
     """Reads and stores information in the header of RSB files"""
     def __init__(self):
+        super(RSBHeader, self).__init__()
         self.version = None
         self.width = None
         self.height = None
@@ -103,26 +105,6 @@ class RSBHeader(object):
             bitDepthTotal = self.bitDepthRed + self.bitDepthGreen + self.bitDepthBlue + self.bitDepthAlpha
             return bitDepthTotal // 8
 
-    def print_header_info(self):
-        print("RSB Version: " + str(self.version))
-        print("Image Width: " + str(self.width))
-        print("Image height: " + str(self.height))
-        if self.bitDepthAlpha > 0:
-            print("Has Alpha?: True")
-        else:
-            print("Has Alpha?: False")
-        print("BitDepthRed: " + str(self.bitDepthRed))
-        print("BitDepthGreen: " + str(self.bitDepthGreen))
-        print("BitDepthBlue: " + str(self.bitDepthBlue))
-        print("BitDepthAlpha: " + str(self.bitDepthAlpha))
-        print("containsPalette: " + str(self.containsPalette))
-        print("Unknown var2: " + str(self.unknown2))
-        print("Unknown var3: " + str(self.unknown3))
-        print("Unknown var4: " + str(self.unknown4))
-        print("Unknown var5: " + str(self.unknown5))
-        print("isDXT: " + str(self.isDXT))
-        print("DXT Type: " + str(self.dxtType))
-
     def read_bit_mask(self, filereader):
         """Reads the bitmask for each color channel. May be stored outside of the header in Version 0 files"""
         #bit depth information
@@ -131,7 +113,9 @@ class RSBHeader(object):
         self.bitDepthBlue = filereader.read_uint()
         self.bitDepthAlpha = filereader.read_uint()
 
-    def read_header(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+
         self.version = filereader.read_uint()
         self.width = filereader.read_uint()
         self.height = filereader.read_uint()
@@ -158,9 +142,10 @@ class RSBHeader(object):
                 self.isDXT = True
 
 
-class RSBPalette(object):
+class RSBPalette(BinaryFileDataStructure):
     """Reads and stores the color palette of version 0 files"""
     def __init__(self):
+        super(RSBPalette, self).__init__()
         self.num_palette_entries = 256
         self.palette_entries = []
         pass
@@ -172,7 +157,9 @@ class RSBPalette(object):
         for color in self.palette_entries:
             print("R: " + str(color[0]) + "\tG: " + str(color[1]) + "\tB: " + str(color[2]) + "\tA: " + str(color[3]))
 
-    def read_palette(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+
         num_bytes_processed = 0
         self.palette_entries = []
         for _ in range(self.num_palette_entries):
@@ -181,9 +168,10 @@ class RSBPalette(object):
             self.palette_entries.append(temp)
         return num_bytes_processed
 
-class RSBImage(object):
+class RSBImage(BinaryFileDataStructure):
     """Reads and stores the image data of RSB files"""
     def __init__(self):
+        super(RSBImage, self).__init__()
         self.image = []
         pass
     
@@ -192,6 +180,10 @@ class RSBImage(object):
             print("Invalid index: " + str(index))
             return "0"
         return self.image[index]
+
+    def read(self, filereader):
+        super().read(filereader)
+        print("Error! This class does not support the base read operation as it requires extra parameters")
 
     def read_image(self, width, height, bytes_per_pixel, filereader):
         self.image = []

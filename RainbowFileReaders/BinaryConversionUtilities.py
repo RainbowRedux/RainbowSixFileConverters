@@ -1,4 +1,5 @@
 import struct
+import pprint
 
 class BinaryFileReader(object):
     """A wrapper for reading and conversion operations on binary file data."""
@@ -121,7 +122,55 @@ class BinaryFileReader(object):
 
     def get_seekg(self):
         return self._seekg
-        
+
+class FileFormatReader(object):
+    def __init__(self):
+        super(FileFormatReader, self).__init__()
+        self.path = None
+
+    def __repr__(self):
+        #a toggle for verbose information or not
+        if False:
+            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
+        else:
+            return super(FileFormatReader, self).__repr__()
+
+    def print_structure_info(self):
+        pprint.pprint(vars(self))
+
+    def read_file(self, filepath):
+        self.filepath = filepath
+        self._filereader = BinaryFileReader(filepath)
+
+        self.read_data()
+
+        print("Processed: " + str(self._filereader.get_seekg()) + " bytes")
+        print("Length: " + str(self._filereader.get_length()) + " bytes")
+        print("Unprocessed: " + str(self._filereader.get_length() - self._filereader.get_seekg()) + " bytes")
+        pass
+
+    def read_data(self):
+        pass
+
+
+class BinaryFileDataStructure(object):
+    def __init__(self):
+        super(BinaryFileDataStructure, self).__init__()
+
+    def __repr__(self):
+        #a toggle for verbose information or not
+        if False:
+            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
+        else:
+            return super(BinaryFileDataStructure, self).__repr__()
+
+    def read(self, filereader):
+        pass
+
+    def print_structure_info(self):
+        pprint.pprint(vars(self))
+    
+
 
 def bytes_to_int(bytearray):
     """Converts 4 bytes to an integer"""

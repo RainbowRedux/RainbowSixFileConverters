@@ -1,7 +1,8 @@
 from RainbowFileReaders import BinaryConversionUtilities
+from RainbowFileReaders.BinaryConversionUtilities import BinaryFileDataStructure
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
-from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
+from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 
 import pprint
 
@@ -11,7 +12,7 @@ class SOBAlphaMethod(object):
     SAM_Masked      = 2 # A guess
     SAM_AlphaBlend  = 3
 
-class SOBModelFile(object):
+class SOBModelFile(BinaryFileDataStructure):
     """Class to read full SOB files"""
     def __init__(self):
         super(SOBModelFile, self).__init__()
@@ -26,52 +27,54 @@ class SOBModelFile(object):
         modelFile = BinaryConversionUtilities.BinaryFileReader(filename)
 
         self.header = SOBHeader()
-        self.header.read_header(modelFile)
+        self.header.read(modelFile)
         if verboseOutput:
             self.header.print_header_info()
 
         self.materialListHeader = RSEMaterialListHeader()
-        self.materialListHeader.read_header(modelFile)
+        self.materialListHeader.read(modelFile)
         if verboseOutput:
-            self.materialListHeader.print_header_info()
+            self.materialListHeader.print_structure_info()
 
         self.materials = []
         for _ in range(self.materialListHeader.numMaterials):
             newMaterial = RSEMaterialDefinition()
-            newMaterial.read_material(modelFile)
+            newMaterial.read(modelFile)
             self.materials.append(newMaterial)
             if verboseOutput:
-                newMaterial.print_material_info()
+                newMaterial.print_structure_info()
 
         self.geometryListHeader = RSEGeometryListHeader()
-        self.geometryListHeader.read_header(modelFile)
+        self.geometryListHeader.read(modelFile)
         if verboseOutput:
             self.geometryListHeader.print_header_info()
 
         self.geometryObjects = []
         for _ in range(self.geometryListHeader.count):
             newObj = SOBGeometryObject()
-            newObj.read_object(modelFile)
+            newObj.read(modelFile)
             self.geometryObjects.append(newObj)
             if verboseOutput:
                 pass
-                #newObj.print_object_info()
+                #newObj.print_structure_info()
 
         self.footer = SOBFooterDefinition()
-        self.footer.read_footer(modelFile)
+        self.footer.read(modelFile)
         
         print("Processed: " + str(modelFile.get_seekg()) + " bytes")
         print("Length: " + str(modelFile.get_length()) + " bytes")
         print("Unprocessed: " + str(modelFile.get_length() - modelFile.get_seekg()) + " bytes")
 
 
-class SOBHeader(object):
+class SOBHeader(BinaryFileDataStructure):
     def __init__(self):
         super(SOBHeader, self).__init__()
         self.headerLength = 0
         self.headerBeginMessage = None
 
-    def read_header(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+
         self.headerLength = filereader.read_uint()
         self.headerBeginMessage = filereader.read_bytes(self.headerLength)
 
@@ -80,11 +83,13 @@ class SOBHeader(object):
         print("Header message: " + str(self.headerBeginMessage))
         print("")
 
-class RSEGeometryListHeader(object):
+class RSEGeometryListHeader(BinaryFileDataStructure):
     def __init__(self):
         super(RSEGeometryListHeader, self).__init__()
 
-    def read_header(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+
         self.geometryListSize = filereader.read_uint()
         self.ID = filereader.read_uint()
         self.geometryListStringLength = filereader.read_uint()
@@ -96,7 +101,7 @@ class RSEGeometryListHeader(object):
     def print_header_info(self):
         pprint.pprint(vars(self))
 
-class SOBGeometryObject(object):
+class SOBGeometryObject(BinaryFileDataStructure):
     def __init__(self):
         super(SOBGeometryObject, self).__init__()
         self.size = None
@@ -118,7 +123,16 @@ class SOBGeometryObject(object):
         self.meshCount = None
         self.meshes = None
 
-    def read_object(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.read_header_info(filereader)
+        self.read_vertices(filereader)
+        self.read_vertex_params(filereader)
+        self.read_faces(filereader)
+        self.read_meshes(filereader)
+
+    def read_header_info(self, filereader):
         self.size = filereader.read_uint()
         self.ID = filereader.read_uint()
         self.versionStringLength = filereader.read_uint()
@@ -141,12 +155,6 @@ class SOBGeometryObject(object):
         
         self.objectName = self.objectNameRaw[:-1].decode("utf-8")
 
-        self.read_vertices(filereader)
-        self.read_vertex_params(filereader)
-        self.read_faces(filereader)
-        self.read_meshes(filereader)
-        
-
     def read_vertices(self, filereader):
         self.vertexCount = filereader.read_uint()
         self.vertices = []
@@ -158,7 +166,7 @@ class SOBGeometryObject(object):
         self.vertexParams = []
         for _ in range(self.vertexParamsCount):
             newParams = SOBVertexParameterCollection()
-            newParams.read_params(filereader)
+            newParams.read(filereader)
             self.vertexParams.append(newParams)
 
     def read_faces(self, filereader):
@@ -166,7 +174,7 @@ class SOBGeometryObject(object):
         self.faces = []
         for _ in range(self.faceCount):
             newFace = SOBFaceDefinition()
-            newFace.read_face(filereader)
+            newFace.read(filereader)
             self.faces.append(newFace)
 
     def read_meshes(self, filereader):
@@ -174,51 +182,38 @@ class SOBGeometryObject(object):
         self.meshes = []
         for _ in range(self.meshCount):
             newMesh = SOBMeshDefinition()
-            newMesh.read_mesh(filereader)
+            newMesh.read(filereader)
             self.meshes.append(newMesh)
 
-    def print_object_info(self):
-        pprint.pprint(vars(self))
-
-class SOBVertexParameterCollection(object):
+class SOBVertexParameterCollection(BinaryFileDataStructure):
     def __init__(self):
         super(SOBVertexParameterCollection, self).__init__()
         self.normal = None
         self.UV = None
         self.color = None
-    
-    def __repr__(self):
-        #a toggle for verbose information or not
-        if False:
-            return pprint.pformat(vars(self))
-        else:
-            return super(SOBVertexParameterCollection, self).__repr__()
 
-    def read_params(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+
         self.normal = filereader.read_vec_f(3)
         self.UV = filereader.read_vec_f(2)
         self.unknown10 = filereader.read_float() # no idea?
         self.color = filereader.read_rgb_color_24bpp_uint()
 
-class SOBFaceDefinition(object):
+class SOBFaceDefinition(BinaryFileDataStructure):
     def __init__(self):
         super(SOBFaceDefinition, self).__init__()
 
-    def __repr__(self):
-        #a toggle for verbose information or not
-        if False:
-            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
-        else:
-            return super(SOBFaceDefinition, self).__repr__()
+    def read(self, filereader):
+        super().read(filereader)
 
-    def read_face(self, filereader):
         self.vertexIndices = filereader.read_vec_uint(3)
         self.paramIndices = filereader.read_vec_uint(3)
         self.faceNormal = filereader.read_vec_f(4)
         self.materialIndex = filereader.read_uint()
 
 #TODO: Check if this is actually smoothing groups
-class SOBMeshDefinition(object):
+class SOBMeshDefinition(BinaryFileDataStructure):
     def __init__(self):
         super(SOBMeshDefinition, self).__init__()
         self.unknown6 = 0
@@ -240,14 +235,9 @@ class SOBMeshDefinition(object):
 
         self.unknown9 = 0
 
-    def __repr__(self):
-        #a toggle for verbose information or not
-        if False:
-            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
-        else:
-            return super(SOBMeshDefinition, self).__repr__()
+    def read(self, filereader):
+        super().read(filereader)
 
-    def read_mesh(self, filereader):
         self.unknown6 = filereader.read_uint()
 
         #read header
@@ -274,18 +264,13 @@ class SOBMeshDefinition(object):
         self.unknown9 = filereader.read_uint()
 
 
-class SOBFooterDefinition(object):
+class SOBFooterDefinition(BinaryFileDataStructure):
     def __init__(self):
         super(SOBFooterDefinition, self).__init__()
 
-    def __repr__(self):
-        #a toggle for verbose information or not
-        if False:
-            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
-        else:
-            return super(SOBFooterDefinition, self).__repr__()
+    def read(self, filereader):
+        super().read(filereader)
 
-    def read_footer(self, filereader):
         self.EndModelLength = filereader.read_uint()
         self.EndModelString = filereader.read_bytes(self.EndModelLength)
 

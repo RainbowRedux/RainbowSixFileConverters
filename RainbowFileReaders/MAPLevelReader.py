@@ -1,4 +1,5 @@
 from RainbowFileReaders import BinaryConversionUtilities
+from RainbowFileReaders.BinaryConversionUtilities import BinaryFileDataStructure
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
 from RainbowFileReaders.SOBModelReader import RSEGeometryListHeader, SOBGeometryObject
@@ -8,7 +9,7 @@ import pprint
 
 from datetime import datetime
 
-class MAPLevelFile(object):
+class MAPLevelFile(BinaryFileDataStructure):
     """Class to read full SOB files"""
     def __init__(self):
         super(MAPLevelFile, self).__init__()
@@ -24,19 +25,19 @@ class MAPLevelFile(object):
         mapFile = BinaryConversionUtilities.BinaryFileReader(filename)
 
         self.header = MAPHeader()
-        self.header.read_header(mapFile)
+        self.header.read(mapFile)
         if verboseOutput:
             self.header.print_header_info()
 
         self.materialListHeader = RSEMaterialListHeader()
-        self.materialListHeader.read_header(mapFile)
+        self.materialListHeader.read(mapFile)
         if verboseOutput:
-            self.materialListHeader.print_header_info()
+            self.materialListHeader.print_structure_info()
 
         self.materials = []
         for _ in range(self.materialListHeader.numMaterials):
             newMaterial = RSEMaterialDefinition()
-            newMaterial.read_material(mapFile)
+            newMaterial.read(mapFile)
             self.materials.append(newMaterial)
             if verboseOutput:
                 pass
@@ -46,7 +47,7 @@ class MAPLevelFile(object):
             self.gameVersion = self.materials[0].get_material_game_version()
 
         self.geometryListHeader = RSEGeometryListHeader()
-        self.geometryListHeader.read_header(mapFile)
+        self.geometryListHeader.read(mapFile)
         if verboseOutput:
             self.geometryListHeader.print_header_info()
 
@@ -54,13 +55,13 @@ class MAPLevelFile(object):
         for _ in range(self.geometryListHeader.count):
             if self.gameVersion == RSEGameVersions.ROGUE_SPEAR:
                 newObj = RSMAPGeometryObject()
-                newObj.read_object(mapFile)
+                newObj.read(mapFile)
                 self.geometryObjects.append(newObj)
                 if verboseOutput:
                     pass
             else:
                 newObj = SOBGeometryObject()
-                newObj.read_object(mapFile)
+                newObj.read(mapFile)
                 self.geometryObjects.append(newObj)
                 if verboseOutput:
                     pass
@@ -77,7 +78,7 @@ class MAPLevelFile(object):
         print("Unprocessed: " + str(mapFile.get_length() - mapFile.get_seekg()) + " bytes")
 
 
-class MAPHeader(object):
+class MAPHeader(BinaryFileDataStructure):
     def __init__(self):
         super(MAPHeader, self).__init__()
         self.headerLength = 0
@@ -85,7 +86,9 @@ class MAPHeader(object):
         self.time = datetime.now()
         self.timePOSIXRaw = 0
 
-    def read_header(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+
         self.headerLength = filereader.read_uint()
         self.headerBeginMessageRaw = filereader.read_bytes(self.headerLength)
         self.headerBeginMessage = self.headerBeginMessageRaw[:-1].decode("utf-8")
@@ -102,11 +105,13 @@ class MAPHeader(object):
         print("Saved time: " + str(self.time.strftime('%d/%m/%Y %H:%M:%S')))
         print("")
 
-class RSMAPGeometryObject(object):
+class RSMAPGeometryObject(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAPGeometryObject, self).__init__()
     
-    def read_object(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+        
         self.size = filereader.read_uint()
         self.id = filereader.read_uint()
         
@@ -121,14 +126,14 @@ class RSMAPGeometryObject(object):
         self.nameString = self.nameStringRaw[:-1].decode("utf-8")
 
         self.geometryData = RSMAPGeometryData()
-        self.geometryData.read_header(filereader)
+        self.geometryData.read(filereader)
 
 
     def print_object_info(self):
         pprint.pprint(vars(self))
 
 
-class RSMAPGeometryData(object):
+class RSMAPGeometryData(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAPGeometryData, self).__init__()
         self.size = None
@@ -140,7 +145,22 @@ class RSMAPGeometryData(object):
         self.objectNameRaw = None
         self.objectName = None
 
-    def read_header(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.read_header_info(filereader)
+
+        self.read_vertices(filereader)
+
+        self.read_face_groups(filereader)
+
+        self.collisionInformation = RSMAP2DCollisionInformation()
+        self.collisionInformation.read(filereader)
+
+        self.unknownDataStructure = RSMAPUnknownGeometryDataSection()
+        self.unknownDataStructure.read(filereader)
+
+    def read_header_info(self, filereader):
         self.size = filereader.read_uint()
         self.id = filereader.read_uint()
         
@@ -155,16 +175,6 @@ class RSMAPGeometryData(object):
         self.objectNameRaw = filereader.read_bytes(self.objectNameLength)
         self.objectName = self.objectNameRaw[:-1].decode("utf-8")
 
-        self.read_vertices(filereader)
-
-        self.read_face_groups(filereader)
-
-        self.collisionInformation = RSMAP2DCollisionInformation()
-        self.collisionInformation.read(filereader)
-
-        self.unknownDataStructure = RSMAPUnknownGeometryDataSection()
-        self.unknownDataStructure.read(filereader)
-
     def read_vertices(self, filereader):
         self.vertexCount = filereader.read_uint()
         self.vertices = []
@@ -177,22 +187,17 @@ class RSMAPGeometryData(object):
 
         for _ in range(self.faceGroupCount):
             newFaceGroup = RSMAPFaceGroup()
-            newFaceGroup.read_face_group(filereader)
+            newFaceGroup.read(filereader)
             self.faceGroups.append(newFaceGroup)
 
 
-class RSMAPFaceGroup(object):
+class RSMAPFaceGroup(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAPFaceGroup, self).__init__()
 
-    def __repr__(self):
-        #a toggle for verbose information or not
-        if False:
-            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
-        else:
-            return super(RSMAPFaceGroup, self).__repr__()
+    def read(self, filereader):
+        super().read(filereader)
 
-    def read_face_group(self, filereader):
         self.unknown1 = filereader.read_uint()
 
         self.faceCount = filereader.read_uint()
@@ -213,24 +218,19 @@ class RSMAPFaceGroup(object):
             self.faceVertexParamIndices.append(filereader.read_vec_short_uint(3))
 
         self.vertexParams = RSMAPVertexParameterCollection()
-        self.vertexParams.read_params(filereader)
+        self.vertexParams.read(filereader)
 
 
-class RSMAPVertexParameterCollection(object):
+class RSMAPVertexParameterCollection(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAPVertexParameterCollection, self).__init__()
         self.normal = None
         self.UV = None
         self.color = None
-    
-    def __repr__(self):
-        #a toggle for verbose information or not
-        if False:
-            return pprint.pformat(vars(self))
-        else:
-            return super(RSMAPVertexParameterCollection, self).__repr__()
 
-    def read_params(self, filereader):
+    def read(self, filereader):
+        super().read(filereader)
+
         self.vertexCount = filereader.read_uint()
 
         self.normals = []
@@ -245,18 +245,13 @@ class RSMAPVertexParameterCollection(object):
         for _ in range(self.vertexCount):
             self.colors.append(filereader.read_vec_f(4))
 
-class RSMAP2DCollisionInformation(object):
+class RSMAP2DCollisionInformation(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAP2DCollisionInformation, self).__init__()
 
-    def __repr__(self):
-        #a toggle for verbose information or not
-        if False:
-            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
-        else:
-            return super(RSMAP2DCollisionInformation, self).__repr__()
-
     def read(self, filereader):
+        super().read(filereader)
+
         self.vertexCount = filereader.read_uint()
 
         self.vertices = []
@@ -272,18 +267,13 @@ class RSMAP2DCollisionInformation(object):
             self.faceNormals.append(filereader.read_vec_f(3))
             self.faceDistancesFromOrigin.append(filereader.read_float())
 
-class RSMAPUnknownGeometryDataSection(object):
+class RSMAPUnknownGeometryDataSection(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAPUnknownGeometryDataSection, self).__init__()
 
-    def __repr__(self):
-        #a toggle for verbose information or not
-        if False:
-            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
-        else:
-            return super(RSMAPUnknownGeometryDataSection, self).__repr__()
-
     def read(self, filereader):
+        super().read(filereader)
+
         self.unknown2Count = filereader.read_uint()
         self.unknown2IndexCollection = []
         for _ in range(self.unknown2Count):
@@ -295,18 +285,13 @@ class RSMAPUnknownGeometryDataSection(object):
             dataObject = RSMAPUnknownGeometryDataObject()
             dataObject.read(filereader)
         
-class RSMAPUnknownGeometryDataObject(object):
+class RSMAPUnknownGeometryDataObject(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAPUnknownGeometryDataObject, self).__init__()
-
-    def __repr__(self):
-        #a toggle for verbose information or not
-        if False:
-            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
-        else:
-            return super(RSMAPUnknownGeometryDataObject, self).__repr__()
     
     def read(self, filereader):
+        super().read(filereader)
+
         self.nameLength = filereader.read_uint()
         self.nameStringRaw = filereader.read_bytes(self.nameLength)
         self.nameString = self.nameStringRaw[:-1].decode("utf-8")
@@ -315,3 +300,7 @@ class RSMAPUnknownGeometryDataObject(object):
 
         self.unknown5Count = filereader.read_uint()
         self.unknown5Indices = filereader.read_vec_short_uint(self.unknown5Count)
+
+class RSEMAPPortalList(BinaryFileDataStructure):
+    def __init__(self):
+        super(RSEMAPPortalList, self).__init__()

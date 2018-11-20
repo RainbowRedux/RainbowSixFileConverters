@@ -24,7 +24,7 @@ def convert_RSB(filename):
     print("Processing: " + filename)
 
     imageFile = RSBImageFile()
-    imageFile.read_RSB(filename)
+    imageFile.read_file(filename)
 
     #create and save png from 256 color image
     if imageFile.image256 is not None:
@@ -58,8 +58,8 @@ def main():
     """Main function that converts test data files"""
     paths = []
     paths.append("../Data/Test")
-    paths.append("../Data/R6GOG")
-    paths.append("../Data/RSDemo")
+    #paths.append("../Data/R6GOG")
+    #paths.append("../Data/RSDemo")
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths
