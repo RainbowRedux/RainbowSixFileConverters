@@ -4,7 +4,7 @@ import pprint
 
 class RSEMaterialListHeader(BinaryFileDataStructure):
     def __init__(self):
-        super(RSEMaterialListHeader, self).__init__()
+        super().__init__()
         self.size = None
         self.unknown1 = None
         self.materialListBeginMessageLength = None

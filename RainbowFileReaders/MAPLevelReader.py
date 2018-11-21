@@ -450,17 +450,6 @@ class RSEMAPObject(BinaryFileDataStructure):
             return
         return
 
-        if self.objectSize == 72:
-            self.bytes = filereader.read_bytes(107)
-        else:
-            self.bytes = filereader.read_bytes(self.objectSize)
-        return
-
-        self.objectType = filereader.read_uint()
-
-        self.read_version_string(filereader)
-        self.versionNumber = filereader.read_uint()
-
         self.read_name_string(filereader)
         self.read_named_string(filereader, "filenameString")
 

@@ -15,6 +15,104 @@ from RainbowFileReaders import R6Constants
 from RainbowFileReaders.R6Constants import UINT_MAX
 from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
 
+def attach_materials_to_blender_object(blenderObject, materials):
+    #This attaches all materials to the mesh, which is excessive in some circumstances
+    for material in materials:
+        blenderObject.data.materials.append(material)
+
+def create_blender_objects(name):
+    newMesh = bpy.data.meshes.new(name + 'Mesh')
+    newObject = bpy.data.objects.new(name, newMesh)
+    newObject.location = (0,0,0)
+    newObject.show_name = True
+    # Link object to scene
+    bpy.context.scene.objects.link(newObject)
+    return (newMesh, newObject)
+
+def add_mesh_geometry(mesh, vertices, faces):
+    #use this over bmesh, as it will allow faces that share vertices with different windings
+    mesh.from_pydata(vertices, [], faces)
+
+    # Update mesh with new data
+    mesh.update(calc_edges=True)
+
+def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
+    name = geometryObject.objectName
+
+    newMesh, newObject = create_blender_objects(name)
+    attach_materials_to_blender_object(newObject, blenderMaterials)
+
+    ########################################
+    # Conform faces to desired data structure
+    ########################################
+    faces = []
+    for face in geometryObject.faces:
+        faces.append(face.vertexIndices)
+
+    add_mesh_geometry(newMesh, geometryObject.vertices, faces)
+
+    #TODO: Modify the following parts to be in separate functions so they can be used for other mesh formats
+
+    ########################################
+    # Copy to bmesh from mesh
+    ########################################
+
+    newBmesh = bmesh.new()
+    newBmesh.from_mesh(newMesh)
+    color_layer = newBmesh.loops.layers.color.new("color")
+    uv_layer = newBmesh.loops.layers.uv.verify()
+    newBmesh.faces.layers.tex.verify()  # currently blender needs both layers.
+
+    print("Number of faces: " + str(len(newBmesh.faces)))
+
+    ########################################
+    # Apply Vertex Colors
+    ########################################
+
+    # Cobbled together from : https://blender.stackexchange.com/a/60730
+    for face_index, face in enumerate(newBmesh.faces):
+        if face is None:
+            continue
+        importedParamIndices = geometryObject.faces[face_index].paramIndices
+        for vert_index, vert in enumerate(face.loops):
+            importedColor = geometryObject.vertexParams[importedParamIndices[vert_index]].color
+            importedColor = normalize_color(importedColor)
+            vert[color_layer] = importedColor
+
+    ########################################
+    # Apply UV Mapping
+    ########################################
+    # Cobbled together from https://docs.blender.org/api/blender_python_api_2_67_release/bmesh.html#customdata-access
+    for face_index, face in enumerate(newBmesh.faces):
+        if face is None:
+            continue
+        importedParamIndices = geometryObject.faces[face_index].paramIndices
+        for vert_index, vert in enumerate(face.loops):
+            importedUV = geometryObject.vertexParams[importedParamIndices[vert_index]].UV
+            vert[uv_layer].uv.x = importedUV[0]
+            # This coord seems to be inverted, this seems to look correct.
+            vert[uv_layer].uv.y = importedUV[1] * -1
+    
+    ########################################
+    # Copy from bmesh back to mesh
+    ########################################
+    
+    newBmesh.to_mesh(newMesh)
+    newMesh.update(calc_edges=True)
+
+    ########################################
+    # Apply Materials per face
+    ########################################
+    for i in range(len(newMesh.polygons)):
+        poly = newMesh.polygons[i]
+        faceProperties = geometryObject.faces[i]
+        #Do not assign a material if index is UINT_MAX
+        if faceProperties.materialIndex != R6Constants.UINT_MAX:
+            poly.material_index = faceProperties.materialIndex
+
+
+    # TODO: Import normals
+
 def import_SOB_to_scene(filename):
     SOBObject = SOBModelReader.SOBModelFile()
     SOBObject.read_file(filename)
@@ -29,107 +127,21 @@ def import_SOB_to_scene(filename):
 
     #TODO Add step for converting from LHS to RHS, and probably rotating to having another axis as the up axis
 
+    blenderMaterials = create_blender_materials_from_list(SOBObject.materials, gameDataPath)
+
     for geoObj in SOBObject.geometryObjects:
-        name = geoObj.objectName
-
-        ########################################
-        # Create blender objects
-        ########################################
-
-        newMesh = bpy.data.meshes.new(name +'Mesh')
-        newObject = bpy.data.objects.new(name, newMesh)
-        newObject.location = (0,0,0)
-        newObject.show_name = True
-        # Link object to scene
-        bpy.context.scene.objects.link(newObject)
-
-        ########################################
-        # Import materials
-        ########################################
-        # TODO: Revisit material definitions. Currently will create a material for each mesh, which is likely not the desired effect
-        blenderMaterials = []
-
-        for materialSpec in SOBObject.materials:
-            newMaterial = create_material_from_SOB_specification(materialSpec, gameDataPath)
-            newObject.data.materials.append(newMaterial)
-            blenderMaterials.append(newMaterial)
-
-        ########################################
-        # Define vertices & faces
-        ########################################
-        faces = []
-
-        print("Number of faces to import: " + str(geoObj.faceCount))
-        print("Number of verts to import: " + str(geoObj.vertexCount))
-        for face in geoObj.faces:
-            faces.append(face.vertexIndices)
-        #use this over bmesh, as it will allow faces that share vertices with different windings
-        newMesh.from_pydata(geoObj.vertices, [], faces)
-
-        # Update mesh with new data
-        newMesh.update(calc_edges=True)
-
-        ########################################
-        # Copy to bmesh from mesh
-        ########################################
-
-        newBmesh = bmesh.new()
-        newBmesh.from_mesh(newMesh)
-        color_layer = newBmesh.loops.layers.color.new("color")
-        uv_layer = newBmesh.loops.layers.uv.verify()
-        newBmesh.faces.layers.tex.verify()  # currently blender needs both layers.
-
-        print("Number of faces: " + str(len(newBmesh.faces)))
-
-        ########################################
-        # Apply Vertex Colors
-        ########################################
-
-        # Cobbled together from : https://blender.stackexchange.com/a/60730
-        for face_index, face in enumerate(newBmesh.faces):
-            if face is None:
-                continue
-            importedParamIndices = geoObj.faces[face_index].paramIndices
-            for vert_index, vert in enumerate(face.loops):
-                importedColor = geoObj.vertexParams[importedParamIndices[vert_index]].color
-                importedColor = normalize_color(importedColor)
-                vert[color_layer] = importedColor
-
-        ########################################
-        # Apply UV Mapping
-        ########################################
-        # Cobbled together from https://docs.blender.org/api/blender_python_api_2_67_release/bmesh.html#customdata-access
-        for face_index, face in enumerate(newBmesh.faces):
-            if face is None:
-                continue
-            importedParamIndices = geoObj.faces[face_index].paramIndices
-            for vert_index, vert in enumerate(face.loops):
-                importedUV = geoObj.vertexParams[importedParamIndices[vert_index]].UV
-                vert[uv_layer].uv.x = importedUV[0]
-                # This coord seems to be inverted, this seems to look correct.
-                vert[uv_layer].uv.y = importedUV[1] * -1
-        
-        ########################################
-        # Copy from bmesh back to mesh
-        ########################################
-        
-        newBmesh.to_mesh(newMesh)
-        newMesh.update(calc_edges=True)
-
-        ########################################
-        # Apply Materials per face
-        ########################################
-        for i in range(len(newMesh.polygons)):
-            poly = newMesh.polygons[i]
-            faceProperties = geoObj.faces[i]
-            #Do not assign a material if index is UINT_MAX
-            if faceProperties.materialIndex != R6Constants.UINT_MAX:
-                poly.material_index = faceProperties.materialIndex
-
-
-        # TODO: Import normals
+        create_mesh_from_RSGeometryObject(geoObj, blenderMaterials)
 
     print("Success")
+
+def create_blender_materials_from_list(materialList, gameDataPath):
+    blenderMaterials = []
+
+    for materialSpec in materialList:
+        newMaterial = create_material_from_RSE_specification(materialSpec, gameDataPath)
+        blenderMaterials.append(newMaterial)
+    
+    return blenderMaterials
 
 def fixup_texture_name(filename):
     ext = filename.lower()[-4:]
@@ -157,12 +169,12 @@ def find_texture(filename, dataPath):
         print("Failed to find texture: " + newfilename)
     return result
 
-def create_material_from_SOB_specification(materialSpecification, gameDataPath):
-    """Creates a material from an SOB specification.
+def create_material_from_RSE_specification(materialSpecification, gameDataPath):
+    """Creates a material from an RSE specification.
     This does ignore some values that don't map well to PBR and don't influence model behaviour much.
     Materials will be more finely tuned in the game engine.
     
-    materialSpecification is an RSEMaterialDefinition as read by SOBModelReader
+    materialSpecification is an RSEMaterialDefinition as read by RSEModelReader
 
     gameDataPath is meant to be the Data folder within the games installation
         directory, as that directory structure is used when loading textures"""

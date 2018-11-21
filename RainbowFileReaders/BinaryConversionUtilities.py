@@ -159,7 +159,8 @@ class FileFormatReader(object):
 
 class BinaryFileDataStructure(object):
     def __init__(self):
-        super(BinaryFileDataStructure, self).__init__()
+        super().__init__()
+        pass
 
     def __repr__(self):
         #a toggle for verbose information or not
