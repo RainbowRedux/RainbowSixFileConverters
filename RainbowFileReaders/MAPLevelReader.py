@@ -79,9 +79,6 @@ class MAPLevelFile(FileFormatReader):
 
         return
 
-        self.footer = SOBFooterDefinition()
-        self.footer.read_footer(mapFile)
-
 
 class MAPHeader(BinaryFileDataStructure):
     def __init__(self):
@@ -375,7 +372,6 @@ class RSEMAPLight(BinaryFileDataStructure):
 
         #Some maps store a version string, others don't, not quite sure why. Also makes unknown6 quite unclear as to whether they are separate fields or not
         self.read_name_string(filereader)
-        print(self.nameString)
         if self.nameString == "Version":
             self.versionString = self.nameString
             self.versionStringRaw = self.nameStringRaw
@@ -419,8 +415,7 @@ class RSEMAPObjectList(BinaryFileDataStructure):
         self.objectCount = filereader.read_uint()
 
         self.objects = []
-        for i in range(self.objectCount):
-            print(str(i))
+        for _ in range(self.objectCount):
             newObject = RSEMAPObject()
             newObject.read(filereader)
             self.objects.append(newObject)
@@ -431,13 +426,36 @@ class RSEMAPObject(BinaryFileDataStructure):
 
     def read(self, filereader):
         super().read(filereader)
+        RS_OBJECT_VERSION = 5
+        R6_OBJECT_VERSION = 1
 
         self.objectSize = filereader.read_uint()
+        self.objectType = filereader.read_uint()
+        self.read_version_string(filereader)
+        self.versionNumber = filereader.read_uint()
+        self.read_name_string(filereader)
+
+        if self.versionNumber >= RS_OBJECT_VERSION:
+            self.bytes = filereader.read_bytes(self.objectSize)
+        elif self.versionNumber == R6_OBJECT_VERSION:
+            numberOfBytesToSkip = self.objectSize
+            #skip 4 uints
+            numberOfBytesToSkip = numberOfBytesToSkip - 4*4
+            #skip the length of the 2 strings
+            numberOfBytesToSkip = numberOfBytesToSkip - self.nameStringLength
+            numberOfBytesToSkip = numberOfBytesToSkip - self.versionStringLength
+            self.bytes = filereader.read_bytes(numberOfBytesToSkip)
+        else:
+            print("BIG ERROR UNSUPPORTED OBJECT VERSION: " + str(self.versionNumber))
+            return
+        return
+
         if self.objectSize == 72:
             self.bytes = filereader.read_bytes(107)
         else:
             self.bytes = filereader.read_bytes(self.objectSize)
         return
+
         self.objectType = filereader.read_uint()
 
         self.read_version_string(filereader)
