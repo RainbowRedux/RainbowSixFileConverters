@@ -127,18 +127,18 @@ def import_SOB_to_scene(filename):
 
     #TODO Add step for converting from LHS to RHS, and probably rotating to having another axis as the up axis
 
-    blenderMaterials = create_blender_materials_from_list(SOBObject.materials, gameDataPath)
+    blenderMaterials = create_blender_materials_from_list(SOBObject.materials, filepath, gameDataPath)
 
     for geoObj in SOBObject.geometryObjects:
         create_mesh_from_RSGeometryObject(geoObj, blenderMaterials)
 
     print("Success")
 
-def create_blender_materials_from_list(materialList, gameDataPath):
+def create_blender_materials_from_list(materialList, filepath, gameDataPath):
     blenderMaterials = []
 
     for materialSpec in materialList:
-        newMaterial = create_material_from_RSE_specification(materialSpec, gameDataPath)
+        newMaterial = create_material_from_RSE_specification(materialSpec, filepath, gameDataPath)
         blenderMaterials.append(newMaterial)
     
     return blenderMaterials
@@ -162,14 +162,12 @@ def find_texture(filename, dataPath):
             # Compare lowercase versions since windows is case-insensitive
             if name.lower().endswith(newfilename.lower()):
                 result = os.path.join(root, name)
-                #print("Found " + result)
         for name in dirs:
             pass
-    if result is None:
-        print("Failed to find texture: " + newfilename)
     return result
 
-def create_material_from_RSE_specification(materialSpecification, gameDataPath):
+
+def create_material_from_RSE_specification(materialSpecification, filepath, gameDataPath):
     """Creates a material from an RSE specification.
     This does ignore some values that don't map well to PBR and don't influence model behaviour much.
     Materials will be more finely tuned in the game engine.
@@ -182,12 +180,19 @@ def create_material_from_RSE_specification(materialSpecification, gameDataPath):
     # set new material to variable
     newMaterial = bpy.data.materials.new(name=materialSpecification.materialName)
     
-    texturePath = os.path.join(gameDataPath, R6Settings.paths["TexturePath"])
-    texturePath = os.path.normpath(texturePath)
+    globalTexturePath = os.path.join(gameDataPath, R6Settings.paths["TexturePath"])
+    globalTexturePath = os.path.normpath(globalTexturePath)
 
-    texToLoad = materialSpecification.textureName
-    texToLoad = find_texture(texToLoad, texturePath)
-    print("Final texture to load: " + str(texToLoad))
+    textureName = materialSpecification.textureName
+    #load from model/map local directory first
+    texToLoad = find_texture(textureName, filepath)
+    # if unable to find the texture, find in the global texture path
+    if texToLoad is None:
+        texToLoad = find_texture(textureName, globalTexturePath)
+    if texToLoad is None:
+        print("Failed to find texture: " + str(textureName))
+    else:
+        print("Final texture to load: " + str(texToLoad))
 
     if texToLoad is not None:
         # Texture loading code adapted from https://stackoverflow.com/q/19076062
