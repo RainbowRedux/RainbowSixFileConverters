@@ -153,6 +153,9 @@ class FileFormatReader(object):
             print("Length: " + str(self._filereader.get_length()) + " bytes")
             print("Unprocessed: " + str(self._filereader.get_length() - self._filereader.get_seekg()) + " bytes")
 
+        self._filereader = None
+        del self._filereader
+
     def read_data(self):
         pass
 

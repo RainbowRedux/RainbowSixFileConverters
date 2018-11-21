@@ -4,6 +4,7 @@ import sys
 
 import bpy
 import bmesh
+from math import radians
 
 sys.path.insert(0, 'E:/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
@@ -42,12 +43,19 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     newMesh, newObject = create_blender_objects(name)
     attach_materials_to_blender_object(newObject, blenderMaterials)
 
+    #fix up rotation
+    newObject.rotation_euler = (radians(90),0,0)
+
     ########################################
     # Conform faces to desired data structure
     ########################################
     faces = []
     for face in geometryObject.faces:
         faces.append(face.vertexIndices)
+
+    #reverse the scaling on the z axis, to correct LHS <-> RHS conversion
+    for vert in geometryObject.vertices:
+        vert[2] = vert[2] * -1
 
     add_mesh_geometry(newMesh, geometryObject.vertices, faces)
 
@@ -92,12 +100,16 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
             vert[uv_layer].uv.x = importedUV[0]
             # This coord seems to be inverted, this seems to look correct.
             vert[uv_layer].uv.y = importedUV[1] * -1
+
+    #Reverse face winding, to ensure backface culling is correct
+    bmesh.ops.reverse_faces(newBmesh, faces=newBmesh.faces)
     
     ########################################
     # Copy from bmesh back to mesh
     ########################################
     
     newBmesh.to_mesh(newMesh)
+    newBmesh.free()
     newMesh.update(calc_edges=True)
 
     ########################################
@@ -109,7 +121,6 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
         #Do not assign a material if index is UINT_MAX
         if faceProperties.materialIndex != R6Constants.UINT_MAX:
             poly.material_index = faceProperties.materialIndex
-
 
     # TODO: Import normals
 
