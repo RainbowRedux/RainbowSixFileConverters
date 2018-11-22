@@ -292,24 +292,28 @@ def read_bitmask_ARGB_color(bytearray, bdR, bdG, bdB, bdA):
         alphaColor = alphaColor >> (bdR + bdG + bdB)
         alphaMaxValue = 2 ** bdA
         #convert to full 255 range of color
-        alphaColor = int((float(alphaColor) / float(alphaMaxValue)) * 255)
+        alphaColor = float(alphaColor) / float(alphaMaxValue) * 255
+        alphaColor = int(round(alphaColor))
 
     redColor = redMask & colorVal
     redColor = redColor >> (bdG + bdB)
     redMaxValue = 2 ** bdR
     #convert to full 255 range of color
-    redColor = int((float(redColor) / float(redMaxValue)) * 255)
+    redColor = float(redColor) / float(redMaxValue) * 255
+    redColor = int(round(redColor))
 
     greenColor = greenMask & colorVal
     greenColor = greenColor >> (bdB)
     greenMaxValue = 2 ** bdG
     #convert to full 255 range of color
-    greenColor = int((float(greenColor) / float(greenMaxValue)) * 255)
+    greenColor = float(greenColor) / float(greenMaxValue) * 255
+    greenColor = int(round(greenColor))
 
     blueColor = blueMask & colorVal
     blueMaxValue = 2 ** bdB
     #convert to full 255 range of color
-    blueColor = int((float(blueColor) / float(blueMaxValue)) * 255)
+    blueColor = float(blueColor) / float(blueMaxValue) * 255
+    blueColor = int(round(blueColor))
 
     return [redColor, greenColor, blueColor, alphaColor]
 
