@@ -8,9 +8,9 @@ import pprint
 
 #decided to not use Enum for python2.7 compatibility
 class SOBAlphaMethod(object):
-    SAM_Solid       = 1
-    SAM_Masked      = 2 # A guess
-    SAM_AlphaBlend  = 3
+    SAM_Opaque       = 1
+    SAM_Unknown      = 2
+    SAM_MethodLookup = 3 # This means exact method is defined in the Sherman.CXP or Rommel.CXP files
 
 class SOBModelFile(FileFormatReader):
     """Class to read full SOB files"""

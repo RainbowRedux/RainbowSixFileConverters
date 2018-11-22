@@ -41,7 +41,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     name = geometryObject.objectName
 
     newMesh, newObject = create_blender_objects(name)
-    attach_materials_to_blender_object(newObject, blenderMaterials)
+    #attach_materials_to_blender_object(newObject, blenderMaterials)
 
     #fix up rotation
     newObject.rotation_euler = (radians(90),0,0)
@@ -115,12 +115,21 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     ########################################
     # Apply Materials per face
     ########################################
+    materialMapping = {}
+    reducedMaterials = []
     for i in range(len(newMesh.polygons)):
         poly = newMesh.polygons[i]
         faceProperties = geometryObject.faces[i]
         #Do not assign a material if index is UINT_MAX
-        if faceProperties.materialIndex != R6Constants.UINT_MAX:
-            poly.material_index = faceProperties.materialIndex
+        if faceProperties.materialIndex == R6Constants.UINT_MAX:
+            continue
+
+        if faceProperties.materialIndex not in materialMapping:
+            reducedMaterials.append(blenderMaterials[faceProperties.materialIndex])
+            newObject.data.materials.append(blenderMaterials[faceProperties.materialIndex])
+            materialMapping[faceProperties.materialIndex] = len(reducedMaterials) - 1
+        
+        poly.material_index = materialMapping[faceProperties.materialIndex]
 
     # TODO: Import normals
 
@@ -171,7 +180,7 @@ def find_texture(filename, dataPath):
     for root, dirs, files in os.walk(dataPath):
         for name in files:
             # Compare lowercase versions since windows is case-insensitive
-            if name.lower().endswith(newfilename.lower()):
+            if name.lower() == newfilename.lower():
                 result = os.path.join(root, name)
         for name in dirs:
             pass
@@ -220,15 +229,15 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
         textureSlot.use_map_color_diffuse = True
         textureSlot.texture_coords = 'UV'
 
-        if materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Solid:
+        if materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Opaque:
             newTexture.use_alpha = True
             textureSlot.use_map_alpha = True
             textureSlot.alpha_factor = materialSpecification.opacity
 
-    if materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Solid:
+    if materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Opaque:
         print(materialSpecification.materialName)
         print(str(materialSpecification.alphaMethod))
-        print(str(SOBAlphaMethod.SAM_Solid))
+        print(str(SOBAlphaMethod.SAM_Opaque))
         newMaterial.use_transparency = True
         #Blenders material transparency method is different to how masked alpha would work in a game engine,
         # this still provides alpha blending, but if you use Z method the transparent part of the surface
@@ -238,7 +247,7 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
         if texToLoad is not None:
             newMaterial.alpha = 0.0
         else:
-            #TODO: Check that opacity is not used when alphaMethod == 1 or SAM_Solid
+            #TODO: Check that opacity is not used when alphaMethod == 1 or SAM_Opaque
             newMaterial.alpha = materialSpecification.opacity
 
     # TODO: work out if materialSpecification.ambient should be averaged and applied
