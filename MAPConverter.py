@@ -5,13 +5,22 @@ import json
 
 from RainbowFileReaders import MAPLevelReader
 from FileWriters import JSONMetaInfo, OBJModelWriter
-from RainbowFileReaders.MathHelpers import is_vector_normal
+from RainbowFileReaders.R6Constants import RSEGameVersions
 
 def convert_MAP(filename):
     print("Processing: " + filename)
 
     modelFile = MAPLevelReader.MAPLevelFile()
     modelFile.read_file(filename)
+
+    #strip out lengthy data which is already being interpreted correctly to make it easier for humans to view the json file
+    for geometryObject in modelFile.geometryObjects:
+        geometryObject.vertices = []
+        geometryObject.vertexParams = []
+        geometryObject.faces = []
+        if modelFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
+            for mesh in geometryObject.meshes:
+                mesh.faceIndices = []
 
     meta = JSONMetaInfo.JSONMetaInfo()
     meta.add_info("filecontents", modelFile)
@@ -24,8 +33,8 @@ def main():
     paths = []
     #paths.append("../Data/Test")
     paths.append("../Data/Test/Maps")
-    #paths.append("../Data/R6GOG")
-    #paths.append("../Data/RSDemo")
+    paths.append("../Data/R6GOG")
+    paths.append("../Data/RSDemo")
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths
