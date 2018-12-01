@@ -16,13 +16,19 @@ from RainbowFileReaders import R6Constants
 from RainbowFileReaders.R6Constants import UINT_MAX
 from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
 
+errorCount = 0
+errorList = []
+
 def attach_materials_to_blender_object(blenderObject, materials):
     #This attaches all materials to the mesh, which is excessive in some circumstances
     for material in materials:
         blenderObject.data.materials.append(material)
 
-def create_blender_objects(name):
-    newMesh = bpy.data.meshes.new(name + 'Mesh')
+def create_blender_objects(name, existingMesh=None):
+    newMesh = existingMesh
+    if newMesh is None:
+        print("Creating new mesh")
+        newMesh = bpy.data.meshes.new(name + 'Mesh')
     newObject = bpy.data.objects.new(name, newMesh)
     newObject.location = (0,0,0)
     newObject.show_name = True
@@ -40,11 +46,11 @@ def add_mesh_geometry(mesh, vertices, faces):
 def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     name = geometryObject.objectName
 
-    newMesh, newObject = create_blender_objects(name)
-    #attach_materials_to_blender_object(newObject, blenderMaterials)
+    geoObjBlendMesh, geoObjBlendObject = create_blender_objects(name)
+    #attach_materials_to_blender_object(geoObjBlendObject, blenderMaterials)
 
     #fix up rotation
-    newObject.rotation_euler = (radians(90),0,0)
+    geoObjBlendObject.rotation_euler = (radians(90),0,0)
 
     ########################################
     # Conform faces to desired data structure
@@ -57,7 +63,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     for vert in geometryObject.vertices:
         vert[2] = vert[2] * -1
 
-    add_mesh_geometry(newMesh, geometryObject.vertices, faces)
+    add_mesh_geometry(geoObjBlendMesh, geometryObject.vertices, faces)
 
     #TODO: Modify the following parts to be in separate functions so they can be used for other mesh formats
 
@@ -66,7 +72,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     ########################################
 
     newBmesh = bmesh.new()
-    newBmesh.from_mesh(newMesh)
+    newBmesh.from_mesh(geoObjBlendMesh)
     color_layer = newBmesh.loops.layers.color.new("color")
     uv_layer = newBmesh.loops.layers.uv.verify()
     newBmesh.faces.layers.tex.verify()  # currently blender needs both layers.
@@ -108,17 +114,17 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     # Copy from bmesh back to mesh
     ########################################
     
-    newBmesh.to_mesh(newMesh)
+    newBmesh.to_mesh(geoObjBlendMesh)
     newBmesh.free()
-    newMesh.update(calc_edges=True)
+    geoObjBlendMesh.update(calc_edges=True)
 
     ########################################
     # Apply Materials per face
     ########################################
     materialMapping = {}
     reducedMaterials = []
-    for i in range(len(newMesh.polygons)):
-        poly = newMesh.polygons[i]
+    for i in range(len(geoObjBlendMesh.polygons)):
+        poly = geoObjBlendMesh.polygons[i]
         faceProperties = geometryObject.faces[i]
         #Do not assign a material if index is UINT_MAX
         if faceProperties.materialIndex == R6Constants.UINT_MAX:
@@ -126,12 +132,84 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
 
         if faceProperties.materialIndex not in materialMapping:
             reducedMaterials.append(blenderMaterials[faceProperties.materialIndex])
-            newObject.data.materials.append(blenderMaterials[faceProperties.materialIndex])
+            geoObjBlendObject.data.materials.append(blenderMaterials[faceProperties.materialIndex])
             materialMapping[faceProperties.materialIndex] = len(reducedMaterials) - 1
         
         poly.material_index = materialMapping[faceProperties.materialIndex]
 
     # TODO: Import normals
+
+    #Split Meshes
+    for rsemesh in geometryObject.meshes:
+        #print("Creating child object")
+        newObjectName = geometryObject.objectName + "_" + rsemesh.meshName
+        newObjMeshCopy = geoObjBlendMesh.copy()
+        newObjMeshCopy, newObjBlendObjCopy = create_blender_objects("COPY-DELETE-ME-" + newObjectName, newObjMeshCopy)
+        
+        #select the object and go into edit mode
+        bpy.context.scene.objects.active = newObjBlendObjCopy
+        
+
+        print("Original Face Count: " + str(len(newObjBlendObjCopy.data.polygons)))
+
+        #https://blenderartists.org/t/automating-mesh-split-process-can-anyone-help/646025/9
+
+        #select all desired faces
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='DESELECT')
+        bpy.ops.object.mode_set(mode='OBJECT')
+        print("Number of faces to select: " + str(rsemesh.numFaceIndices))
+        for faceIndex in rsemesh.faceIndices:
+            #print("Selecting face: " + str(faceIndex))
+            newObjBlendObjCopy.data.polygons[faceIndex].select = True
+
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='INVERT')
+        bpy.ops.mesh.separate(type='SELECTED')
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        newSubBlendObject = None
+        otherObjs = []
+
+        for selectedObj in bpy.context.selected_objects:
+            if len(selectedObj.data.polygons) == rsemesh.numFaceIndices:
+                newSubBlendObject = selectedObj
+            else:
+                otherObjs.append(selectedObj)
+
+        if newSubBlendObject is None:
+            print("Nothing worked!")
+            global errorCount
+            global errorList
+            errorCount += 1
+            errorList.append(newObjectName)
+            #raise Exception('Unable to create correct object')
+            
+        if newSubBlendObject is not None:
+            newSubBlendObject.parent = geoObjBlendObject
+            newSubBlendObject.name = newObjectName
+            newSubBlendObject.rotation_euler = (radians(90),0,0)
+
+        #delete new copied object
+        for otherObj in otherObjs:
+            bpy.context.scene.objects.active = otherObj
+            bpy.ops.object.delete()
+        #print("Created child object")
+
+        continue
+
+    #delete original master mesh data
+    bpy.context.scene.objects.active = geoObjBlendObject
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.delete(type='FACE') # will be acted on.
+    bpy.ops.object.mode_set(mode='OBJECT')
+    print(errorCount)
+    for err in errorList:
+        print(err)
+
+
+
 
 def import_SOB_to_scene(filename):
     SOBObject = SOBModelReader.SOBModelFile()
