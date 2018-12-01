@@ -85,11 +85,8 @@ class RSEGeometryListHeader(BinaryFileDataStructure):
 
         self.geometryListSize = filereader.read_uint()
         self.ID = filereader.read_uint()
-        self.geometryListStringLength = filereader.read_uint()
-        self.geometryListStringRaw = filereader.read_bytes(self.geometryListStringLength)
+        self.read_named_string(filereader, "geometryListString")
         self.count = filereader.read_uint()
-
-        self.geometryListString = self.geometryListStringRaw[:-1].decode("utf-8")
 
 class SOBGeometryObject(BinaryFileDataStructure):
     def __init__(self):
@@ -99,9 +96,9 @@ class SOBGeometryObject(BinaryFileDataStructure):
         self.versionStringLength = None
         self.versionNumber = None
         self.versionString = None
-        self.objectNameLength = None
-        self.objectNameRaw = None
-        self.objectName = None
+        self.nameStringLength = None
+        self.nameStringRaw = None
+        self.nameString = None
         self.unknown4 = None
         self.unknown5 = None
         self.vertexCount = None
@@ -125,25 +122,19 @@ class SOBGeometryObject(BinaryFileDataStructure):
     def read_header_info(self, filereader):
         self.size = filereader.read_uint()
         self.ID = filereader.read_uint()
-        self.versionStringLength = filereader.read_uint()
+        self.read_version_string(filereader)
         self.versionNumber = None
-        if self.versionStringLength == 8:
-            self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
-            #If the version string was actually set to version, then a version number is stored, along with object name
-            if self.versionStringRaw[:-1] == b'Version':
-                self.versionNumber = filereader.read_uint()
-                self.objectNameLength = filereader.read_uint()
-                self.objectNameRaw = filereader.read_bytes(self.objectNameLength)
+        #If the version string was actually set to version, then a version number is stored, along with object name
+        if self.versionString == 'Version':
+            self.versionNumber = filereader.read_uint()
+            self.read_name_string(filereader)
             self.unknown4 = filereader.read_uint()
             self.unknown5 = filereader.read_uint()
-        else:
-            self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
         #If an object name was not read, then the version string is actually the name
-        if self.objectNameRaw is None: # differs from spec in AlexKimovs repo
-            self.objectNameLength = self.versionStringLength
-            self.objectNameRaw = self.versionStringRaw
-        
-        self.objectName = self.objectNameRaw[:-1].decode("utf-8")
+        if self.nameStringRaw is None: # differs from spec in AlexKimovs repo
+            self.nameStringLength = self.versionStringLength
+            self.nameStringRaw = self.versionStringRaw
+            self.nameString = self.versionString
 
     def read_vertices(self, filereader):
         self.vertexCount = filereader.read_uint()

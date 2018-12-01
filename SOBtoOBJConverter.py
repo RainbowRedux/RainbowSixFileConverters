@@ -47,7 +47,7 @@ def write_OBJ(filename, SOBObject):
     writer = OBJModelWriter.OBJModelWriter()
     writer.open_file(filename)
     for geoObject in SOBObject.geometryObjects:
-        writer.begin_new_object(geoObject.objectName)
+        writer.begin_new_object(geoObject.nameString)
         #write vertices
         for i in range(len(geoObject.vertices)):
             vertex = geoObject.vertices[i]
@@ -76,8 +76,8 @@ def main():
 
     fp.processFunction = convert_SOB
 
-    #fp.run_sequential()
-    fp.run_async()
+    fp.run_sequential()
+    #fp.run_async()
 
 if __name__ == "__main__":
     main()

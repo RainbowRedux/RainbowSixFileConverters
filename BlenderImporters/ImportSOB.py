@@ -44,7 +44,7 @@ def add_mesh_geometry(mesh, vertices, faces):
     mesh.update(calc_edges=True)
 
 def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
-    name = geometryObject.objectName
+    name = geometryObject.nameString
 
     geoObjBlendMesh, geoObjBlendObject = create_blender_objects(name)
     #attach_materials_to_blender_object(geoObjBlendObject, blenderMaterials)
@@ -149,7 +149,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
 
     #Split Meshes
     for rsemesh in geometryObject.meshes:
-        newObjectName = geometryObject.objectName + "_" + rsemesh.meshName
+        newObjectName = geometryObject.nameString + "_" + rsemesh.meshName
         uniqueFaceIndicies = list(set(rsemesh.faceIndices))
         
         newSubBlendObject = clone_object_with_specified_faces(newObjectName, uniqueFaceIndicies, geoObjBlendObject)
