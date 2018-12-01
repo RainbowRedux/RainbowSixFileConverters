@@ -107,15 +107,10 @@ class RSMAPGeometryObject(BinaryFileDataStructure):
         self.size = filereader.read_uint()
         self.id = filereader.read_uint()
         
-        self.versionLength = filereader.read_uint()
-        self.versionStringRaw = filereader.read_bytes(self.versionLength)
-        self.versionString = self.versionStringRaw[:-1].decode("utf-8")
-
+        self.read_version_string(filereader)
         self.versionNumber = filereader.read_uint()
 
-        self.nameLength = filereader.read_uint()
-        self.nameStringRaw = filereader.read_bytes(self.nameLength)
-        self.nameString = self.nameStringRaw[:-1].decode("utf-8")
+        self.read_name_string(filereader)
 
         self.geometryData = RSMAPGeometryData()
         self.geometryData.read(filereader)
