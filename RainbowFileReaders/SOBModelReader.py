@@ -67,14 +67,11 @@ class SOBModelFile(FileFormatReader):
 class SOBHeader(BinaryFileDataStructure):
     def __init__(self):
         super(SOBHeader, self).__init__()
-        self.headerLength = 0
-        self.headerBeginMessage = None
 
     def read(self, filereader):
         super().read(filereader)
 
-        self.headerLength = filereader.read_uint()
-        self.headerBeginMessage = filereader.read_bytes(self.headerLength)
+        self.read_named_string(filereader, "headerBeginMessage")
 
 class RSEGeometryListHeader(BinaryFileDataStructure):
     def __init__(self):
@@ -199,10 +196,6 @@ class SOBMeshDefinition(BinaryFileDataStructure):
         super(SOBMeshDefinition, self).__init__()
         self.unknown6 = 0
 
-        self.meshNameLength = 0
-        self.meshName = None
-        self.meshNameRaw = None
-
         self.numVertexIndices = 0
         self.vertexIndices = []
 
@@ -222,9 +215,7 @@ class SOBMeshDefinition(BinaryFileDataStructure):
         self.unknown6 = filereader.read_uint()
 
         #read header
-        self.meshNameLength = filereader.read_uint()
-        self.meshNameRaw = filereader.read_bytes(self.meshNameLength)
-        self.meshName = self.meshNameRaw[:-1].decode("utf-8")
+        self.read_name_string(filereader)
 
         #read vertices
         self.numVertexIndices = filereader.read_uint()
@@ -238,8 +229,7 @@ class SOBMeshDefinition(BinaryFileDataStructure):
         self.unknown7 = filereader.read_uint()
 
         #read unknown8
-        self.unknown8Length = filereader.read_uint()
-        self.unknown8Raw = filereader.read_bytes(self.unknown8Length)
+        self.read_named_string(filereader, "unknown8String")
 
         #read unknown9
         self.unknown9 = filereader.read_uint()
@@ -251,9 +241,7 @@ class SOBFooterDefinition(BinaryFileDataStructure):
 
     def read(self, filereader):
         super().read(filereader)
-
-        self.EndModelLength = filereader.read_uint()
-        self.EndModelString = filereader.read_bytes(self.EndModelLength)
+        self.read_named_string(filereader, "EndModelString")
 
 if __name__ == "__main__":
     test = SOBModelFile()

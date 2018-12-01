@@ -83,17 +83,13 @@ class MAPLevelFile(FileFormatReader):
 class MAPHeader(BinaryFileDataStructure):
     def __init__(self):
         super(MAPHeader, self).__init__()
-        self.headerLength = 0
-        self.headerBeginMessage = None
         self.time = datetime.now()
         self.timePOSIXRaw = 0
 
     def read(self, filereader):
         super().read(filereader)
 
-        self.headerLength = filereader.read_uint()
-        self.headerBeginMessageRaw = filereader.read_bytes(self.headerLength)
-        self.headerBeginMessage = self.headerBeginMessageRaw[:-1].decode("utf-8")
+        self.read_named_string(filereader, "headerBeginMessage")
         self.timePOSIXRaw = filereader.read_uint()
         #special case handling, some files have a zero timestamp recorded, which datetime.fromtimestamp() doesn't like
         if self.timePOSIXRaw == 0:
