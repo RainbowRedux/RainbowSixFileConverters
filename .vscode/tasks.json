@@ -13,13 +13,33 @@
                 "${workspaceRoot}/../Data/R6GOG/data/model/cessna.sob"]
         },
         {
+            "label": "Blender-Win: Headless MAP Import",
+            "type": "shell",
+            "command": "C:\\Program Files\\Blender Foundation\\Blender\\blender.exe",
+            "args":["--background",
+                "--python",
+                "${workspaceRoot}\\BlenderImporters\\ImportMAP.py",
+                "${workspaceRoot}/../Data/R6GOG/data/map/m01/M01.map"]
+        },
+        {
             "label": "Blender-Mac: Headless SOB Import",
             "type": "shell",
-            "command": "/Applications/Blender/blender.app/Contents/MacOS/blender",
+            "command": "/Applications/blender.app/Contents/MacOS/blender",
             "args":["--background",
                 "--python",
                 "${workspaceRoot}/BlenderImporters/ImportSOB.py",
                 "${workspaceRoot}/../Data/R6GOG/data/model/cessna.sob"]
+        },
+        {
+            "label": "Blender-Mac: Headless MAP Import",
+            "type": "shell",
+            "command": "/Applications/blender.app/Contents/MacOS/blender",
+            "args": [
+                "--background",
+                "--python",
+                "${workspaceRoot}/BlenderImporters/ImportMAP.py",
+                "${workspaceRoot}/../Data/R6GOG/data/map/m01/M01.map"
+            ]
         },
         {
             "label": "Blender-Lin: Headless SOB Import",
