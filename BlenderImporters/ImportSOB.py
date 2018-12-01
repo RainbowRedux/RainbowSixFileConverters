@@ -65,6 +65,12 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
 
     add_mesh_geometry(geoObjBlendMesh, geometryObject.vertices, faces)
 
+    numTotalFaces = geometryObject.faceCount
+    numCreatedFaces = len(geoObjBlendObject.data.polygons)
+
+    if numCreatedFaces != numTotalFaces:
+        raise ValueError("Not enough faces created")
+
     #TODO: Modify the following parts to be in separate functions so they can be used for other mesh formats
 
     ########################################
@@ -139,76 +145,104 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
 
     # TODO: Import normals
 
+    createdSubMeshes = []
+
     #Split Meshes
     for rsemesh in geometryObject.meshes:
-        #print("Creating child object")
         newObjectName = geometryObject.objectName + "_" + rsemesh.meshName
-        newObjMeshCopy = geoObjBlendMesh.copy()
-        newObjMeshCopy, newObjBlendObjCopy = create_blender_objects("COPY-DELETE-ME-" + newObjectName, newObjMeshCopy)
+        uniqueFaceIndicies = list(set(rsemesh.faceIndices))
         
-        #select the object and go into edit mode
-        bpy.context.scene.objects.active = newObjBlendObjCopy
-        
+        newSubBlendObject = clone_object_with_specified_faces(newObjectName, uniqueFaceIndicies, geoObjBlendObject)
 
-        print("Original Face Count: " + str(len(newObjBlendObjCopy.data.polygons)))
-
-        #https://blenderartists.org/t/automating-mesh-split-process-can-anyone-help/646025/9
-
-        #select all desired faces
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='DESELECT')
-        bpy.ops.object.mode_set(mode='OBJECT')
-        print("Number of faces to select: " + str(rsemesh.numFaceIndices))
-        for faceIndex in rsemesh.faceIndices:
-            #print("Selecting face: " + str(faceIndex))
-            newObjBlendObjCopy.data.polygons[faceIndex].select = True
-
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='INVERT')
-        bpy.ops.mesh.separate(type='SELECTED')
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-        newSubBlendObject = None
-        otherObjs = []
-
-        for selectedObj in bpy.context.selected_objects:
-            if len(selectedObj.data.polygons) == rsemesh.numFaceIndices:
-                newSubBlendObject = selectedObj
-            else:
-                otherObjs.append(selectedObj)
-
-        if newSubBlendObject is None:
-            print("Nothing worked!")
-            global errorCount
-            global errorList
-            errorCount += 1
-            errorList.append(newObjectName)
-            #raise Exception('Unable to create correct object')
-            
         if newSubBlendObject is not None:
             newSubBlendObject.parent = geoObjBlendObject
-            newSubBlendObject.name = newObjectName
-            newSubBlendObject.rotation_euler = (radians(90),0,0)
+            createdSubMeshes.append(newSubBlendObject)
+            #newSubBlendObject.rotation_euler = (radians(90),0,0)
 
-        #delete new copied object
-        for otherObj in otherObjs:
-            bpy.context.scene.objects.active = otherObj
-            bpy.ops.object.delete()
-        #print("Created child object")
 
-        continue
+    #clean used materials from each object
+    objectsToCleanMaterialsFrom = createdSubMeshes.copy()
+    objectsToCleanMaterialsFrom.append( geoObjBlendObject)
+    for objectToClean in objectsToCleanMaterialsFrom:
+        remove_unused_materials(objectToClean)
 
-    #delete original master mesh data
-    bpy.context.scene.objects.active = geoObjBlendObject
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.delete(type='FACE') # will be acted on.
-    bpy.ops.object.mode_set(mode='OBJECT')
-    print(errorCount)
+
+    if True:
+        #delete original master mesh data
+        bpy.context.scene.objects.active = geoObjBlendObject
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.delete(type='FACE') # will be acted on.
+        bpy.ops.object.mode_set(mode='OBJECT')
+    print("Number of mesh split errors: " + str(errorCount))
     for err in errorList:
         print(err)
 
 
+def remove_unused_materials(objectToClean):
+    objectToClean.data.materials
+
+    materialIndicesInUse = []
+
+    for i in range(len(objectToClean.data.polygons)):
+        poly = objectToClean.data.polygons[i]
+        materialIndicesInUse.append(poly.material_index)
+
+    materialIndicesInUse.sort()
+
+    numMaterials = len(objectToClean.data.materials)
+    j = 0
+    for i in range(numMaterials):
+        if i not in materialIndicesInUse:
+            objectToClean.data.materials.pop(j, True)
+            j -= 1
+        j += 1
+
+def clone_object_with_specified_faces(newObjectName, faceIndices, originalObject ):
+    #Copy master mesh into new object
+    newObjMeshCopy = originalObject.data.copy()
+    newObjMeshCopy, newSubBlendObject = create_blender_objects(newObjectName, newObjMeshCopy)
+    
+    #select the object
+    bpy.context.scene.objects.active = newSubBlendObject
+
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    bmDelFaces = bmesh.from_edit_mesh(newObjMeshCopy)
+
+    #https://blender.stackexchange.com/a/31750
+    bmDelFaces.faces.ensure_lookup_table()
+    
+    selectedFaces = []
+    for i in range(len(bmDelFaces.faces)):
+        if i in faceIndices:
+            pass
+        else:
+            selectedFaces.append(bmDelFaces.faces[i])
+
+    # https://blender.stackexchange.com/a/1542
+    DEL_FACES = 5
+    DEL_ALL = 6
+    bmesh.ops.delete(bmDelFaces, geom=selectedFaces, context=DEL_FACES)  
+
+    # Push the changes back to edit mode and change to object mode
+    bmesh.update_edit_mesh(newObjMeshCopy, True)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    numFacesToKeep = len(faceIndices)
+    numFacesRemaining = len(newSubBlendObject.data.polygons)
+    print("Number of faces to select: " + str(numFacesToKeep))
+    print("Number of faces left: " + str(numFacesRemaining))
+
+    if numFacesRemaining != numFacesToKeep:
+        print("Face count mismatch!")
+        global errorCount
+        global errorList
+        errorCount += 1
+        errorList.append(newObjectName + " missing " + str(numFacesToKeep - numFacesRemaining))
+        #raise Exception('Unable to create correct object')
+
+    return newSubBlendObject
 
 
 def import_SOB_to_scene(filename):
