@@ -5,6 +5,7 @@ import sys
 import bpy
 import bmesh
 from math import radians
+import mathutils
 
 sys.path.insert(0, 'E:/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
@@ -51,6 +52,11 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
 
     #fix up rotation
     geoObjBlendObject.rotation_euler = (radians(90),0,0)
+    #rot1 = mathutils.Euler((0, 0, radians(-90))).to_quaternion()
+    #rot2 = mathutils.Euler((0, radians(90), 0)).to_quaternion()
+    #finalRot = rot2*rot1
+    #eulerRot = finalRot.to_euler()
+    #geoObjBlendObject.rotation_euler = eulerRot
 
     ########################################
     # Conform faces to desired data structure
@@ -62,7 +68,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     #reverse the scaling on the z axis, to correct LHS <-> RHS conversion
     #this must be done here to not change the face winding which would interfere with backface culling
     for vert in geometryObject.vertices:
-        vert[2] = vert[2] * -1
+        vert[0] = vert[0] * -1
 
     add_mesh_geometry(geoObjBlendMesh, geometryObject.vertices, faces)
 
@@ -368,6 +374,7 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
     newMaterial.diffuse_color = normalize_color(materialSpecification.diffuse)  # change color
     newMaterial.specular_color = normalize_color(materialSpecification.specular)
     newMaterial.specular_intensity = materialSpecification.specularLevel
+    newMaterial.use_vertex_color_light = True
 
 
     return newMaterial
