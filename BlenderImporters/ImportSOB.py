@@ -60,6 +60,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
         faces.append(face.vertexIndices)
 
     #reverse the scaling on the z axis, to correct LHS <-> RHS conversion
+    #this must be done here to not change the face winding which would interfere with backface culling
     for vert in geometryObject.vertices:
         vert[2] = vert[2] * -1
 
@@ -148,8 +149,8 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     createdSubMeshes = []
 
     #Split Meshes
-    for rsemesh in geometryObject.meshes:
-        newObjectName = geometryObject.nameString + "_" + rsemesh.nameString
+    for index, rsemesh in enumerate(geometryObject.meshes):
+        newObjectName = rsemesh.nameString + "_idx_" + str(index) + "_geo_" + geometryObject.nameString
         uniqueFaceIndicies = list(set(rsemesh.faceIndices))
         
         newSubBlendObject = clone_object_with_specified_faces(newObjectName, uniqueFaceIndicies, geoObjBlendObject)
@@ -167,13 +168,12 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
         remove_unused_materials(objectToClean)
 
 
-    if True:
-        #delete original master mesh data
-        bpy.context.scene.objects.active = geoObjBlendObject
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.mesh.delete(type='FACE') # will be acted on.
-        bpy.ops.object.mode_set(mode='OBJECT')
+    #delete original master mesh data
+    bpy.context.scene.objects.active = geoObjBlendObject
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.delete(type='FACE') # will be acted on.
+    bpy.ops.object.mode_set(mode='OBJECT')
     print("Number of mesh split errors: " + str(errorCount))
     for err in errorList:
         print(err)
