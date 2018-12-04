@@ -55,18 +55,11 @@ def create_spotlight_from_light_specification(lightSpec):
     lamp_object.rotation_euler = transformMatrix.to_euler()
     importedQuat = transformMatrix.to_quaternion()
 
+    #correct the incorrect rotation due to coordinate system conversion
     coordSystemConversionQuat = mathutils.Euler((radians(-90), 0, 0)).to_quaternion()
-
     finalQuat = importedQuat * coordSystemConversionQuat
-
     lamp_object.rotation_euler = finalQuat.to_euler()
 
-    #geoObjBlendObject.rotation_euler = (radians(90),0,0)
-    #rot1 = mathutils.Euler((0, 0, radians(-90))).to_quaternion()
-    #rot2 = mathutils.Euler((0, radians(90), 0)).to_quaternion()
-    #finalRot = rot2*rot1
-    #eulerRot = finalRot.to_euler()
-    #geoObjBlendObject.rotation_euler = eulerRot
     
 
     color = []
