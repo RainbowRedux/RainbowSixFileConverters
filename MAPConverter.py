@@ -7,11 +7,13 @@ from RainbowFileReaders import MAPLevelReader
 from FileWriters import JSONMetaInfo, OBJModelWriter
 from RainbowFileReaders.R6Constants import RSEGameVersions
 
+lightTypes = []
+
 def convert_MAP(filename):
     print("Processing: " + filename)
 
     modelFile = MAPLevelReader.MAPLevelFile()
-    modelFile.read_file(filename)
+    modelFile.read_file(filename, False)
 
     #strip out lengthy data which is already being interpreted correctly to make it easier for humans to view the json file
     for geometryObject in modelFile.geometryObjects:
@@ -21,6 +23,11 @@ def convert_MAP(filename):
         if modelFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
             for mesh in geometryObject.meshes:
                 mesh.faceIndices = []
+
+    
+    for light in modelFile.lightList.lights:
+            if light.type not in lightTypes:
+                lightTypes.append(light.type)
 
     meta = JSONMetaInfo.JSONMetaInfo()
     meta.add_info("filecontents", modelFile)
@@ -42,8 +49,10 @@ def main():
 
     fp.processFunction = convert_MAP
 
-    #fp.run_sequential()
-    fp.run_async()
+    fp.run_sequential()
+    #fp.run_async()
+
+    print(lightTypes)
 
 if __name__ == "__main__":
     main()

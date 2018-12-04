@@ -379,12 +379,12 @@ class RSEMAPLight(BinaryFileDataStructure):
 
         self.position = filereader.read_vec_f(3)
         self.color = filereader.read_vec_uint(3)
-        self.unknown7 = filereader.read_float()
-        self.unknown8 = filereader.read_uint()
-        self.unknown9 = filereader.read_float()
+        self.constantAttenuation = filereader.read_float()
+        self.linearAttenuation = filereader.read_float()
+        self.quadraticAttenuation = filereader.read_float()
         #maybe?
         self.falloff = filereader.read_float()
-        self.attenuation = filereader.read_float()
+        self.energy = filereader.read_float()
         self.type = filereader.read_bytes(1)[0]
 
 class RSEMAPObjectList(BinaryFileDataStructure):
