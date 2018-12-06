@@ -18,9 +18,38 @@ from RainbowFileReaders.R6Constants import UINT_MAX, RSEGameVersions, RSELightTy
 from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
 
 from BlenderImporters import ImportSOB
-from BlenderImporters.ImportSOB import create_blender_materials_from_list, create_mesh_from_RSGeometryObject
+from BlenderImporters.ImportSOB import create_mesh_from_RSGeometryObject
+from BlenderImporters import BlenderUtils
 
+def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
+    name = geometryObject.nameString
 
+    geoObjBlendMesh, geoObjBlendObject = BlenderUtils.create_blender_mesh_object(name)
+    #attach_materials_to_blender_object(geoObjBlendObject, blenderMaterials)
+
+    #fix up rotation
+    geoObjBlendObject.rotation_euler = (radians(90),0,0)
+
+    ########################################
+    # Conform faces to desired data structure
+    ########################################
+    faces = []
+    for face in geometryObject.faces:
+        faces.append(face.vertexIndices)
+
+    #reverse the scaling on the z axis, to correct LHS <-> RHS conversion
+    #this must be done here to not change the face winding which would interfere with backface culling
+    for vert in geometryObject.vertices:
+        vert[0] = vert[0] * -1
+
+    BlenderUtils.add_mesh_geometry(geoObjBlendMesh, geometryObject.vertices, faces)
+
+    numTotalFaces = geometryObject.faceCount
+    numCreatedFaces = len(geoObjBlendObject.data.polygons)
+
+    if numCreatedFaces != numTotalFaces:
+        raise ValueError("Not enough faces created")
+    pass
 
 def create_spotlight_from_light_specification(lightSpec):
     #https://stackoverflow.com/a/17355744
@@ -75,6 +104,7 @@ def create_spotlight_from_light_specification(lightSpec):
     lamp_data.energy = 1.0
     lamp_data.distance = lightSpec.energy
     lamp_data.use_sphere = True
+    lamp_data.shadow_method = 'NOSHADOW'
 
 
     #lamp_data.specular_factor = lightSpec.unknown7
@@ -104,6 +134,8 @@ def import_MAP_to_scene(filename):
     MAPObject.read_file(filename)
     filepath = os.path.dirname(filename)
     
+    BlenderUtils.setup_blank_scene()
+
     print("")
     print("Beginning import")
 
@@ -112,12 +144,15 @@ def import_MAP_to_scene(filename):
     gameDataPath = os.path.split(gameDataPath)[0]
     print("Assuming gamepath is: " + gameDataPath)
 
-    blenderMaterials = create_blender_materials_from_list(MAPObject.materials, filepath, gameDataPath)
+    blenderMaterials = BlenderUtils.create_blender_materials_from_list(MAPObject.materials, filepath, gameDataPath)
 
     if MAPObject.gameVersion == RSEGameVersions.RAINBOW_SIX:
         for geoObj in MAPObject.geometryObjects:
             create_mesh_from_RSGeometryObject(geoObj, blenderMaterials)
     else:
+        for geoObj in MAPObject.geometryObjects:
+            pass
+            #create_mesh_from_RSMAPGeometryObject(geoObj, blenderMaterials)
         print("No import method implemented for this version of geometry yet")
 
     import_lights(MAPObject.lightList)
@@ -126,7 +161,9 @@ def import_MAP_to_scene(filename):
 
 #"E:\Dropbox\Development\Rainbow\Data\R6GOG\data\map\m01\M01.map"
 #import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\R6GOG\\data\\map\\m07\\m7.map")
-#import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\R6GOG\\data\\map\\m01\\M01.map")
-import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m01/M01.map")
+import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\R6GOG\\data\\map\\m01\\M01.map")
+#"E:\Dropbox\Development\Rainbow\Data\RSDemo\data\map\rm01\rm01.map"
+#import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\RSDemo\\data\\map\\rm01\\rm01.map")
+#import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m01/M01.map")
 #import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m07/m7.map")
 #import_MAP_to_scene(sys.argv[-1])
