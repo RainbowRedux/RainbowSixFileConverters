@@ -46,8 +46,6 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
     uv_layer = newBmesh.loops.layers.uv.verify()
     newBmesh.faces.layers.tex.verify()  # currently blender needs both layers.
 
-    print("Number of faces: " + str(len(newBmesh.faces)))
-
     ########################################
     # Apply Vertex Colors
     ########################################
@@ -105,16 +103,10 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
         
         poly.material_index = materialMapping[materialIndex]
 
-    #Flip normals as data is stored in CCW, when blender wants CW winding
-    #BlenderUtils.flip_normals_on_object(geoObjBlendObject)
-
     return geoObjBlendObject
 
 def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
     name = geometryObject.nameString
-
-    print(geometryObject.nameString)
-    print(geometryObject.geometryData.nameString)
 
     geoObjectParentObject = bpy.data.objects.new(name, None)
     geoObjectParentObject.location = (0,0,0)
@@ -137,13 +129,7 @@ def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
         subObject = import_face_group_as_mesh(facegroup, geometryObject.geometryData.vertices, blenderMaterials, faceGroupName)
         subObject.parent = geoObjectParentObject
         subObjects.append(subObject)
-
-
-    #reverse the scaling on the z axis, to correct LHS <-> RHS conversion
-    #this must be done here to not change the face winding which would interfere with backface culling
-
-    #BlenderUtils.add_mesh_geometry(geoObjBlendMesh, geometryObject.vertices, faces)
-
+    
     pass
 
 def create_spotlight_from_light_specification(lightSpec):
@@ -206,9 +192,6 @@ def create_spotlight_from_light_specification(lightSpec):
 
     return lamp_object
 
-    pass
-
-
 def import_lights(lightlist):
     lightGroup = bpy.data.objects.new("LightGroup", None)
     lightGroup.location = (0,0,0)
@@ -246,9 +229,7 @@ def import_MAP_to_scene(filename):
             create_mesh_from_RSGeometryObject(geoObj, blenderMaterials)
     else:
         for geoObj in MAPObject.geometryObjects:
-            pass
             create_mesh_from_RSMAPGeometryObject(geoObj, blenderMaterials)
-        print("No import method implemented for this version of geometry yet")
 
     import_lights(MAPObject.lightList)
 

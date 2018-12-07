@@ -50,7 +50,6 @@ def setup_blank_scene():
 def create_blender_mesh_object(name, existingMesh=None):
     newMesh = existingMesh
     if newMesh is None:
-        print("Creating new mesh")
         newMesh = bpy.data.meshes.new(name + 'Mesh')
     newObject = bpy.data.objects.new(name, newMesh)
     newObject.location = (0,0,0)
