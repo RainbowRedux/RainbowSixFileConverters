@@ -175,7 +175,7 @@ class RSMAPFaceGroup(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.unknown1 = filereader.read_uint()
+        self.materialIndex = filereader.read_uint()
 
         self.faceCount = filereader.read_uint()
         
@@ -208,18 +208,18 @@ class RSMAPVertexParameterCollection(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.vertexCount = filereader.read_uint()
+        self.vertexParamCount = filereader.read_uint()
 
         self.normals = []
-        for _ in range(self.vertexCount):
+        for _ in range(self.vertexParamCount):
             self.normals.append(filereader.read_vec_f(3))
 
         self.UVs = []
-        for _ in range(self.vertexCount):
+        for _ in range(self.vertexParamCount):
             self.UVs.append(filereader.read_vec_f(2))
         
         self.colors = []
-        for _ in range(self.vertexCount):
+        for _ in range(self.vertexParamCount):
             self.colors.append(filereader.read_vec_f(4))
 
 class RSMAP2DCollisionInformation(BinaryFileDataStructure):

@@ -9,6 +9,14 @@ from RainbowFileReaders.R6Constants import UINT_MAX
 from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
 from RainbowFileReaders.SOBModelReader import SOBAlphaMethod
 
+def flip_normals_on_object(blendObject):
+    #https://blenderartists.org/t/script-to-flip-normals-for-multiple-objects/533443/2
+    bpy.context.scene.objects.active = blendObject
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.flip_normals() # just flip normals
+    bpy.ops.object.mode_set()
+
 def set_blender_render_unit_scale_options():
     ONE_KILOMETER = 100 * 1000 #100cm in a meter, 1000m in a km
     TEN_CENTIMETERS = 10

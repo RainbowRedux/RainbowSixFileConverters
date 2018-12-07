@@ -21,34 +21,129 @@ from BlenderImporters import ImportSOB
 from BlenderImporters.ImportSOB import create_mesh_from_RSGeometryObject
 from BlenderImporters import BlenderUtils
 
-def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
-    name = geometryObject.nameString
-
+def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
     geoObjBlendMesh, geoObjBlendObject = BlenderUtils.create_blender_mesh_object(name)
-    #attach_materials_to_blender_object(geoObjBlendObject, blenderMaterials)
 
-    #fix up rotation
-    geoObjBlendObject.rotation_euler = (radians(90),0,0)
-
-    ########################################
-    # Conform faces to desired data structure
-    ########################################
     faces = []
-    for face in geometryObject.faces:
-        faces.append(face.vertexIndices)
+    #these faces appear to be stored as CCW winding, blender expects CW winding, can flip set of params on import, or flip all after import
+    for face in faceGroup.faceVertexIndices:
+        faces.append(face)
+    BlenderUtils.add_mesh_geometry(geoObjBlendMesh, vertices, faces)
 
-    #reverse the scaling on the z axis, to correct LHS <-> RHS conversion
-    #this must be done here to not change the face winding which would interfere with backface culling
-    for vert in geometryObject.vertices:
-        vert[0] = vert[0] * -1
-
-    BlenderUtils.add_mesh_geometry(geoObjBlendMesh, geometryObject.vertices, faces)
-
-    numTotalFaces = geometryObject.faceCount
+    numTotalFaces = faceGroup.faceCount
     numCreatedFaces = len(geoObjBlendObject.data.polygons)
 
     if numCreatedFaces != numTotalFaces:
         raise ValueError("Not enough faces created")
+
+    ########################################
+    # Copy to bmesh from mesh
+    ########################################
+
+    newBmesh = bmesh.new()
+    newBmesh.from_mesh(geoObjBlendMesh)
+    color_layer = newBmesh.loops.layers.color.new("color")
+    uv_layer = newBmesh.loops.layers.uv.verify()
+    newBmesh.faces.layers.tex.verify()  # currently blender needs both layers.
+
+    print("Number of faces: " + str(len(newBmesh.faces)))
+
+    ########################################
+    # Apply Vertex Colors
+    ########################################
+
+    # Cobbled together from : https://blender.stackexchange.com/a/60730
+    for face_index, face in enumerate(newBmesh.faces):
+        if face is None:
+            continue
+        importedParamIndices = faceGroup.faceVertexParamIndices[face_index]
+        for vert_index, vert in enumerate(face.loops):
+            importedColor = faceGroup.vertexParams.colors[importedParamIndices[vert_index]]
+            importedColor = normalize_color(importedColor)[0:3]
+            vert[color_layer] = importedColor
+
+    ########################################
+    # Apply UV Mapping
+    ########################################
+    # Cobbled together from https://docs.blender.org/api/blender_python_api_2_67_release/bmesh.html#customdata-access
+    for face_index, face in enumerate(newBmesh.faces):
+        if face is None:
+            continue
+        importedParamIndices = faceGroup.faceVertexParamIndices[face_index]
+        for vert_index, vert in enumerate(face.loops):
+            importedUV = faceGroup.vertexParams.UVs[importedParamIndices[vert_index]]
+            vert[uv_layer].uv.x = importedUV[0]
+            # This coord seems to be inverted, this seems to look correct.
+            vert[uv_layer].uv.y = importedUV[1] * -1
+
+    #Reverse face winding, to ensure backface culling is correct
+    bmesh.ops.reverse_faces(newBmesh, faces=newBmesh.faces)
+    
+    ########################################
+    # Copy from bmesh back to mesh
+    ########################################
+    
+    newBmesh.to_mesh(geoObjBlendMesh)
+    newBmesh.free()
+    geoObjBlendMesh.update(calc_edges=True)
+    
+    #Map materials to faces
+    #TODO: Also remove the reduced material index mapping code which is overcomplicating this block
+    materialMapping = {}
+    reducedMaterials = []
+    for i in range(len(geoObjBlendMesh.polygons)):
+        poly = geoObjBlendMesh.polygons[i]
+        materialIndex = faceGroup.materialIndex
+        #Do not assign a material if index is UINT_MAX
+        if materialIndex == R6Constants.UINT_MAX:
+            continue
+
+        if materialIndex not in materialMapping:
+            reducedMaterials.append(blenderMaterials[materialIndex])
+            geoObjBlendObject.data.materials.append(blenderMaterials[materialIndex])
+            materialMapping[materialIndex] = len(reducedMaterials) - 1
+        
+        poly.material_index = materialMapping[materialIndex]
+
+    #Flip normals as data is stored in CCW, when blender wants CW winding
+    #BlenderUtils.flip_normals_on_object(geoObjBlendObject)
+
+    return geoObjBlendObject
+
+def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
+    name = geometryObject.nameString
+
+    print(geometryObject.nameString)
+    print(geometryObject.geometryData.nameString)
+
+    geoObjectParentObject = bpy.data.objects.new(name, None)
+    geoObjectParentObject.location = (0,0,0)
+    geoObjectParentObject.show_name = True
+    # Link object to scene
+    bpy.context.scene.objects.link(geoObjectParentObject)
+
+    #fix up rotation
+    geoObjectParentObject.rotation_euler = (radians(90),0,0)
+
+    for vert in geometryObject.geometryData.vertices:
+        vert[0] = vert[0] * -1
+
+    ########################################
+    # Conform faces to desired data structure
+    ########################################
+    subObjects = []
+    for idx, facegroup in enumerate(geometryObject.geometryData.faceGroups):
+        faceGroupName = name + "_mat" + str(facegroup.materialIndex) + "_idx" + str(idx)
+        subObject = import_face_group_as_mesh(facegroup, geometryObject.geometryData.vertices, blenderMaterials, faceGroupName)
+        subObject.parent = geoObjectParentObject
+        subObjects.append(subObject)
+
+
+    #reverse the scaling on the z axis, to correct LHS <-> RHS conversion
+    #this must be done here to not change the face winding which would interfere with backface culling
+
+    #BlenderUtils.add_mesh_geometry(geoObjBlendMesh, geometryObject.vertices, faces)
+
     pass
 
 def create_spotlight_from_light_specification(lightSpec):
@@ -152,7 +247,7 @@ def import_MAP_to_scene(filename):
     else:
         for geoObj in MAPObject.geometryObjects:
             pass
-            #create_mesh_from_RSMAPGeometryObject(geoObj, blenderMaterials)
+            create_mesh_from_RSMAPGeometryObject(geoObj, blenderMaterials)
         print("No import method implemented for this version of geometry yet")
 
     import_lights(MAPObject.lightList)
@@ -161,9 +256,10 @@ def import_MAP_to_scene(filename):
 
 #"E:\Dropbox\Development\Rainbow\Data\R6GOG\data\map\m01\M01.map"
 #import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\R6GOG\\data\\map\\m07\\m7.map")
-import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\R6GOG\\data\\map\\m01\\M01.map")
+#import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\R6GOG\\data\\map\\m01\\M01.map")
 #"E:\Dropbox\Development\Rainbow\Data\RSDemo\data\map\rm01\rm01.map"
 #import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\RSDemo\\data\\map\\rm01\\rm01.map")
+import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/RSDemo/data/map/rm01/rm01.map")
 #import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m01/M01.map")
 #import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m07/m7.map")
 #import_MAP_to_scene(sys.argv[-1])

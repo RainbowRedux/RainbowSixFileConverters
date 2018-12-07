@@ -113,6 +113,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     ########################################
     materialMapping = {}
     reducedMaterials = []
+    #TODO: Remove the reduced materials mapping which is just overcomplicating things, there is a cleanup pass at the end anyway
     for i in range(len(geoObjBlendMesh.polygons)):
         poly = geoObjBlendMesh.polygons[i]
         faceProperties = geometryObject.faces[i]
