@@ -7,9 +7,9 @@ RIGHT_VECTOR    1.0 0.0 0.0
 
 Blender uses a Right handed coordinate Z-up system with the following properties
 ```
-FORWARD_VECTOR  -1.0 0.0 0.0
-UP_VECTOR       0.0 0.0 1.0
-RIGHT_VECTOR    0.0 1.0 0.0
+FORWARD_VECTOR  -1.0  0.0 0.0
+UP_VECTOR       0.0   0.0 1.0
+RIGHT_VECTOR    0.0   1.0 0.0
 ```
 
 Current steps are:
