@@ -162,6 +162,10 @@ def find_texture(filename, dataPath):
             # Compare lowercase versions since windows is case-insensitive
             if name.lower() == newfilename.lower():
                 result = os.path.join(root, name)
+            if result is None and name.startswith("TGA"):
+                if name.lower()[3:] == newfilename.lower():
+                    result = os.path.join(root, name)
+
         for name in dirs:
             pass
     return result
