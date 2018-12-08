@@ -22,8 +22,9 @@ def set_blender_render_unit_scale_options():
     TEN_CENTIMETERS = 10
 
     # https://blender.stackexchange.com/a/38613
-    bpy.data.cameras[bpy.context.scene.camera.name].clip_end = ONE_KILOMETER
-    bpy.data.cameras[bpy.context.scene.camera.name].clip_start = TEN_CENTIMETERS
+    if bpy.context.scene.camera is not None:
+        bpy.data.cameras[bpy.context.scene.camera.name].clip_end = ONE_KILOMETER
+        bpy.data.cameras[bpy.context.scene.camera.name].clip_start = TEN_CENTIMETERS
 
     for a in bpy.context.screen.areas:
         if a.type == 'VIEW_3D':
@@ -43,6 +44,8 @@ def set_environment_lighting_enabled(bEnabled):
         world.light_settings.use_environment_light = bEnabled
 
 def setup_blank_scene():
+    #bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.ops.wm.read_factory_settings()
     set_blender_render_unit_scale_options()
     set_environment_lighting_enabled(True)
     pass

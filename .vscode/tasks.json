@@ -42,6 +42,16 @@
             ]
         },
         {
+            "label": "Blender-Mac: Headless MAP Import-Export",
+            "type": "shell",
+            "command": "/Applications/blender.app/Contents/MacOS/blender",
+            "args": [
+                "--background",
+                "--python",
+                "${workspaceRoot}/BlenderImporters/ImportMAPAutoExport.py"
+            ]
+        },
+        {
             "label": "Blender-Lin: Headless SOB Import",
             "type": "shell",
             "command": "blender",
