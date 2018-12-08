@@ -235,6 +235,15 @@ def import_MAP_to_scene(filename):
 
     print("Success")
 
+def save_blend_scene(path):
+    bpy.ops.wm.save_as_mainfile(filepath=path)
+
+def import_map_and_save(path):
+    inPath = os.path.abspath(path)
+    outPath = inPath + ".blend"
+    import_MAP_to_scene(path)
+    save_blend_scene(outPath)
+
 #"E:\Dropbox\Development\Rainbow\Data\R6GOG\data\map\m01\M01.map"
 #import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\R6GOG\\data\\map\\m07\\m7.map")
 #import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\R6GOG\\data\\map\\m01\\M01.map")
@@ -244,3 +253,7 @@ import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/RSDem
 #import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m01/M01.map")
 #import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m07/m7.map")
 #import_MAP_to_scene(sys.argv[-1])
+
+#import_map_and_save("/Users/philipedwards/Dropbox/Development/Rainbow/Data/RSDemo/data/map/rm01/rm01.map")
+#import_map_and_save("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m01/M01.map")
+#import_map_and_save("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m07/m7.map")
