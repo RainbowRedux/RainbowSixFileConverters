@@ -2,6 +2,7 @@ import random
 import os
 import sys
 from math import radians
+import math
 
 import bpy
 import bmesh
@@ -93,9 +94,16 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
         importedParamIndices = geometryObject.faces[face_index].paramIndices
         for vert_index, vert in enumerate(face.loops):
             importedUV = geometryObject.vertexParams[importedParamIndices[vert_index]].UV
-            vert[uv_layer].uv.x = importedUV[0]
+            if math.isnan(importedUV[0]):
+                vert[uv_layer].uv.x = 0.0
+            else:
+                vert[uv_layer].uv.x = importedUV[0]
             # This coord seems to be inverted, this seems to look correct.
-            vert[uv_layer].uv.y = importedUV[1] * -1
+            if math.isnan(importedUV[1]):
+                vert[uv_layer].uv.y = 0.0
+            else:
+                vert[uv_layer].uv.y = importedUV[1] * -1
+            
 
     #Reverse face winding, to ensure backface culling is correct
     bmesh.ops.reverse_faces(newBmesh, faces=newBmesh.faces)

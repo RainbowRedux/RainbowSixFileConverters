@@ -70,9 +70,15 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
         importedParamIndices = faceGroup.faceVertexParamIndices[face_index]
         for vert_index, vert in enumerate(face.loops):
             importedUV = faceGroup.vertexParams.UVs[importedParamIndices[vert_index]]
-            vert[uv_layer].uv.x = importedUV[0]
+            if math.isnan(importedUV[0]):
+                vert[uv_layer].uv.x = 0.0
+            else:
+                vert[uv_layer].uv.x = importedUV[0]
             # This coord seems to be inverted, this seems to look correct.
-            vert[uv_layer].uv.y = importedUV[1] * -1
+            if math.isnan(importedUV[1]):
+                vert[uv_layer].uv.y = 0.0
+            else:
+                vert[uv_layer].uv.y = importedUV[1] * -1
 
     #Reverse face winding, to ensure backface culling is correct
     bmesh.ops.reverse_faces(newBmesh, faces=newBmesh.faces)
@@ -238,11 +244,16 @@ def import_MAP_to_scene(filename):
 def save_blend_scene(path):
     bpy.ops.wm.save_as_mainfile(filepath=path)
 
+def export_fbx_scene(path):
+    bpy.ops.export_scene.fbx(filepath=path, path_mode='RELATIVE')
+
 def import_map_and_save(path):
     inPath = os.path.abspath(path)
-    outPath = inPath + ".blend"
+    outBlendPath = inPath + ".blend"
+    outFBXPath = inPath + ".fbx"
     import_MAP_to_scene(inPath)
-    save_blend_scene(outPath)
+    save_blend_scene(outBlendPath)
+    export_fbx_scene(outFBXPath)
 
 
 if __name__ == "__main__":
