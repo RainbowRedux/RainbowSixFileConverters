@@ -10,6 +10,7 @@
 - STP - Text - Material to physical property mapping?
 - MAP - Binary - Map file, geo, materials, portals
 - DMP - Binary - Appears to be light data that is no longer stored in MAP files in Rogue Spear
+- RLV - Binary - ??? - stored alongside roguespear maps
 
 
 # Engine Version Names

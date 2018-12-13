@@ -17,12 +17,16 @@ def convert_MAP(filename):
 
     #strip out lengthy data which is already being interpreted correctly to make it easier for humans to view the json file
     for geometryObject in modelFile.geometryObjects:
-        geometryObject.vertices = []
-        geometryObject.vertexParams = []
-        geometryObject.faces = []
         if modelFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
+            geometryObject.vertices = ["Stripped from JSON"]
+            geometryObject.vertexParams = ["Stripped from JSON"]
+            geometryObject.faces = ["Stripped from JSON"]
             for mesh in geometryObject.meshes:
-                mesh.faceIndices = []
+                mesh.faceIndices = ["Stripped from JSON"]
+        else:
+            pass
+            geometryObject.geometryData.vertices = ["Stripped from JSON"]
+            geometryObject.geometryData.faceGroups = ["Stripped from JSON"]
 
     
     for light in modelFile.lightList.lights:
@@ -40,8 +44,8 @@ def main():
     paths = []
     #paths.append("../Data/Test")
     paths.append("../Data/Test/Maps")
-    paths.append("../Data/R6GOG")
-    paths.append("../Data/RSDemo")
+    #paths.append("../Data/R6GOG")
+    #paths.append("../Data/RSDemo")
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths

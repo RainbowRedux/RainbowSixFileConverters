@@ -201,9 +201,6 @@ class RSMAPFaceGroup(BinaryFileDataStructure):
 class RSMAPVertexParameterCollection(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAPVertexParameterCollection, self).__init__()
-        self.normal = None
-        self.UV = None
-        self.color = None
 
     def read(self, filereader):
         super().read(filereader)
