@@ -22,6 +22,16 @@
                 "${workspaceRoot}/../Data/R6GOG/data/map/m01/M01.map"]
         },
         {
+            "label": "Blender-Win: Headless MAP Batch Import-Export",
+            "type": "shell",
+            "command": "C:\\Program Files\\Blender Foundation\\Blender\\blender.exe",
+            "args": [
+                "--background",
+                "--python",
+                "${workspaceRoot}\\BlenderImporters\\ImportMAPAutoExport.py"
+            ]
+        },
+        {
             "label": "Blender-Mac: Headless SOB Import",
             "type": "shell",
             "command": "/Applications/blender.app/Contents/MacOS/blender",
@@ -42,7 +52,7 @@
             ]
         },
         {
-            "label": "Blender-Mac: Headless MAP Import-Export",
+            "label": "Blender-Mac: Headless MAP Batch Import-Export",
             "type": "shell",
             "command": "/Applications/blender.app/Contents/MacOS/blender",
             "args": [
