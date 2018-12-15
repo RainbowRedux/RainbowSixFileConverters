@@ -19,7 +19,7 @@
             "args":["--background",
                 "--python",
                 "${workspaceRoot}\\BlenderImporters\\ImportMAP.py",
-                "${workspaceRoot}/../Data/R6GOG/data/map/m01/M01.map"]
+                "${workspaceRoot}/../Data/Test/ReducedGames/R6GOG/data/map/m01/M01.map"]
         },
         {
             "label": "Blender-Win: Headless MAP Batch Import-Export",

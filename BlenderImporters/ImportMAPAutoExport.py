@@ -11,9 +11,8 @@ from BlenderImporters import ImportMAP
 
 def ExportAllMaps():
     paths = []
-    paths.append("../Data/R6GOG")
-    paths.append("../Data/RSDemo")
-    paths.append("../Data/RSUO")
+    #paths.append("../Data/FullGames")
+    paths.append("../Data/Test/ReducedGames")
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths
