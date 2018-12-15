@@ -1,7 +1,5 @@
 import shlex
 
-from RainbowFileReaders import CXPMaterialPropertiesReader
-
 class CXPMaterialProperties(object):
     def __init__(self):
         super(CXPMaterialProperties, self).__init__()
@@ -14,6 +12,7 @@ class CXPMaterialProperties(object):
         self.textureformat = []
         self.animAdditionalTextures = []
         self.nosubsamble = False
+        self.scrollParams = []
 
     def read(self, keywords):
         if keywords[0].strip() != "Material" and keywords[0] != "Surface":
@@ -92,6 +91,9 @@ def read_cxp(path):
         newMat.read(keywords)
         MaterialProperties.append(newMat)
     return MaterialProperties
+
+def load_relevant_cxps(datapath, modpath):
+    pass
 
 def test():
     #read_cxp("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/texture/Sherman.CXP")
