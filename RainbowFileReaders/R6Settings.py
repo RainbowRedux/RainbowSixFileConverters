@@ -1,4 +1,6 @@
 #This file stores constants and settings related to R6 files and directory formats
+#This also contains a few functions to determine some relevant settings such as game installation directory
+import os
 
 paths = {}
 #R6 and onwards
@@ -51,3 +53,48 @@ paths["MissionSplashBitmapPath"] = "splash"
 paths["DataPath"] = "data"
 paths["ModsPath"] = "mods"
 paths["UserPath"] = ""
+
+def determine_data_paths_for_file(filename):
+    """Takes the path of the file currently being processed, and will identify the base game path, and if applicable, the current mod.
+    It assumes a file is being loaded from an installed game directory, installed as a full install. Not tested on partial installs, and CDs.
+    If any path cannot be determined, it will be returned as None.
+    All relative paths will be returned as absolute paths, which can be reversed with os.path.relpath()
+    @returns Tuple of (BaseGamePath, BaseDataPath, ModPath)"""
+
+    #Get the absolute path
+    absPath = os.path.abspath(filename)
+    #Base game path
+    gamePath = None
+    modName = None
+    currDirParent = absPath
+    prevDir = None
+    while gamePath is None:
+        currDirParent, currDir = os.path.split(currDirParent)
+        if currDir is None or currDir == "":
+            break
+        if currDir == paths["DataPath"]:
+            gamePath = currDirParent
+        elif currDir == paths["ModsPath"]:
+            gamePath = currDirParent
+            modName = prevDir
+        prevDir = currDir
+    
+    baseDataPath = None
+    modPath = None
+    if gamePath is not None:
+        baseDataPath = os.path.join(gamePath, paths["DataPath"])
+        if modName is not None:
+            modPath = os.path.join(gamePath, paths["ModsPath"], modName)
+
+    return (gamePath, baseDataPath, modPath)
+
+
+if __name__ == "__main__":
+    #A path that should work, with no mod
+    print(str(determine_data_paths_for_file("../Data/Test/ReducedGames/RSDemo/data/map/rm01/rm01.map")))
+    #A path that should work, with a mod
+    print(str(determine_data_paths_for_file("../Data/Test/ReducedGames/RSDemo/mods/CLASSIC MISSIONS/map/cl01/cl01.map")))
+    #A path that should work, with no mod
+    print(str(determine_data_paths_for_file("../Data/Test/ReducedGames/R6GOG/data/map/m01/M01.map")))
+    #A path that should not work, as it will be unable to determine directory structure
+    print(str(determine_data_paths_for_file("../Rainbow/")))

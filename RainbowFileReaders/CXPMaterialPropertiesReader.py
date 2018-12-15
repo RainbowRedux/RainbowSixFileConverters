@@ -1,10 +1,14 @@
 import shlex
+import os
+
+from RainbowFileReaders import R6Settings
 
 class CXPMaterialProperties(object):
     def __init__(self):
         super(CXPMaterialProperties, self).__init__()
+        self.materialName = None
         self.softwarealpha = False
-        self.blendMode = None
+        self.blendMode = "opaque"
         self.colorkey = []
         self.mipMapValues = []
         self.gunpass = False
@@ -62,14 +66,16 @@ class CXPMaterialProperties(object):
                 self.animNumAdditionalTextures = int(keywords.pop(0))
                 for _ in range(self.animNumAdditionalTextures):
                     self.animAdditionalTextures.append(keywords.pop(0))
-            elif currKeyword == "scroll":
+            elif currKeyword == "scroll" or currKeyword == "scrolling":
                 self.scrollParams.append(keywords.pop(0))
                 self.scrollParams.append(keywords.pop(0))
                 self.scrollParams.append(keywords.pop(0))
             else:
                 print("Skipping: " + currKeyword)
 
-def read_cxp_keywords(path):
+def _read_cxp_keywords(path):
+    """Reads a text file and tokenizes.
+    Keeps strings within quotes, and discards comments"""
     inFile = open(path, "r")
     lines = inFile.readlines()
     cxp_keywords = []
@@ -84,16 +90,53 @@ def read_cxp_keywords(path):
     return cxp_keywords
 
 def read_cxp(path):
-    keywords = read_cxp_keywords(path)
+    keywords = _read_cxp_keywords(path)
     MaterialProperties = []
     while len(keywords) > 0:
         newMat = CXPMaterialProperties()
-        newMat.read(keywords)
+        try:
+            newMat.read(keywords)
+        except:
+            #In this instance, there is an invalid CXP material
+            #One such instance is the Rommel.CXP file in the classic missions included with Urban Operations includes an extra "End" statement at the bottom, which is invalid
+            #remove this errored keyword so that program can continue
+            discardedWord = keywords.pop(0)
+            print("Skipping invalid material definition in CXP")
+            print("\tDiscarded keyword: " + discardedWord)
         MaterialProperties.append(newMat)
     return MaterialProperties
 
-def load_relevant_cxps(datapath, modpath):
-    pass
+def load_relevant_cxps(datapath, modpath = None):
+    dataTexturePath = os.path.join(datapath, R6Settings.paths["TexturePath"])
+    modTexturePath = None
+    if modpath is not None:
+        modTexturePath = os.path.join(modpath, R6Settings.paths["TexturePath"])
+    
+    CXPsToRead = []
+
+    #Add the mod texture path first, so entries from here take priority
+    if modTexturePath is not None:
+        modShermanPath = os.path.join(modTexturePath, "Sherman.CXP")
+        modRommelPath = os.path.join(modTexturePath, "Rommel.CXP")
+        if os.path.isfile(modShermanPath):
+            CXPsToRead.append(modShermanPath)
+        if os.path.isfile(modRommelPath):
+            CXPsToRead.append(modRommelPath)
+
+
+    dataShermanPath = os.path.join(dataTexturePath, "Sherman.CXP")
+    dataRommelPath = os.path.join(dataTexturePath, "Rommel.CXP")
+    if os.path.isfile(dataShermanPath):
+        CXPsToRead.append(dataShermanPath)
+    if os.path.isfile(dataRommelPath):
+        CXPsToRead.append(dataRommelPath)
+    
+    CXPDefinitions = []
+    for cxpPath in CXPsToRead:
+        tempCXPDefs = read_cxp(cxpPath)
+        CXPDefinitions.extend(tempCXPDefs)
+
+    return CXPDefinitions
 
 def test():
     #read_cxp("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/texture/Sherman.CXP")

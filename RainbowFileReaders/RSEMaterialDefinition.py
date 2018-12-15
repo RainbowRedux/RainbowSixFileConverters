@@ -47,6 +47,7 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
         self.twoSidedRaw = None
         self.twoSided = None
         self.normalizedColors = None
+        self.CXPMaterialProperties = None
 
     def get_material_game_version(self):
         """Returns the game this type of material is used in"""
@@ -69,6 +70,13 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
                 return RSEGameVersions.ROGUE_SPEAR
             
         return RSEGameVersions.UNKNOWN
+
+    def add_CXP_information(self, CXPDefinitions):
+        """Takes a list of CXPMaterialProperties, and adds matching information"""
+        for cxp in CXPDefinitions:
+            if cxp.materialName == self.textureName:
+                print("Matched CXP: " + cxp.materialName)
+                self.CXPMaterialProperties = cxp
 
     def read(self, filereader):
         super().read(filereader)

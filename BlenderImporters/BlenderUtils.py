@@ -200,7 +200,8 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
         print("Failed to find texture: " + str(textureName))
     else:
         print("Final texture to load: " + str(texToLoad))
-
+        
+    #TODO: Refactor texture loading, expand to support image sequences
     if texToLoad is not None:
         # Texture loading code adapted from https://stackoverflow.com/q/19076062
         # Load the image
@@ -221,7 +222,13 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
             textureSlot.use_map_alpha = True
             textureSlot.alpha_factor = materialSpecification.opacity
 
-    if materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Opaque:
+    materialBlendMode = "opaque"
+    if materialSpecification.alphaMethod == SOBAlphaMethod.SAM_MethodLookup:
+        if materialSpecification.CXPMaterialProperties != None:
+            materialBlendMode = materialSpecification.CXPMaterialProperties.blendMode
+
+
+    if materialBlendMode != "opaque":
         print(materialSpecification.materialName)
         print(str(materialSpecification.alphaMethod))
         print(str(SOBAlphaMethod.SAM_Opaque))
@@ -229,7 +236,14 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
         #Blenders material transparency method is different to how masked alpha would work in a game engine,
         # this still provides alpha blending, but if you use Z method the transparent part of the surface
         # still has specular properties. In this instance, MASK provides expected results
-        newMaterial.transparency_method = 'MASK'
+        #On further reflection, this might actually be desired. Left the comments here and other parameters which can be tweaked as more areas are tested. This also has the benefit of allowing transparency to work in Rendered mode.
+        #newMaterial.transparency_method = 'MASK'
+        newMaterial.transparency_method = 'Z_TRANSPARENCY'
+        #newMaterial.specular_alpha = 0.0
+
+        #disable shadowing on translucent materials, as unexpected results occur otherwise
+        newMaterial.use_cast_shadows = False
+        newMaterial.use_shadows = False
 
         if texToLoad is not None:
             newMaterial.alpha = 0.0

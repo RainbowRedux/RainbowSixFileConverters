@@ -4,6 +4,7 @@ from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
 from RainbowFileReaders.SOBModelReader import RSEGeometryListHeader, SOBGeometryObject
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
+from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 
 import pprint
 
@@ -36,14 +37,17 @@ class MAPLevelFile(FileFormatReader):
         if self.verboseOutput:
             self.materialListHeader.print_structure_info()
 
+        _, gameDataPath, modPath = R6Settings.determine_data_paths_for_file(self.filepath)
+        CXPDefinitions = load_relevant_cxps(gameDataPath, modPath)
+
         self.materials = []
         for _ in range(self.materialListHeader.numMaterials):
             newMaterial = RSEMaterialDefinition()
             newMaterial.read(fileReader)
+            newMaterial.add_CXP_information(CXPDefinitions)
             self.materials.append(newMaterial)
             if self.verboseOutput:
                 pass
-                #newMaterial.print_structure_info()
 
         if len(self.materials) > 0:
             self.gameVersion = self.materials[0].get_material_game_version()
