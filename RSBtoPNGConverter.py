@@ -58,9 +58,8 @@ def main():
     """Main function that converts test data files"""
     paths = []
     paths.append("../Data/Test")
-    #paths.append("../Data/")
-    #paths.append("../Data/R6GOG")
-    #paths.append("../Data/RSDemo")
+    #paths.append("../Data/FullGames")
+
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths
