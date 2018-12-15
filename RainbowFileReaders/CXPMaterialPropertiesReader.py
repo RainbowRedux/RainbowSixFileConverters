@@ -29,6 +29,7 @@ class CXPMaterialProperties(object):
                 break
             elif currKeyword == "mipmap":
                 #read 2 values for this
+                #TODO: Work out what these values mean
                 self.mipMapValues.append(keywords.pop(0))
                 self.mipMapValues.append(keywords.pop(0))
             elif currKeyword == "colorkey":
@@ -39,6 +40,7 @@ class CXPMaterialProperties(object):
                 self.colorkey.append(keywords.pop(0))
             elif currKeyword == "textureformat":
                 #read the 5 values specified with a texture format
+                #TODO: Work out what most of these values mean. Confirm final 4 values are RGBA bitdepth
                 self.textureformat.append(keywords.pop(0))
                 self.textureformat.append(keywords.pop(0))
                 self.textureformat.append(keywords.pop(0))
