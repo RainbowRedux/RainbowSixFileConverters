@@ -1,5 +1,7 @@
 import shlex
 
+from RainbowFileReaders import CXPMaterialPropertiesReader
+
 class CXPMaterialProperties(object):
     def __init__(self):
         super(CXPMaterialProperties, self).__init__()
