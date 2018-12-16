@@ -6,16 +6,27 @@ from RainbowFileReaders import R6Settings
 class CXPMaterialProperties(object):
     def __init__(self):
         super(CXPMaterialProperties, self).__init__()
+        #Actually just texture name
         self.materialName = None
+        #Should be alpha-transparent in software rendering mode
         self.softwarealpha = False
+        #Default to opaque mode, 
         self.blendMode = "opaque"
+        #If this is not empty, this is the color that should act as the alpha mask. It's often slightly off by 1 due to imprecision in 16bit color images, so take that into accound when using this value
         self.colorkey = []
+        #Mip map bias values?
         self.mipMapValues = []
+        #Determines if gunfire/bullets can pass through this material
         self.gunpass = False
+        #Determines if grenades can pass through this material
         self.grenadepass = False
+        #Parameters around the texture format. Not sure what the leading 0 is, but the rest appear to be RGBA bit depths, eg. 4, 4, 4, 4 for a 16bit texture with an alpha channel
         self.textureformat = []
+        #additional textures that should be added to the image sequence
         self.animAdditionalTextures = []
+        #disables mipmapping?
         self.nosubsamble = False
+        #Scroll rates, empty if not enabled
         self.scrollParams = []
 
     def read(self, keywords):

@@ -20,6 +20,7 @@ class MAPLevelFile(FileFormatReader):
         self.geometryListHeader = None
         self.geometryObjects = []
         self.footer = None
+        #Game version is not stored in file, and has to be determined by analysing the structure of stored materials. Stored here for easy use
         self.gameVersion = None
 
     def read_data(self):
