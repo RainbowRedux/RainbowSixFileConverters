@@ -74,7 +74,8 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
     def add_CXP_information(self, CXPDefinitions):
         """Takes a list of CXPMaterialProperties, and adds matching information"""
         for cxp in CXPDefinitions:
-            if cxp.materialName == self.textureName:
+            #Match on lowercase since it's a windows game and windows has no concept of case sensitive filenames
+            if cxp.materialName.lower() == self.textureName.lower():
                 print("Matched CXP: " + cxp.materialName)
                 self.CXPMaterialProperties = cxp
 

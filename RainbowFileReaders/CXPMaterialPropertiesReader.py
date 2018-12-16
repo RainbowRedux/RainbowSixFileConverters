@@ -107,32 +107,35 @@ def read_cxp(path):
     return MaterialProperties
 
 def load_relevant_cxps(datapath, modpath = None):
-    dataTexturePath = os.path.join(datapath, R6Settings.paths["TexturePath"])
+    dataTexturePath = None
+    if datapath is not None:
+        dataTexturePath = os.path.join(datapath, R6Settings.paths["TexturePath"])
+
     modTexturePath = None
     if modpath is not None:
         modTexturePath = os.path.join(modpath, R6Settings.paths["TexturePath"])
     
-    CXPsToRead = []
+    CXPFilesToRead = []
 
     #Add the mod texture path first, so entries from here take priority
     if modTexturePath is not None:
         modShermanPath = os.path.join(modTexturePath, "Sherman.CXP")
         modRommelPath = os.path.join(modTexturePath, "Rommel.CXP")
         if os.path.isfile(modShermanPath):
-            CXPsToRead.append(modShermanPath)
+            CXPFilesToRead.append(modShermanPath)
         if os.path.isfile(modRommelPath):
-            CXPsToRead.append(modRommelPath)
+            CXPFilesToRead.append(modRommelPath)
 
-
-    dataShermanPath = os.path.join(dataTexturePath, "Sherman.CXP")
-    dataRommelPath = os.path.join(dataTexturePath, "Rommel.CXP")
-    if os.path.isfile(dataShermanPath):
-        CXPsToRead.append(dataShermanPath)
-    if os.path.isfile(dataRommelPath):
-        CXPsToRead.append(dataRommelPath)
+    if dataTexturePath is not None:
+        dataShermanPath = os.path.join(dataTexturePath, "Sherman.CXP")
+        dataRommelPath = os.path.join(dataTexturePath, "Rommel.CXP")
+        if os.path.isfile(dataShermanPath):
+            CXPFilesToRead.append(dataShermanPath)
+        if os.path.isfile(dataRommelPath):
+            CXPFilesToRead.append(dataRommelPath)
     
     CXPDefinitions = []
-    for cxpPath in CXPsToRead:
+    for cxpPath in CXPFilesToRead:
         tempCXPDefs = read_cxp(cxpPath)
         CXPDefinitions.extend(tempCXPDefs)
 

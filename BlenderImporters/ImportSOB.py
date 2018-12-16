@@ -185,7 +185,7 @@ def import_SOB_to_scene(filename):
 
     #TODO Add step for converting from LHS to RHS, and probably rotating to having another axis as the up axis
 
-    blenderMaterials = create_blender_materials_from_list(SOBObject.materials, filepath, gameDataPath)
+    blenderMaterials = BlenderUtils.create_blender_materials_from_list(SOBObject.materials, filepath, gameDataPath)
 
     for geoObj in SOBObject.geometryObjects:
         create_mesh_from_RSGeometryObject(geoObj, blenderMaterials)

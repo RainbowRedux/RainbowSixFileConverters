@@ -3,6 +3,7 @@ from RainbowFileReaders.BinaryConversionUtilities import BinaryFileDataStructure
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
+from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 
 import pprint
 
@@ -38,10 +39,14 @@ class SOBModelFile(FileFormatReader):
         if self.verboseOutput:
             self.materialListHeader.print_structure_info()
 
+        _, gameDataPath, modPath = R6Settings.determine_data_paths_for_file(self.filepath)
+        CXPDefinitions = load_relevant_cxps(gameDataPath, modPath)
+
         self.materials = []
         for _ in range(self.materialListHeader.numMaterials):
             newMaterial = RSEMaterialDefinition()
             newMaterial.read(fileReader)
+            newMaterial.add_CXP_information(CXPDefinitions)
             self.materials.append(newMaterial)
             if self.verboseOutput:
                 newMaterial.print_structure_info()
