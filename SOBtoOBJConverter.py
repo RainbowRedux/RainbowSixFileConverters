@@ -67,8 +67,7 @@ def main():
     """Main function that converts test data files"""
     paths = []
     paths.append("../Data/Test")
-    paths.append("../Data/R6GOG")
-    paths.append("../Data/RSDemo")
+    paths.append("../Data/FullGames")
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths
@@ -76,8 +75,8 @@ def main():
 
     fp.processFunction = convert_SOB
 
-    fp.run_sequential()
-    #fp.run_async()
+    #fp.run_sequential()
+    fp.run_async()
 
 if __name__ == "__main__":
     main()
