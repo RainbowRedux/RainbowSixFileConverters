@@ -142,7 +142,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
 
     #Split Meshes
     for index, rsemesh in enumerate(geometryObject.meshes):
-        newObjectName = rsemesh.nameString + "_idx_" + str(index) + "_geo_" + geometryObject.nameString
+        newObjectName = geometryObject.nameString + "_" + rsemesh.nameString + "_idx" + str(index)
         uniqueFaceIndicies = list(set(rsemesh.faceIndices))
         
         newSubBlendObject = BlenderUtils.clone_mesh_object_with_specified_faces(newObjectName, uniqueFaceIndicies, geoObjBlendObject)

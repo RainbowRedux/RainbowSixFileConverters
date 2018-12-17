@@ -112,9 +112,9 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
     return geoObjBlendObject
 
 def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
-    name = geometryObject.nameString
+    geoObjName = geometryObject.nameString
 
-    geoObjectParentObject = bpy.data.objects.new(name, None)
+    geoObjectParentObject = bpy.data.objects.new(geoObjName, None)
     geoObjectParentObject.location = (0,0,0)
     geoObjectParentObject.show_name = True
     # Link object to scene
@@ -131,7 +131,7 @@ def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
     ########################################
     subObjects = []
     for idx, facegroup in enumerate(geometryObject.geometryData.faceGroups):
-        faceGroupName = name + "_mat" + str(facegroup.materialIndex) + "_idx" + str(idx)
+        faceGroupName = geoObjName + "_idx" + str(idx) + "_mat" + str(facegroup.materialIndex)
         subObject = import_face_group_as_mesh(facegroup, geometryObject.geometryData.vertices, blenderMaterials, faceGroupName)
         subObject.parent = geoObjectParentObject
         subObjects.append(subObject)
