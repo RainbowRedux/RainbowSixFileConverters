@@ -19,6 +19,10 @@ class MAPLevelFile(FileFormatReader):
         self.materials = []
         self.geometryListHeader = None
         self.geometryObjects = []
+        self.portalList = []
+        self.lightList = []
+        self.objectList = []
+
         self.footer = None
         #Game version is not stored in file, and has to be determined by analysing the structure of stored materials. Stored here for easy use
         self.gameVersion = None
@@ -129,9 +133,9 @@ class RSMAPGeometryData(BinaryFileDataStructure):
         self.versionStringLength = None
         self.versionNumber = None
         self.versionString = None
-        self.objectNameLength = None
-        self.objectNameRaw = None
-        self.objectName = None
+        self.nameStringLength = None
+        self.nameStringRaw = None
+        self.nameString = None
 
     def read(self, filereader):
         super().read(filereader)

@@ -211,6 +211,10 @@ class SOBMeshDefinition(BinaryFileDataStructure):
 
         self.unknown9 = 0
 
+        self.nameStringLength = 0
+        self.nameStringRaw = None
+        self.nameString = None
+
     def read(self, filereader):
         super().read(filereader)
 
