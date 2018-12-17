@@ -12,7 +12,7 @@ from BlenderImporters import ImportMAP
 def ExportAllMaps():
     paths = []
     #paths.append("../Data/FullGames")
-    paths.append("../Data/Test/ReducedGames")
+    paths.append("D:\\R6Data\\Test\\ReducedGames\\R6GOG")
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths

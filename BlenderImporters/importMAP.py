@@ -139,19 +139,19 @@ def create_spotlight_from_light_specification(lightSpec):
     lamp_data = None
     if math.isclose(lightSpec.falloff, 0.0):
         print("point")
-        lamp_data = bpy.data.lamps.new(name=lightSpec.nameString + "_pointdata", type='POINT')
+        lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_pointdata", type='POINT')
     else:
         print("spot")
-        lamp_data = bpy.data.lamps.new(name=lightSpec.nameString + "_spotdata", type='SPOT')
+        lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_spotdata", type='SPOT')
         lamp_data.spot_size = radians(lightSpec.falloff)
         lamp_data.show_cone = True
     # Create new object with our lamp datablock
     lamp_object = bpy.data.objects.new(name=lightSpec.nameString, object_data=lamp_data)
     # Link lamp object to the scene so it'll appear in this scene
-    bpy.context.scene.objects.link(lamp_object)
+    bpy.context.scene.collection.objects.link(lamp_object)
     # And finally select it make active
-    lamp_object.select = True
-    bpy.context.scene.objects.active = lamp_object
+    lamp_object.select_set(True)
+    bpy.context.view_layer.objects.active = lamp_object
 
     # Place lamp to a specified location
     position = lightSpec.position
@@ -169,7 +169,7 @@ def create_spotlight_from_light_specification(lightSpec):
 
     #correct the incorrect rotation due to coordinate system conversion
     coordSystemConversionQuat = mathutils.Euler((radians(-90), 0, 0)).to_quaternion()
-    finalQuat = importedQuat * coordSystemConversionQuat
+    finalQuat = importedQuat @ coordSystemConversionQuat
     lamp_object.rotation_euler = finalQuat.to_euler()
 
     
@@ -185,9 +185,9 @@ def create_spotlight_from_light_specification(lightSpec):
     lamp_data.quadratic_coefficient = lightSpec.quadraticAttenuation
 
     lamp_data.energy = 1.0
+    lamp_data.use_custom_distance = True
     lamp_data.distance = lightSpec.energy
-    lamp_data.use_sphere = True
-    lamp_data.shadow_method = 'NOSHADOW'
+    lamp_data.use_shadow = False
 
 
     #lamp_data.specular_factor = lightSpec.unknown7
@@ -199,7 +199,7 @@ def import_lights(lightlist):
     lightGroup.location = (0,0,0)
     lightGroup.show_name = True
     # Link object to scene
-    bpy.context.scene.objects.link(lightGroup)
+    bpy.context.scene.collection.objects.link(lightGroup)
     lightGroup.rotation_euler = (radians(90),0,0)
 
     for light in lightlist.lights:
