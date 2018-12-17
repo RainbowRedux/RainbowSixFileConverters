@@ -1,5 +1,6 @@
 import bpy
 import bmesh
+from bpy_extras import node_shader_utils
 
 import os
 
@@ -40,8 +41,10 @@ def set_blender_render_unit_scale_options():
     bpy.context.scene.unit_settings.scale_length = 0.01
 
 def set_environment_lighting_enabled(bEnabled):
-    for world in bpy.data.worlds:
-        world.light_settings.use_environment_light = bEnabled
+    #TODO: Change how environment lighting is setup in Blender 2.8. This will be something to do with an HDRI
+    pass
+    #for world in bpy.data.worlds:
+    #    world.light_settings.use_environment_light = bEnabled
 
 def setup_blank_scene():
     #bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -55,7 +58,7 @@ def create_blender_blank_object(name):
     newBlankObject.location = (0,0,0)
     newBlankObject.show_name = True
     # Link object to scene
-    bpy.context.scene.objects.link(newBlankObject)
+    bpy.context.scene.collection.objects.link(newBlankObject)
 
     return newBlankObject
 
@@ -67,7 +70,7 @@ def create_blender_mesh_object(name, existingMesh=None):
     newObject.location = (0,0,0)
     newObject.show_name = True
     # Link object to scene
-    bpy.context.scene.objects.link(newObject)
+    bpy.context.scene.collection.objects.link(newObject)
     return (newMesh, newObject)
 
 def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalObject ):
@@ -77,7 +80,8 @@ def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalO
     newObjMeshCopy.name = newObjectName + "Mesh"
     
     #select the object
-    bpy.context.scene.objects.active = newSubBlendObject
+    newSubBlendObject.select_set(True)
+    bpy.context.view_layer.objects.active = newSubBlendObject
 
     bpy.ops.object.mode_set(mode='EDIT')
 
@@ -96,7 +100,7 @@ def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalO
     # https://blender.stackexchange.com/a/1542
     DEL_FACES = 5
     DEL_ALL = 6
-    bmesh.ops.delete(bmDelFaces, geom=selectedFaces, context=DEL_FACES)  
+    bmesh.ops.delete(bmDelFaces, geom=selectedFaces, context="FACES")  
 
     # Push the changes back to edit mode and change to object mode
     bmesh.update_edit_mesh(newObjMeshCopy, True)
@@ -143,7 +147,7 @@ def remove_unused_materials_from_mesh_object(objectToClean):
     j = 0
     for i in range(numMaterials):
         if i not in materialIndicesInUse:
-            objectToClean.data.materials.pop(j, True)
+            objectToClean.data.materials.pop(index=j, update_data=True)
             j -= 1
         j += 1
 
@@ -194,8 +198,9 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
     gameDataPath is meant to be the Data folder within the games installation
         directory, as that directory structure is used when loading textures"""
 
-    # set new material to variable
+    #Create new material
     newMaterial = bpy.data.materials.new(name=materialSpecification.materialName)
+    newMaterialBSDFWrap = node_shader_utils.PrincipledBSDFWrapper(newMaterial, is_readonly=False)
     
     globalTexturePath = os.path.join(gameDataPath, R6Settings.paths["TexturePath"])
     globalTexturePath = os.path.normpath(globalTexturePath)
@@ -217,20 +222,18 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
         # Load the image
         texImage = bpy.data.images.load(texToLoad)
         # Create texture from image
-        newTexture = bpy.data.textures.new(textureName, type = 'IMAGE')
-        newTexture.image = texImage
 
         # Add texture slot for color texture
-        textureSlot = newMaterial.texture_slots.add()
-        textureSlot.texture = newTexture
-
-        textureSlot.use_map_color_diffuse = True
-        textureSlot.texture_coords = 'UV'
+        #textureSlot = newMaterial.texture_paint_slots.add()
+        
 
         if materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Opaque:
-            newTexture.use_alpha = True
-            textureSlot.use_map_alpha = True
-            textureSlot.alpha_factor = materialSpecification.opacity
+            pass
+            newMaterialBSDFWrap.base_color_texture.use_alpha = True
+            #textureSlot.use_map_alpha = True
+            #textureSlot.alpha_factor = materialSpecification.opacity
+        newMaterialBSDFWrap.base_color_texture.image = texImage
+        newMaterialBSDFWrap.base_color_texture.texcoords = 'UV'
 
     materialBlendMode = "opaque"
     if materialSpecification.alphaMethod == SOBAlphaMethod.SAM_MethodLookup:
@@ -239,27 +242,31 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
 
 
     if materialBlendMode != "opaque":
-        print(materialSpecification.materialName)
-        print(str(materialSpecification.alphaMethod))
-        print(str(SOBAlphaMethod.SAM_Opaque))
-        newMaterial.use_transparency = True
+        #TODO: Enable proper translucency in blender 2.8
+        #TODO: Toggle shadows in blender 2.8
+        #newMaterial.use_transparency = True
         #Blenders material transparency method is different to how masked alpha would work in a game engine,
         # this still provides alpha blending, but if you use Z method the transparent part of the surface
         # still has specular properties. In this instance, MASK provides expected results
         #On further reflection, this might actually be desired. Left the comments here and other parameters which can be tweaked as more areas are tested. This also has the benefit of allowing transparency to work in Rendered mode.
         #newMaterial.transparency_method = 'MASK'
-        newMaterial.transparency_method = 'Z_TRANSPARENCY'
+        if materialBlendMode == "colorkey":
+            #TODO: Setup a node in material to mask based on the colorkey color
+            newMaterial.blend_method = 'CLIP'
+        else:
+            newMaterial.blend_method = 'BLEND'
         #newMaterial.specular_alpha = 0.0
 
         #disable shadowing on translucent materials, as unexpected results occur otherwise
-        newMaterial.use_cast_shadows = False
-        newMaterial.use_shadows = False
+        #TODO: Reenable the options for toggling shadows when API is better documented
+        #newMaterialBSDFWrap.use_cast_shadows = False
+        #newMaterialBSDFWrap.use_shadows = False
 
         if texToLoad is not None:
-            newMaterial.alpha = 0.0
+            newMaterialBSDFWrap.transmission = 0.0
         else:
             #TODO: Check that opacity is not used when alphaMethod == 1 or SAM_Opaque
-            newMaterial.alpha = materialSpecification.opacity
+            newMaterialBSDFWrap.transmission = materialSpecification.opacity
 
     # TODO: work out if materialSpecification.ambient should be averaged and applied
     # to newMaterial.ambient, or if it's for the lighting model that might be
@@ -271,7 +278,7 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
         newMaterial.diffuse_color = normalize_color(materialSpecification.diffuse)[0:3]  # change color
         newMaterial.specular_color = normalize_color(materialSpecification.specular)[0:3]
     newMaterial.specular_intensity = materialSpecification.specularLevel
-    newMaterial.use_vertex_color_light = True
+    #newMaterial.use_vertex_color_light = True
 
 
     return newMaterial
