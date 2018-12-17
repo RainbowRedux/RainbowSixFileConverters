@@ -114,11 +114,7 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
 def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
     geoObjName = geometryObject.nameString
 
-    geoObjectParentObject = bpy.data.objects.new(geoObjName, None)
-    geoObjectParentObject.location = (0,0,0)
-    geoObjectParentObject.show_name = True
-    # Link object to scene
-    bpy.context.scene.objects.link(geoObjectParentObject)
+    geoObjectParentObject = BlenderUtils.create_blender_blank_object(geoObjName)
 
     #fix up rotation
     geoObjectParentObject.rotation_euler = (radians(90),0,0)

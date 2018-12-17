@@ -50,6 +50,15 @@ def setup_blank_scene():
     set_environment_lighting_enabled(True)
     pass
 
+def create_blender_blank_object(name):
+    newBlankObject = bpy.data.objects.new(name, None)
+    newBlankObject.location = (0,0,0)
+    newBlankObject.show_name = True
+    # Link object to scene
+    bpy.context.scene.objects.link(newBlankObject)
+
+    return newBlankObject
+
 def create_blender_mesh_object(name, existingMesh=None):
     newMesh = existingMesh
     if newMesh is None:
@@ -65,6 +74,7 @@ def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalO
     #Copy master mesh into new object
     newObjMeshCopy = originalObject.data.copy()
     newObjMeshCopy, newSubBlendObject = create_blender_mesh_object(newObjectName, newObjMeshCopy)
+    newObjMeshCopy.name = newObjectName + "Mesh"
     
     #select the object
     bpy.context.scene.objects.active = newSubBlendObject
@@ -200,14 +210,14 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
         print("Failed to find texture: " + str(textureName))
     else:
         print("Final texture to load: " + str(texToLoad))
-        
+
     #TODO: Refactor texture loading, expand to support image sequences
     if texToLoad is not None:
         # Texture loading code adapted from https://stackoverflow.com/q/19076062
         # Load the image
         texImage = bpy.data.images.load(texToLoad)
         # Create texture from image
-        newTexture = bpy.data.textures.new('ColorTex', type = 'IMAGE')
+        newTexture = bpy.data.textures.new(textureName, type = 'IMAGE')
         newTexture.image = texImage
 
         # Add texture slot for color texture

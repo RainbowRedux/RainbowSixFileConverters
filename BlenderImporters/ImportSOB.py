@@ -25,16 +25,17 @@ errorList = []
 def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     name = geometryObject.nameString
 
-    geoObjBlendMesh, geoObjBlendObject = BlenderUtils.create_blender_mesh_object(name)
-    #attach_materials_to_blender_object(geoObjBlendObject, blenderMaterials)
+    geoObjBlendMeshMaster, geoObjBlendObjectMaster = BlenderUtils.create_blender_mesh_object(name + "_TEMPMASTER")
+
+    geoObjectParentObject = BlenderUtils.create_blender_blank_object(name)
 
     #fix up rotation
-    geoObjBlendObject.rotation_euler = (radians(90),0,0)
+    geoObjectParentObject.rotation_euler = (radians(90),0,0)
     #rot1 = mathutils.Euler((0, 0, radians(-90))).to_quaternion()
     #rot2 = mathutils.Euler((0, radians(90), 0)).to_quaternion()
     #finalRot = rot2*rot1
     #eulerRot = finalRot.to_euler()
-    #geoObjBlendObject.rotation_euler = eulerRot
+    #geoObjBlendObjectMaster.rotation_euler = eulerRot
 
     ########################################
     # Conform faces to desired data structure
@@ -48,10 +49,10 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     for vert in geometryObject.vertices:
         vert[0] = vert[0] * -1
 
-    BlenderUtils.add_mesh_geometry(geoObjBlendMesh, geometryObject.vertices, faces)
+    BlenderUtils.add_mesh_geometry(geoObjBlendMeshMaster, geometryObject.vertices, faces)
 
     numTotalFaces = geometryObject.faceCount
-    numCreatedFaces = len(geoObjBlendObject.data.polygons)
+    numCreatedFaces = len(geoObjBlendObjectMaster.data.polygons)
 
     if numCreatedFaces != numTotalFaces:
         raise ValueError("Not enough faces created")
@@ -63,7 +64,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     ########################################
 
     newBmesh = bmesh.new()
-    newBmesh.from_mesh(geoObjBlendMesh)
+    newBmesh.from_mesh(geoObjBlendMeshMaster)
     color_layer = newBmesh.loops.layers.color.new("color")
     uv_layer = newBmesh.loops.layers.uv.verify()
     newBmesh.faces.layers.tex.verify()  # currently blender needs both layers.
@@ -112,9 +113,9 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     # Copy from bmesh back to mesh
     ########################################
     
-    newBmesh.to_mesh(geoObjBlendMesh)
+    newBmesh.to_mesh(geoObjBlendMeshMaster)
     newBmesh.free()
-    geoObjBlendMesh.update(calc_edges=True)
+    geoObjBlendMeshMaster.update(calc_edges=True)
 
     ########################################
     # Apply Materials per face
@@ -122,8 +123,8 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     materialMapping = {}
     reducedMaterials = []
     #TODO: Remove the reduced materials mapping which is just overcomplicating things, there is a cleanup pass at the end anyway
-    for i in range(len(geoObjBlendMesh.polygons)):
-        poly = geoObjBlendMesh.polygons[i]
+    for i in range(len(geoObjBlendMeshMaster.polygons)):
+        poly = geoObjBlendMeshMaster.polygons[i]
         faceProperties = geometryObject.faces[i]
         #Do not assign a material if index is UINT_MAX
         if faceProperties.materialIndex == R6Constants.UINT_MAX:
@@ -131,7 +132,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
 
         if faceProperties.materialIndex not in materialMapping:
             reducedMaterials.append(blenderMaterials[faceProperties.materialIndex])
-            geoObjBlendObject.data.materials.append(blenderMaterials[faceProperties.materialIndex])
+            geoObjBlendObjectMaster.data.materials.append(blenderMaterials[faceProperties.materialIndex])
             materialMapping[faceProperties.materialIndex] = len(reducedMaterials) - 1
         
         poly.material_index = materialMapping[faceProperties.materialIndex]
@@ -145,27 +146,28 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
         newObjectName = geometryObject.nameString + "_" + rsemesh.nameString + "_idx" + str(index)
         uniqueFaceIndicies = list(set(rsemesh.faceIndices))
         
-        newSubBlendObject = BlenderUtils.clone_mesh_object_with_specified_faces(newObjectName, uniqueFaceIndicies, geoObjBlendObject)
+        newSubBlendObject = BlenderUtils.clone_mesh_object_with_specified_faces(newObjectName, uniqueFaceIndicies, geoObjBlendObjectMaster)
 
         if newSubBlendObject is not None:
-            newSubBlendObject.parent = geoObjBlendObject
+            newSubBlendObject.parent = geoObjectParentObject
             createdSubMeshes.append(newSubBlendObject)
             #newSubBlendObject.rotation_euler = (radians(90),0,0)
 
-
     #clean used materials from each object
     objectsToCleanMaterialsFrom = createdSubMeshes.copy()
-    objectsToCleanMaterialsFrom.append( geoObjBlendObject)
+    objectsToCleanMaterialsFrom.append( geoObjBlendObjectMaster)
     for objectToClean in objectsToCleanMaterialsFrom:
         BlenderUtils.remove_unused_materials_from_mesh_object(objectToClean)
 
-
     #delete original master mesh data
-    bpy.context.scene.objects.active = geoObjBlendObject
+    bpy.context.scene.objects.active = geoObjBlendObjectMaster
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.mesh.delete(type='FACE') # will be acted on.
     bpy.ops.object.mode_set(mode='OBJECT')
+
+    bpy.data.meshes.remove(geoObjBlendMeshMaster)
+
     print("Number of mesh split errors: " + str(errorCount))
     for err in errorList:
         print(err)
