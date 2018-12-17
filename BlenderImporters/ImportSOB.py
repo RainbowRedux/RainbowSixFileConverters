@@ -15,7 +15,7 @@ from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders import R6Constants
 from RainbowFileReaders.R6Constants import UINT_MAX
-from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
+from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float, pad_color
 
 from BlenderImporters import BlenderUtils
 
@@ -67,7 +67,6 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     newBmesh.from_mesh(geoObjBlendMeshMaster)
     color_layer = newBmesh.loops.layers.color.new("color")
     uv_layer = newBmesh.loops.layers.uv.verify()
-    newBmesh.faces.layers.tex.verify()  # currently blender needs both layers.
 
     print("Number of faces: " + str(len(newBmesh.faces)))
 
@@ -83,6 +82,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
         for vert_index, vert in enumerate(face.loops):
             importedColor = geometryObject.vertexParams[importedParamIndices[vert_index]].color
             importedColor = normalize_color(importedColor)
+            importedColor = pad_color(importedColor)
             vert[color_layer] = importedColor
 
     ########################################
@@ -159,19 +159,12 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     for objectToClean in objectsToCleanMaterialsFrom:
         BlenderUtils.remove_unused_materials_from_mesh_object(objectToClean)
 
-    #delete original master mesh data
-    bpy.context.scene.objects.active = geoObjBlendObjectMaster
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.delete(type='FACE') # will be acted on.
-    bpy.ops.object.mode_set(mode='OBJECT')
-
     bpy.data.meshes.remove(geoObjBlendMeshMaster)
 
     print("Number of mesh split errors: " + str(errorCount))
     for err in errorList:
         print(err)
-
+    
 
 def import_SOB_to_scene(filename):
     SOBObject = SOBModelReader.SOBModelFile()

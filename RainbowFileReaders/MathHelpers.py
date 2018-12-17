@@ -8,6 +8,17 @@ def normalize_color(color):
         normColor.append(el / 255)
     return tuple(normColor)
 
+def pad_color(color):
+    """ take an iterable object with values 0-255, and convert to 0.0-1.0 range
+    returns tuple"""
+    paddedColor = []
+    for el in color:
+        paddedColor.append(el)
+
+    while len(paddedColor) < 4:
+        paddedColor.append(1.0)
+    return tuple(paddedColor)
+
 def sanitize_float(inFloat):
     """converts float to string, with maximum of 8 decimal places, avoiding e-notation"""
     return "{0:.8f}".format(inFloat)
