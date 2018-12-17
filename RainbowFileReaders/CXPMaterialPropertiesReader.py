@@ -107,6 +107,7 @@ def read_cxp(path):
         newMat = CXPMaterialProperties()
         try:
             newMat.read(keywords)
+            MaterialProperties.append(newMat)
         except:
             #In this instance, there is an invalid CXP material
             #One such instance is the Rommel.CXP file in the classic missions included with Urban Operations includes an extra "End" statement at the bottom, which is invalid
@@ -114,7 +115,6 @@ def read_cxp(path):
             discardedWord = keywords.pop(0)
             print("Skipping invalid material definition in CXP")
             print("\tDiscarded keyword: " + discardedWord)
-        MaterialProperties.append(newMat)
     return MaterialProperties
 
 def load_relevant_cxps(datapath, modpath = None):
