@@ -184,9 +184,10 @@ def create_spotlight_from_light_specification(lightSpec):
     lamp_data.linear_coefficient = lightSpec.linearAttenuation
     lamp_data.quadratic_coefficient = lightSpec.quadraticAttenuation
 
-    lamp_data.energy = 1.0
-    lamp_data.use_custom_distance = True
-    lamp_data.distance = lightSpec.energy
+    #TODO: Fix these approximations
+    lamp_data.energy = lightSpec.energy * 10
+    #lamp_data.use_custom_distance = True
+    #lamp_data.distance = lightSpec.energy
     lamp_data.use_shadow = False
 
 

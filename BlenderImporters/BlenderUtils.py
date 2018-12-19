@@ -97,9 +97,6 @@ def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalO
         else:
             selectedFaces.append(bmDelFaces.faces[i])
 
-    # https://blender.stackexchange.com/a/1542
-    DEL_FACES = 5
-    DEL_ALL = 6
     bmesh.ops.delete(bmDelFaces, geom=selectedFaces, context="FACES")  
 
     # Push the changes back to edit mode and change to object mode
@@ -108,8 +105,6 @@ def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalO
 
     numFacesToKeep = len(faceIndices)
     numFacesRemaining = len(newSubBlendObject.data.polygons)
-    print("Number of faces to select: " + str(numFacesToKeep))
-    print("Number of faces left: " + str(numFacesRemaining))
 
     if numFacesRemaining != numFacesToKeep:
         print("Face count mismatch!")
