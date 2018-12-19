@@ -15,7 +15,7 @@ from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders import R6Constants
 from RainbowFileReaders.R6Constants import UINT_MAX, RSEGameVersions, RSELightTypes
-from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
+from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float, pad_color
 
 from BlenderImporters import ImportSOB
 from BlenderImporters.ImportSOB import create_mesh_from_RSGeometryObject
@@ -44,7 +44,7 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
     newBmesh.from_mesh(geoObjBlendMesh)
     color_layer = newBmesh.loops.layers.color.new("color")
     uv_layer = newBmesh.loops.layers.uv.verify()
-    newBmesh.faces.layers.tex.verify()  # currently blender needs both layers.
+    #newBmesh.faces.layers.tex.verify()  # currently blender needs both layers.
 
     ########################################
     # Apply Vertex Colors
@@ -58,7 +58,7 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
         for vert_index, vert in enumerate(face.loops):
             importedColor = faceGroup.vertexParams.colors[importedParamIndices[vert_index]]
             importedColor = normalize_color(importedColor)[0:3]
-            vert[color_layer] = importedColor
+            vert[color_layer] = pad_color(importedColor)
 
     ########################################
     # Apply UV Mapping
