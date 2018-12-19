@@ -88,6 +88,17 @@ def determine_data_paths_for_file(filename):
 
     return (gamePath, baseDataPath, modPath)
 
+def get_relevant_texture_paths(filename):
+    filepath = os.path.dirname(filename)
+    texturePaths = []
+    texturePaths.append(filepath)
+    dataPaths = determine_data_paths_for_file(filename)[1:]
+    for path in dataPaths:
+        if path is not None:
+            texturePaths.append(path + paths["TexturePath"])
+
+    return texturePaths
+
 
 if __name__ == "__main__":
     #A path that should work, with no mod

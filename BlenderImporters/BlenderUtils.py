@@ -146,11 +146,11 @@ def remove_unused_materials_from_mesh_object(objectToClean):
             j -= 1
         j += 1
 
-def create_blender_materials_from_list(materialList, filepath, gameDataPath):
+def create_blender_materials_from_list(materialList, texturePaths):
     blenderMaterials = []
 
     for materialSpec in materialList:
-        newMaterial = create_material_from_RSE_specification(materialSpec, filepath, gameDataPath)
+        newMaterial = create_material_from_RSE_specification(materialSpec, texturePaths)
         blenderMaterials.append(newMaterial)
     
     return blenderMaterials
@@ -183,7 +183,7 @@ def find_texture(filename, dataPath):
     return result
 
 
-def create_material_from_RSE_specification(materialSpecification, filepath, gameDataPath):
+def create_material_from_RSE_specification(materialSpecification, texturePaths):
     """Creates a material from an RSE specification.
     This does ignore some values that don't map well to PBR and don't influence model behaviour much.
     Materials will be more finely tuned in the game engine.
@@ -196,16 +196,17 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
     #Create new material
     newMaterial = bpy.data.materials.new(name=materialSpecification.materialName)
     newMaterialBSDFWrap = node_shader_utils.PrincipledBSDFWrapper(newMaterial, is_readonly=False)
-    
-    globalTexturePath = os.path.join(gameDataPath, R6Settings.paths["TexturePath"])
-    globalTexturePath = os.path.normpath(globalTexturePath)
 
-    textureName = materialSpecification.textureName
-    #load from model/map local directory first
-    texToLoad = find_texture(textureName, filepath)
-    # if unable to find the texture, find in the global texture path
-    if texToLoad is None:
-        texToLoad = find_texture(textureName, globalTexturePath)
+    textureName = materialSpecification.textureName    
+    texToLoad = None
+
+    #Search for texture to load
+    for path in texturePaths:
+        texToLoad = find_texture(textureName, path)
+        #if a texture was found, don't continue searching
+        if texToLoad is not None:
+            break
+
     if texToLoad is None:
         print("Failed to find texture: " + str(textureName))
     else:
@@ -217,10 +218,8 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
         # Load the image
         texImage = bpy.data.images.load(texToLoad)
         # Create texture from image
-
         # Add texture slot for color texture
         #textureSlot = newMaterial.texture_paint_slots.add()
-        
 
         if materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Opaque:
             pass

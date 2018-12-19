@@ -11,6 +11,7 @@
 - CXP - Text - Texture/Material metadata such as color keying and animation properties
 - SOB - Binary - Static objects. Mainly used in R6, amd appears to be leftovers in RS. **S**herman **OB**jects?
 - ROB - Binary - Static objects. Used in RS. **R**ommel **OB**jects?
+- QOB - Binary - Static objects
 
 ## Map related files
 
@@ -20,3 +21,10 @@
 - MAP - Binary - Map file, geo, materials, portals
 - DMP - Binary - Light data that is no longer stored in MAP files in Rogue Spear/Rommel
 - RLV - Binary - ??? - stored alongside roguespear maps
+
+## Character related files
+
+- BCL - Binary - ??
+- CRP - Binary - Character model?
+- DAM - Binary - Motion/Anim Data?
+- SKL - Binary - Skeleton?

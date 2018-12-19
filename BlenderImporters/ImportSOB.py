@@ -163,18 +163,13 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
 def import_SOB_to_scene(filename):
     SOBObject = SOBModelReader.SOBModelFile()
     SOBObject.read_file(filename)
-    filepath = os.path.dirname(filename)
     
     print("")
     print("Beginning import")
 
-    print("File is in directory: " + filepath)
-    gameDataPath = os.path.split(filepath)[0]
-    print("Assuming gamepath is: " + gameDataPath)
+    texturePaths = R6Settings.get_relevant_texture_paths(filename)
 
-    #TODO Add step for converting from LHS to RHS, and probably rotating to having another axis as the up axis
-
-    blenderMaterials = BlenderUtils.create_blender_materials_from_list(SOBObject.materials, filepath, gameDataPath)
+    blenderMaterials = BlenderUtils.create_blender_materials_from_list(SOBObject.materials, texturePaths)
 
     for geoObj in SOBObject.geometryObjects:
         create_mesh_from_RSGeometryObject(geoObj, blenderMaterials)

@@ -211,19 +211,15 @@ def import_lights(lightlist):
 def import_MAP_to_scene(filename):
     MAPObject = MAPLevelReader.MAPLevelFile()
     MAPObject.read_file(filename)
-    filepath = os.path.dirname(filename)
     
     BlenderUtils.setup_blank_scene()
 
     print("")
     print("Beginning import")
 
-    print("File is in directory: " + filepath)
-    gameDataPath = os.path.split(filepath)[0]
-    gameDataPath = os.path.split(gameDataPath)[0]
-    print("Assuming gamepath is: " + gameDataPath)
+    texturePaths = R6Settings.get_relevant_texture_paths(filename)
 
-    blenderMaterials = BlenderUtils.create_blender_materials_from_list(MAPObject.materials, filepath, gameDataPath)
+    blenderMaterials = BlenderUtils.create_blender_materials_from_list(MAPObject.materials, texturePaths)
 
     if MAPObject.gameVersion == RSEGameVersions.RAINBOW_SIX:
         for geoObj in MAPObject.geometryObjects:
