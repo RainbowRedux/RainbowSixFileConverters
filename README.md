@@ -2,16 +2,29 @@
 
 These collection of python scripts will allow you to extract data from Rainbow Six, Eagle Watch and Rogue Spear.
 
+## Modules
+This project consists of several python modules.
+
+- RainbowFileReaders - This module is dedicated to reading the Files from Rainbow Six, Rogue Spear and other Red Storm Entertainment games.
+- FileWriters - This module consists of a few utility classes which are used in RainbowFileReaders
+- BlenderImporters - Uses RainbowFileReaders to read files and then import the data to Blender.
+
 ## Requirements
+
+### RainbowFileReaders
 
 - Python 3.6 & 3.7
 - Pillow 5.0 is required for the RSB conversion utility
+
+### BlenderImporters
+
+- Blender 2.8
 
 ## Notes on file formats and code
 
 In almost all of the converters there are several fields which are unknown. These are stored in the classes as well as in the accompanying JSON files, and are labelled in ascending order, such as "unknown1". I've tried to account for later versions of the files even though i'm not focusing on those versions for this project, so these field names/numbers will still be taken into account.
 
-For the avoidance of confusing, the shorthand abreviations and prefixes that are used in code are:
+For the avoidance of confusion, the shorthand abreviations and prefixes that are used in code are:
 
 - **RSE** - Red Storm Entertainment, shared data structures, or datastructures that can be conformed easily with a few variations between versions
 - **R6** - Rainbow Six, Eagle Watch. The first game and mission pack in the series
