@@ -1,23 +1,17 @@
 from PIL import Image
 import time
-import DirectoryProcessor
 import json
 
 from RainbowFileReaders import MAPLevelReader
-from FileWriters import JSONMetaInfo, OBJModelWriter
+from FileUtilities import JSONMetaInfo, OBJModelWriter, DirectoryProcessor
 from RainbowFileReaders.R6Constants import RSEGameVersions
 
 lightTypes = []
 
-def convert_MAP(filename):
-    print("Processing: " + filename)
-
-    modelFile = MAPLevelReader.MAPLevelFile()
-    modelFile.read_file(filename, False)
-
+def strip_extra_data_for_json(mapFile):
     #strip out lengthy data which is already being interpreted correctly to make it easier for humans to view the json file
-    for geometryObject in modelFile.geometryObjects:
-        if modelFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
+    for geometryObject in mapFile.geometryObjects:
+        if mapFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
             geometryObject.vertices = ["Stripped from JSON"]
             geometryObject.vertexParams = ["Stripped from JSON"]
             geometryObject.faces = ["Stripped from JSON"]
@@ -27,9 +21,17 @@ def convert_MAP(filename):
             pass
             geometryObject.geometryData.vertices = ["Stripped from JSON"]
             geometryObject.geometryData.faceGroups = ["Stripped from JSON"]
+    pass
 
+def convert_MAP(filename):
+    print("Processing: " + filename)
+
+    mapFile = MAPLevelReader.MAPLevelFile()
+    mapFile.read_file(filename, False)
+
+    strip_extra_data_for_json(mapFile)
     
-    for light in modelFile.lightList.lights:
+    for light in mapFile.lightList.lights:
             if light.type not in lightTypes:
                 lightTypes.append(light.type)
 
