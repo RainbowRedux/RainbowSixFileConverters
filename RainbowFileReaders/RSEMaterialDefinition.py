@@ -40,9 +40,9 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
         self.opacity = None
         self.unknown2 = None
         self.alphaMethod = None
-        self.ambient = None
-        self.diffuse = None
-        self.specular = None
+        self.ambientColor = None
+        self.diffuseColor = None
+        self.specularColor = None
         self.specularLevel = None
         self.twoSidedRaw = None
         self.twoSided = None
@@ -112,15 +112,15 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
         #check if it's a rainbow six file, or rogue spear file
         if gameVer == RSEGameVersions.RAINBOW_SIX:
             # Rainbow Six files typically have material sizes this size, or contain no version number
-            self.ambient = filereader.read_rgb_color_24bpp_uint()
-            self.diffuse = filereader.read_rgb_color_24bpp_uint()
-            self.specular = filereader.read_rgb_color_24bpp_uint()
+            self.ambientColor = filereader.read_rgb_color_24bpp_uint()
+            self.diffuseColor = filereader.read_rgb_color_24bpp_uint()
+            self.specularColor = filereader.read_rgb_color_24bpp_uint()
             self.normalizedColors = False
         elif gameVer == RSEGameVersions.ROGUE_SPEAR:
             #It's probably a Rogue Spear file
-            self.ambient = filereader.read_rgba_color_32bpp_float()
-            self.diffuse = filereader.read_rgba_color_32bpp_float()
-            self.specular = filereader.read_rgba_color_32bpp_float()
+            self.ambientColor = filereader.read_rgba_color_32bpp_float()
+            self.diffuseColor = filereader.read_rgba_color_32bpp_float()
+            self.specularColor = filereader.read_rgba_color_32bpp_float()
             self.normalizedColors = True
         else:
             print("Unhandled case")

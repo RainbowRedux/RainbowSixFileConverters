@@ -272,13 +272,14 @@ def create_material_from_RSE_specification(materialSpecification, filepath, game
     # to newMaterial.ambient, or if it's for the lighting model that might be
     # specified in materialSpecification.unknown2
     if materialSpecification.normalizedColors:
-        newMaterial.diffuse_color = materialSpecification.diffuse[0:3]  # change color
-        newMaterial.specular_color = materialSpecification.specular[0:3]
+        newMaterial.diffuse_color = materialSpecification.diffuseColor[0:3]  # change color
+        newMaterial.specular_color = materialSpecification.specularColor[0:3]
     else:
-        newMaterial.diffuse_color = normalize_color(materialSpecification.diffuse)[0:3]  # change color
-        newMaterial.specular_color = normalize_color(materialSpecification.specular)[0:3]
-    newMaterial.specular_intensity = materialSpecification.specularLevel
+        newMaterial.diffuse_color = normalize_color(materialSpecification.diffuseColor)[0:3]  # change color
+        newMaterial.specular_color = normalize_color(materialSpecification.specularColor)[0:3]
+    newMaterialBSDFWrap.specular = materialSpecification.specularLevel
     #newMaterial.use_vertex_color_light = True
 
 
     return newMaterial
+
