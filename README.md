@@ -44,7 +44,7 @@ Please refer to the [wiki](https://github.com/boristsr/RainbowSixFileConverters/
 
 ### Commandline
 
-Highly recommend the user of virtualenvwrapper. Currently paths are hardcoded into the python files, this will change ASAP. for now look near the bottom of the Converter.py scripts and add your path by changing the following lines:
+Highly recommend the use of virtualenvwrapper. Currently paths are hardcoded into the python files, this will change ASAP, but for now look near the bottom of the Converter.py scripts and add your path by changing the following lines:
 
 ```python
 paths = []
