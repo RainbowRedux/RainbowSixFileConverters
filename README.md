@@ -6,7 +6,7 @@ These collection of python scripts will allow you to extract data from Rainbow S
 This project consists of several python modules.
 
 - RainbowFileReaders - This module is dedicated to reading the Files from Rainbow Six, Rogue Spear and other Red Storm Entertainment games.
-- FileWriters - This module consists of a few utility classes which are used in RainbowFileReaders
+- FileUtilities - This module consists of a few utility classes which are used in RainbowFileReaders
 - BlenderImporters - Uses RainbowFileReaders to read files and then import the data to Blender.
 
 ## Requirements

@@ -9,7 +9,7 @@ def normalize_color(color):
     return tuple(normColor)
 
 def pad_color(color):
-    """ take an iterable object with values 0-255, and convert to 0.0-1.0 range
+    """ take an iterable object, and add 1.0 elements until length is 4.
     returns tuple"""
     paddedColor = []
     for el in color:

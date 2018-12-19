@@ -1,5 +1,5 @@
-from RainbowFileReaders import BinaryConversionUtilities
-from RainbowFileReaders.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
+from FileUtilities import BinaryConversionUtilities
+from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
 from RainbowFileReaders.SOBModelReader import RSEGeometryListHeader, SOBGeometryObject

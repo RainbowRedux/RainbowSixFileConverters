@@ -138,10 +138,8 @@ def create_spotlight_from_light_specification(lightSpec):
     #https://stackoverflow.com/a/17355744
     lamp_data = None
     if math.isclose(lightSpec.falloff, 0.0):
-        print("point")
         lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_pointdata", type='POINT')
     else:
-        print("spot")
         lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_spotdata", type='SPOT')
         lamp_data.spot_size = radians(lightSpec.falloff)
         lamp_data.show_cone = True

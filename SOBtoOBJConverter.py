@@ -8,11 +8,11 @@
 from PIL import Image
 import time
 import os
-import DirectoryProcessor
+from FileUtilities import DirectoryProcessor
 import json
 
 from RainbowFileReaders import SOBModelReader
-from FileWriters import JSONMetaInfo, OBJModelWriter
+from FileUtilities import JSONMetaInfo, OBJModelWriter
 from RainbowFileReaders.MathHelpers import is_vector_normal
 
 def convert_SOB(filename):
@@ -67,7 +67,7 @@ def main():
     """Main function that converts test data files"""
     paths = []
     paths.append("../Data/Test")
-    paths.append("../Data/FullGames")
+    #paths.append("../Data/FullGames")
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths
@@ -75,8 +75,8 @@ def main():
 
     fp.processFunction = convert_SOB
 
-    #fp.run_sequential()
-    fp.run_async()
+    fp.run_sequential()
+    #fp.run_async()
 
 if __name__ == "__main__":
     main()

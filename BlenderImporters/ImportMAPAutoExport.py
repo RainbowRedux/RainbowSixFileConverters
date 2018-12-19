@@ -6,7 +6,7 @@ sys.path.insert(0, 'E:/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 
-import DirectoryProcessor
+from FileUtilities import DirectoryProcessor
 from BlenderImporters import ImportMAP
 
 def ExportAllMaps():

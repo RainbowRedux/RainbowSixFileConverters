@@ -17,8 +17,7 @@ import json
 import os
 
 from RainbowFileReaders.RSBImageReader import RSBImageFile
-from FileWriters import JSONMetaInfo
-import DirectoryProcessor
+from FileUtilities import JSONMetaInfo, DirectoryProcessor
 
 def convert_RSB(filename):
     print("Processing: " + filename)

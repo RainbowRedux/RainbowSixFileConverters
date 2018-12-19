@@ -68,8 +68,6 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
     color_layer = newBmesh.loops.layers.color.new("color")
     uv_layer = newBmesh.loops.layers.uv.verify()
 
-    print("Number of faces: " + str(len(newBmesh.faces)))
-
     ########################################
     # Apply Vertex Colors
     ########################################
@@ -160,10 +158,6 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
         BlenderUtils.remove_unused_materials_from_mesh_object(objectToClean)
 
     bpy.data.meshes.remove(geoObjBlendMeshMaster)
-
-    print("Number of mesh split errors: " + str(errorCount))
-    for err in errorList:
-        print(err)
     
 
 def import_SOB_to_scene(filename):

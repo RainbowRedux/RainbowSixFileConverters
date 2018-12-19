@@ -1,5 +1,5 @@
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEMaterialFormatConstants
-from RainbowFileReaders.BinaryConversionUtilities import BinaryFileDataStructure
+from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure
 import pprint
 
 class RSEMaterialListHeader(BinaryFileDataStructure):
