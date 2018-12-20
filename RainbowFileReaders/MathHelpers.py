@@ -8,6 +8,14 @@ def normalize_color(color):
         normColor.append(el / 255)
     return tuple(normColor)
 
+def unnormalize_color(color):
+    """ take an iterable object with values 0.0-1.0, and convert to 0-255 range
+    returns tuple"""
+    normColor = []
+    for el in color:
+        normColor.append(int(el * 255))
+    return tuple(normColor)
+
 def pad_color(color):
     """ take an iterable object, and add 1.0 elements until length is 4.
     returns tuple"""

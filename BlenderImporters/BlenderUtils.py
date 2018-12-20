@@ -265,13 +265,11 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
     # TODO: work out if materialSpecification.ambient should be averaged and applied
     # to newMaterial.ambient, or if it's for the lighting model that might be
     # specified in materialSpecification.unknown2
-    if materialSpecification.normalizedColors:
-        newMaterial.diffuse_color = materialSpecification.diffuseColor[0:3]  # change color
-        newMaterial.specular_color = materialSpecification.specularColor[0:3]
-    else:
-        newMaterial.diffuse_color = normalize_color(materialSpecification.diffuseColor)[0:3]  # change color
-        newMaterial.specular_color = normalize_color(materialSpecification.specularColor)[0:3]
+    newMaterial.diffuse_color = materialSpecification.diffuseColorFloat[0:3]  # change color
+    newMaterial.specular_color = materialSpecification.specularColorFloat[0:3]
+
     newMaterialBSDFWrap.specular = materialSpecification.specularLevel
+    newMaterialBSDFWrap.roughness = 1 - materialSpecification.specularLevel
     #newMaterial.use_vertex_color_light = True
 
 

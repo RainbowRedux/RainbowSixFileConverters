@@ -57,7 +57,7 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
         importedParamIndices = faceGroup.faceVertexParamIndices[face_index]
         for vert_index, vert in enumerate(face.loops):
             importedColor = faceGroup.vertexParams.colors[importedParamIndices[vert_index]]
-            importedColor = normalize_color(importedColor)[0:3]
+            importedColor = normalize_color(importedColor)
             vert[color_layer] = pad_color(importedColor)
 
     ########################################
@@ -137,12 +137,7 @@ def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
 def create_spotlight_from_light_specification(lightSpec):
     #https://stackoverflow.com/a/17355744
     lamp_data = None
-    if math.isclose(lightSpec.falloff, 0.0):
-        lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_pointdata", type='POINT')
-    else:
-        lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_spotdata", type='SPOT')
-        lamp_data.spot_size = radians(lightSpec.falloff)
-        lamp_data.show_cone = True
+    lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_pointdata", type='POINT')
     # Create new object with our lamp datablock
     lamp_object = bpy.data.objects.new(name=lightSpec.nameString, object_data=lamp_data)
     # Link lamp object to the scene so it'll appear in this scene
@@ -183,7 +178,8 @@ def create_spotlight_from_light_specification(lightSpec):
     lamp_data.quadratic_coefficient = lightSpec.quadraticAttenuation
 
     #TODO: Fix these approximations
-    lamp_data.energy = lightSpec.energy * 10
+    lamp_data.energy = lightSpec.energy * 25
+    lamp_data.shadow_soft_size = lightSpec.falloff
     #lamp_data.use_custom_distance = True
     #lamp_data.distance = lightSpec.energy
     lamp_data.use_shadow = False
@@ -248,16 +244,4 @@ def import_map_and_save(path):
 
 
 if __name__ == "__main__":
-    #"E:\Dropbox\Development\Rainbow\Data\R6GOG\data\map\m01\M01.map"
-    #import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\R6GOG\\data\\map\\m07\\m7.map")
-    #import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\R6GOG\\data\\map\\m01\\M01.map")
-    #"E:\Dropbox\Development\Rainbow\Data\RSDemo\data\map\rm01\rm01.map"
-    #import_MAP_to_scene("E:\\Dropbox\\Development\\Rainbow\\Data\\RSDemo\\data\\map\\rm01\\rm01.map")
-    #import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/RSDemo/data/map/rm01/rm01.map")
-    #import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m01/M01.map")
-    #import_MAP_to_scene("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m07/m7.map")
     import_MAP_to_scene(sys.argv[-1])
-
-    #import_map_and_save("/Users/philipedwards/Dropbox/Development/Rainbow/Data/RSDemo/data/map/rm01/rm01.map")
-    #import_map_and_save("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m01/M01.map")
-    #import_map_and_save("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/map/m07/m7.map")
