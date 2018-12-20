@@ -207,7 +207,7 @@ class SOBMeshDefinition(BinaryFileDataStructure):
         self.numFaceIndices = 0
         self.faceIndices = []
 
-        self.unknown7 = 0
+        self.geometryFlags = 0
 
         self.unknown9 = 0
 
@@ -231,8 +231,8 @@ class SOBMeshDefinition(BinaryFileDataStructure):
         self.numFaceIndices = filereader.read_uint()
         self.faceIndices = filereader.read_vec_uint(self.numFaceIndices)
 
-        #read unknown7
-        self.unknown7 = filereader.read_uint()
+        #read geometryFlags
+        self.geometryFlags = filereader.read_uint()
 
         #read unknown8
         self.read_named_string(filereader, "unknown8String")

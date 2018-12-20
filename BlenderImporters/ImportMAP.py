@@ -134,12 +134,12 @@ def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
     
     pass
 
-def create_spotlight_from_light_specification(lightSpec):
+def create_spotlight_from_light_specification(lightSpec, name):
     #https://stackoverflow.com/a/17355744
     lamp_data = None
     lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_pointdata", type='POINT')
     # Create new object with our lamp datablock
-    lamp_object = bpy.data.objects.new(name=lightSpec.nameString, object_data=lamp_data)
+    lamp_object = bpy.data.objects.new(name=name, object_data=lamp_data)
     # Link lamp object to the scene so it'll appear in this scene
     bpy.context.scene.collection.objects.link(lamp_object)
     # And finally select it make active
@@ -197,9 +197,10 @@ def import_lights(lightlist):
     bpy.context.scene.collection.objects.link(lightGroup)
     lightGroup.rotation_euler = (radians(90),0,0)
 
-    for light in lightlist.lights:
+    for idx, light in enumerate(lightlist.lights):
         if light.type == RSELightTypes.SPOTLIGHT:
-            newLamp = create_spotlight_from_light_specification(light)
+            name = light.nameString + "_idx" + str(idx)
+            newLamp = create_spotlight_from_light_specification(light, name)
             newLamp.parent = lightGroup
         else:
             print("Skipping light: " + light.nameString)
