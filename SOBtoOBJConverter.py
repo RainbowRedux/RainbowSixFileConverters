@@ -65,9 +65,8 @@ def write_OBJ(filename, SOBObject):
 
 def main():
     """Main function that converts test data files"""
-    paths = []
-    paths.append("../Data/Test")
-    #paths.append("../Data/FullGames")
+    import ProcessorPathsHelper
+    paths = ProcessorPathsHelper.get_paths()
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths

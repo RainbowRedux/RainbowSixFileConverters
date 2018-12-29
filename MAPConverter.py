@@ -43,10 +43,8 @@ def convert_MAP(filename):
 
 def main():
     """Main function that converts a test file"""
-    paths = []
-    #paths.append("../Data/Test")
-    paths.append("../Data/Test/ReducedGames")
-    #paths.append("../Data/FullGames")
+    import ProcessorPathsHelper
+    paths = ProcessorPathsHelper.get_paths()
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths
@@ -54,10 +52,12 @@ def main():
 
     fp.processFunction = convert_MAP
 
-    fp.run_sequential()
-    #fp.run_async()
+    #fp.run_sequential()
+    fp.run_async()
 
     print(lightTypes)
+    for err in flagErrors:
+        print(err)
 
 if __name__ == "__main__":
     main()
