@@ -11,7 +11,7 @@ from BlenderImporters import ImportMAP
 
 def ExportAllMaps():
     paths = []
-    paths.append("Test/ReducedGames")
+    paths.append("TestData/ReducedGames")
     import ProcessorPathsHelper
     paths = ProcessorPathsHelper.expand_paths(paths)
 

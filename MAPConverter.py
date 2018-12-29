@@ -8,6 +8,7 @@ from RainbowFileReaders.R6Constants import RSEGameVersions
 
 lightTypes = []
 
+
 def strip_extra_data_for_json(mapFile):
     #strip out lengthy data which is already being interpreted correctly to make it easier for humans to view the json file
     for geometryObject in mapFile.geometryObjects:
@@ -20,8 +21,13 @@ def strip_extra_data_for_json(mapFile):
         else:
             pass
             geometryObject.geometryData.vertices = ["Stripped from JSON"]
-            geometryObject.geometryData.faceGroups = ["Stripped from JSON"]
+            for facegroup in geometryObject.geometryData.faceGroups:
+                facegroup.faceVertexIndices = ["Stripped from JSON"]
+                facegroup.faceVertexParamIndices = ["Stripped from JSON"]
+                facegroup.RSMAPVertexParameterCollection = "Stripped from JSON"
     pass
+
+flagErrors = []
 
 def convert_MAP(filename):
     print("Processing: " + filename)
@@ -30,6 +36,15 @@ def convert_MAP(filename):
     mapFile.read_file(filename, False)
 
     strip_extra_data_for_json(mapFile)
+
+    for geometryObject in mapFile.geometryObjects:
+        if mapFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
+            for mesh in geometryObject.meshes:
+                if mesh.geometryFlagsEvaluated["UnevaluatedFlags"]:
+                    errorMessage = filename + " UnevaluatedFlags for:" + geometryObject.nameString + "_" + mesh.nameString
+                    flagErrors.append(errorMessage)
+                    print(errorMessage)
+                
     
     for light in mapFile.lightList.lights:
             if light.type not in lightTypes:

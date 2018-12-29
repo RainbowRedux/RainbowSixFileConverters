@@ -135,7 +135,7 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
         
         poly.material_index = materialMapping[faceProperties.materialIndex]
 
-    # TODO: Import normals
+    #TODO: Import normals
 
     createdSubMeshes = []
 
@@ -149,7 +149,10 @@ def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
         if newSubBlendObject is not None:
             newSubBlendObject.parent = geoObjectParentObject
             createdSubMeshes.append(newSubBlendObject)
-            #newSubBlendObject.rotation_euler = (radians(90),0,0)
+            
+            for flag in rsemesh.geometryFlagsEvaluated:
+                newSubBlendObject[flag] = rsemesh.geometryFlagsEvaluated[flag]
+
 
     #clean used materials from each object
     objectsToCleanMaterialsFrom = createdSubMeshes.copy()
