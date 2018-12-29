@@ -14,7 +14,7 @@ class CXPMaterialProperties(object):
         self.blendMode = "opaque"
         #If this is not empty, this is the color that should act as the alpha mask. It's often slightly off by 1 due to imprecision in 16bit color images, so take that into accound when using this value
         self.colorkey = []
-        #Mip map bias values?
+        #This appears to describe maximum Min/Mag texture filtering modes. Final value for a given texture seems to be min(UserOption, TextureOption)
         self.mipMapValues = []
         #Determines if gunfire/bullets can pass through this material
         self.gunpass = False
