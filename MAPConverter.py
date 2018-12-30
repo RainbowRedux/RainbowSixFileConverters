@@ -37,6 +37,7 @@ def convert_MAP(filename):
 
     strip_extra_data_for_json(mapFile)
 
+    
     for geometryObject in mapFile.geometryObjects:
         if mapFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
             for mesh in geometryObject.meshes:
@@ -44,7 +45,16 @@ def convert_MAP(filename):
                     errorMessage = filename + " UnevaluatedFlags for:" + geometryObject.nameString + "_" + mesh.nameString
                     flagErrors.append(errorMessage)
                     print(errorMessage)
-                
+        elif mapFile.gameVersion == RSEGameVersions.ROGUE_SPEAR:
+            #Rogue Spear
+            for unknownDataObjects in geometryObject.geometryData.collisionInformation.unknownDataObjects:
+                if unknownDataObjects.geometryFlagsEvaluated["UnevaluatedFlags"]:
+                    errorMessage = filename + " UnevaluatedFlags for:" + geometryObject.nameString + "_" + mesh.nameString
+                    flagErrors.append(errorMessage)
+                    print(errorMessage)
+        else:
+            print("Unable to determine where geometryFlags are")
+    
     
     for light in mapFile.lightList.lights:
             if light.type not in lightTypes:
@@ -70,7 +80,9 @@ def main():
     #fp.run_sequential()
     fp.run_async()
 
+    print("Light Types: ")
     print(lightTypes)
+    print("Geometry Flag errors: ")
     for err in flagErrors:
         print(err)
 

@@ -2,7 +2,7 @@ from FileUtilities import BinaryConversionUtilities
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
-from RainbowFileReaders.SOBModelReader import RSEGeometryListHeader, SOBGeometryObject
+from RainbowFileReaders.SOBModelReader import RSEGeometryListHeader, SOBGeometryObject, SOBGeometryFlags
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 
@@ -149,9 +149,6 @@ class RSMAPGeometryData(BinaryFileDataStructure):
         self.collisionInformation = RSMAP2DCollisionInformation()
         self.collisionInformation.read(filereader)
 
-        self.unknownDataStructure = RSMAPUnknownGeometryDataSection()
-        self.unknownDataStructure.read(filereader)
-
     def read_header_info(self, filereader):
         self.size = filereader.read_uint()
         self.id = filereader.read_uint()
@@ -241,32 +238,26 @@ class RSMAP2DCollisionInformation(BinaryFileDataStructure):
         for _ in range(self.vertexCount):
             self.vertices.append(filereader.read_vec_f(3))
 
-        self.faceCount = filereader.read_uint()
+        self.faceNormalCount = filereader.read_uint()
 
         self.faceNormals = []
         self.faceDistancesFromOrigin = []
 
-        for _ in range(self.faceCount):
+        for _ in range(self.faceNormalCount):
             self.faceNormals.append(filereader.read_vec_f(3))
             self.faceDistancesFromOrigin.append(filereader.read_float())
-
-class RSMAPUnknownGeometryDataSection(BinaryFileDataStructure):
-    def __init__(self):
-        super(RSMAPUnknownGeometryDataSection, self).__init__()
-
-    def read(self, filereader):
-        super().read(filereader)
 
         self.unknown2Count = filereader.read_uint()
         self.unknown2IndexCollection = []
         for _ in range(self.unknown2Count):
             self.unknown2IndexCollection.append(filereader.read_vec_short_uint(8))
-        
+
         self.unknownDataObjectCount = filereader.read_uint()
         self.unknownDataObjects = []
         for _ in range(self.unknownDataObjectCount):
             dataObject = RSMAPUnknownGeometryDataObject()
             dataObject.read(filereader)
+            self.unknownDataObjects.append(dataObject)
         
 class RSMAPUnknownGeometryDataObject(BinaryFileDataStructure):
     def __init__(self):
@@ -277,7 +268,8 @@ class RSMAPUnknownGeometryDataObject(BinaryFileDataStructure):
 
         self.read_name_string(filereader)
 
-        self.unknown4 = filereader.read_uint()
+        self.geometryFlags = filereader.read_uint() #??
+        self.geometryFlagsEvaluated = SOBGeometryFlags.EvaluateFlags(self.geometryFlags)
 
         self.unknown5Count = filereader.read_uint()
         self.unknown5Indices = filereader.read_vec_short_uint(self.unknown5Count)
