@@ -21,6 +21,7 @@ class CXPMaterialProperties(object):
         #Determines if grenades can pass through this material
         self.grenadepass = False
         #Parameters around the texture format. Not sure what the leading 0 is, but the rest appear to be RGBA bit depths, eg. 4, 4, 4, 4 for a 16bit texture with an alpha channel
+        #This mainly appears to be a property used when generating RSB files.
         self.textureformat = []
         #additional textures that should be added to the image sequence
         self.animAdditionalTextures = []
