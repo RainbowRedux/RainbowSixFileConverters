@@ -24,7 +24,9 @@ def strip_extra_data_for_json(mapFile):
             for facegroup in geometryObject.geometryData.faceGroups:
                 facegroup.faceVertexIndices = ["Stripped from JSON"]
                 facegroup.faceVertexParamIndices = ["Stripped from JSON"]
-                facegroup.RSMAPVertexParameterCollection = "Stripped from JSON"
+                facegroup.vertexParams = ["Stripped from JSON"]
+                facegroup.faceNormals = ["Stripped from JSON"]
+                facegroup.faceDistancesFromOrigin = ["Stripped from JSON"]
     pass
 
 flagErrors = []
