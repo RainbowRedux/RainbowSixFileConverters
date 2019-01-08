@@ -2,7 +2,7 @@ from FileUtilities import BinaryConversionUtilities
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
-from RainbowFileReaders.SOBModelReader import RSEGeometryListHeader, SOBGeometryObject, SOBGeometryFlags
+from RainbowFileReaders.SOBModelReader import RSEGeometryListHeader, R6GeometryObject, SOBGeometryFlags
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 
@@ -71,7 +71,7 @@ class MAPLevelFile(FileFormatReader):
                 if self.verboseOutput:
                     pass
             else:
-                newObj = SOBGeometryObject()
+                newObj = R6GeometryObject()
                 newObj.read(fileReader)
                 self.geometryObjects.append(newObj)
                 if self.verboseOutput:
@@ -146,7 +146,7 @@ class RSMAPGeometryData(BinaryFileDataStructure):
 
         self.read_face_groups(filereader)
 
-        self.collisionInformation = RSMAP2DCollisionInformation()
+        self.collisionInformation = RSMAPCollisionInformation()
         self.collisionInformation.read(filereader)
 
     def read_header_info(self, filereader):
@@ -225,9 +225,9 @@ class RSMAPVertexParameterCollection(BinaryFileDataStructure):
         for _ in range(self.vertexParamCount):
             self.colors.append(filereader.read_vec_f(4))
 
-class RSMAP2DCollisionInformation(BinaryFileDataStructure):
+class RSMAPCollisionInformation(BinaryFileDataStructure):
     def __init__(self):
-        super(RSMAP2DCollisionInformation, self).__init__()
+        super(RSMAPCollisionInformation, self).__init__()
 
     def read(self, filereader):
         super().read(filereader)
@@ -258,12 +258,12 @@ class RSMAP2DCollisionInformation(BinaryFileDataStructure):
             faceObject.read(filereader)
             self.faces.append(faceObject)
 
-        self.unknownDataObjectCount = filereader.read_uint()
-        self.unknownDataObjects = []
-        for _ in range(self.unknownDataObjectCount):
+        self.collisionMeshDefinitionsCount = filereader.read_uint()
+        self.collisionMeshDefinitions = []
+        for _ in range(self.collisionMeshDefinitionsCount):
             dataObject = RSMAPCollisionMesh()
             dataObject.read(filereader)
-            self.unknownDataObjects.append(dataObject)
+            self.collisionMeshDefinitions.append(dataObject)
 
 class RSMAPCollisionFaceInformation(BinaryFileDataStructure):
     def __init__(self):
@@ -274,9 +274,11 @@ class RSMAPCollisionFaceInformation(BinaryFileDataStructure):
 
         self.vertexIndices = filereader.read_vec_short_uint(3)
 
+        self.unknown1 = filereader.read_short_uint()
+
         self.normalIndices = filereader.read_vec_short_uint(3)
 
-        self.materialIndex = filereader.read_uint()
+        self.unknown2 = filereader.read_short_uint()
 
 
 class RSMAPCollisionMesh(BinaryFileDataStructure):

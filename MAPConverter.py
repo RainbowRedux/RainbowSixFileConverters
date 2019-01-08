@@ -49,8 +49,8 @@ def convert_MAP(filename):
                     print(errorMessage)
         elif mapFile.gameVersion == RSEGameVersions.ROGUE_SPEAR:
             #Rogue Spear
-            for unknownDataObjects in geometryObject.geometryData.collisionInformation.unknownDataObjects:
-                if unknownDataObjects.geometryFlagsEvaluated["UnevaluatedFlags"]:
+            for collisionMeshDefinition in geometryObject.geometryData.collisionInformation.collisionMeshDefinitions:
+                if collisionMeshDefinition.geometryFlagsEvaluated["UnevaluatedFlags"]:
                     errorMessage = filename + " UnevaluatedFlags for:" + geometryObject.nameString + "_" + mesh.nameString
                     flagErrors.append(errorMessage)
                     print(errorMessage)

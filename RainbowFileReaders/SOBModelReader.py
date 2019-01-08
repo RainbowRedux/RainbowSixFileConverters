@@ -98,7 +98,7 @@ class SOBModelFile(FileFormatReader):
 
         self.geometryObjects = []
         for _ in range(self.geometryListHeader.count):
-            newObj = SOBGeometryObject()
+            newObj = R6GeometryObject()
             newObj.read(fileReader)
             self.geometryObjects.append(newObj)
             if self.verboseOutput:
@@ -130,9 +130,9 @@ class RSEGeometryListHeader(BinaryFileDataStructure):
         self.read_named_string(filereader, "geometryListString")
         self.count = filereader.read_uint()
 
-class SOBGeometryObject(BinaryFileDataStructure):
+class R6GeometryObject(BinaryFileDataStructure):
     def __init__(self):
-        super(SOBGeometryObject, self).__init__()
+        super(R6GeometryObject, self).__init__()
         self.size = None
         self.ID = None
         self.versionStringLength = None

@@ -22,7 +22,7 @@ from BlenderImporters import BlenderUtils
 errorCount = 0
 errorList = []
 
-def create_mesh_from_RSGeometryObject(geometryObject, blenderMaterials):
+def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
     name = geometryObject.nameString
 
     geoObjBlendMeshMaster, geoObjBlendObjectMaster = BlenderUtils.create_blender_mesh_object(name + "_TEMPMASTER")
@@ -175,7 +175,7 @@ def import_SOB_to_scene(filename):
     blenderMaterials = BlenderUtils.create_blender_materials_from_list(SOBObject.materials, texturePaths)
 
     for geoObj in SOBObject.geometryObjects:
-        create_mesh_from_RSGeometryObject(geoObj, blenderMaterials)
+        create_objects_from_R6GeometryObject(geoObj, blenderMaterials)
 
     print("Success")
 

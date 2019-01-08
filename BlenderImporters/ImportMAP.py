@@ -18,8 +18,74 @@ from RainbowFileReaders.R6Constants import UINT_MAX, RSEGameVersions, RSELightTy
 from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float, pad_color
 
 from BlenderImporters import ImportSOB
-from BlenderImporters.ImportSOB import create_mesh_from_RSGeometryObject
+from BlenderImporters.ImportSOB import create_objects_from_R6GeometryObject
 from BlenderImporters import BlenderUtils
+
+def create_mesh_from_RSMAPCollisionInformation(geometryObjectDefinition, blenderMaterials, name):
+
+    collisionObjectDefinition = geometryObjectDefinition.collisionInformation
+
+    geoObjBlendMeshMaster, geoObjBlendObjectMaster = BlenderUtils.create_blender_mesh_object(name + "_TEMPMASTER")
+
+    geoObjectParentObject = BlenderUtils.create_blender_blank_object(name)
+
+    #fix up rotation
+    #geoObjectParentObject.rotation_euler = (radians(90),0,0)
+
+    ########################################
+    # Conform faces to desired data structure
+    ########################################
+    faces = []
+    for face in collisionObjectDefinition.faces:
+        faces.append(face.vertexIndices)
+
+    #reverse the scaling on the z axis, to correct LHS <-> RHS conversion
+    #this must be done here to not change the face winding which would interfere with backface culling
+    verts = geometryObjectDefinition.vertices.copy()
+    for idx, vert in enumerate(collisionObjectDefinition.vertices):
+        vert[0] = vert[0] * -1
+        #verts[idx] = vert
+
+    BlenderUtils.add_mesh_geometry(geoObjBlendMeshMaster, verts, faces)
+
+    numTotalFaces = collisionObjectDefinition.faceCount
+    numCreatedFaces = len(geoObjBlendObjectMaster.data.polygons)
+
+    if numCreatedFaces != numTotalFaces:
+        print("Not enough faces created")
+        raise ValueError("Not enough faces created")
+
+    geoObjBlendObjectMaster.parent = geoObjectParentObject
+
+    ########################################
+    # Create sub meshes
+    ########################################
+    createdSubMeshes = []
+
+    #Split Meshes
+    for index, meshdef in enumerate(collisionObjectDefinition.collisionMeshDefinitions):
+        newObjectName = name + "_" + meshdef.nameString + "_idx" + str(index)
+        uniqueFaceIndices = list(set(meshdef.faceIndices))
+        
+        newSubBlendObject = BlenderUtils.clone_mesh_object_with_specified_faces(newObjectName, uniqueFaceIndices, geoObjBlendObjectMaster)
+
+        if newSubBlendObject is not None:
+            newSubBlendObject.parent = geoObjectParentObject
+            createdSubMeshes.append(newSubBlendObject)
+            
+            for flag in meshdef.geometryFlagsEvaluated:
+                newSubBlendObject[flag] = meshdef.geometryFlagsEvaluated[flag]
+
+            if meshdef.geometryFlagsEvaluated["GF_INVISIBLE"] is True:
+                # Pretty sure GF_INVISIBLE on collision geometry means ignored
+                newSubBlendObject.hide_viewport = True
+                newSubBlendObject.hide_render = True
+                newSubBlendObject.hide_select = True
+
+
+    bpy.data.meshes.remove(geoObjBlendMeshMaster)
+
+    return geoObjectParentObject
 
 def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
     geoObjBlendMesh, geoObjBlendObject = BlenderUtils.create_blender_mesh_object(name)
@@ -111,7 +177,7 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
 
     return geoObjBlendObject
 
-def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
+def create_objects_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
     geoObjName = geometryObject.nameString
 
     geoObjectParentObject = BlenderUtils.create_blender_blank_object(geoObjName)
@@ -122,15 +188,16 @@ def create_mesh_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
     for vert in geometryObject.geometryData.vertices:
         vert[0] = vert[0] * -1
 
-    ########################################
-    # Conform faces to desired data structure
-    ########################################
     subObjects = []
     for idx, facegroup in enumerate(geometryObject.geometryData.faceGroups):
         faceGroupName = geoObjName + "_idx" + str(idx) + "_mat" + str(facegroup.materialIndex)
         subObject = import_face_group_as_mesh(facegroup, geometryObject.geometryData.vertices, blenderMaterials, faceGroupName)
         subObject.parent = geoObjectParentObject
         subObjects.append(subObject)
+
+    collisionName = geoObjName + "_collision"
+    collisionObj = create_mesh_from_RSMAPCollisionInformation(geometryObject.geometryData, blenderMaterials, collisionName)
+    collisionObj.parent = geoObjectParentObject
     
     pass
 
@@ -220,10 +287,10 @@ def import_MAP_to_scene(filename):
 
     if MAPObject.gameVersion == RSEGameVersions.RAINBOW_SIX:
         for geoObj in MAPObject.geometryObjects:
-            create_mesh_from_RSGeometryObject(geoObj, blenderMaterials)
+            create_objects_from_R6GeometryObject(geoObj, blenderMaterials)
     else:
         for geoObj in MAPObject.geometryObjects:
-            create_mesh_from_RSMAPGeometryObject(geoObj, blenderMaterials)
+            create_objects_from_RSMAPGeometryObject(geoObj, blenderMaterials)
 
     import_lights(MAPObject.lightList)
 
