@@ -6,9 +6,8 @@ import os
 
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders import R6Constants
-from RainbowFileReaders.R6Constants import UINT_MAX
+from RainbowFileReaders.R6Constants import UINT_MAX, RSEAlphaMethod
 from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
-from RainbowFileReaders.SOBModelReader import SOBAlphaMethod
 
 def flip_normals_on_object(blendObject):
     #https://blenderartists.org/t/script-to-flip-normals-for-multiple-objects/533443/2
@@ -221,7 +220,7 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
         # Add texture slot for color texture
         #textureSlot = newMaterial.texture_paint_slots.add()
 
-        if materialSpecification.alphaMethod != SOBAlphaMethod.SAM_Opaque:
+        if materialSpecification.alphaMethod != RSEAlphaMethod.SAM_Opaque:
             pass
             newMaterialBSDFWrap.base_color_texture.use_alpha = True
             #textureSlot.use_map_alpha = True
@@ -230,7 +229,7 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
         newMaterialBSDFWrap.base_color_texture.texcoords = 'UV'
 
     materialBlendMode = "opaque"
-    if materialSpecification.alphaMethod == SOBAlphaMethod.SAM_MethodLookup:
+    if materialSpecification.alphaMethod == RSEAlphaMethod.SAM_MethodLookup:
         if materialSpecification.CXPMaterialProperties != None:
             materialBlendMode = materialSpecification.CXPMaterialProperties.blendMode
 

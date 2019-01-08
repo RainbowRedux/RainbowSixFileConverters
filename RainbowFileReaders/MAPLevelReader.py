@@ -1,8 +1,8 @@
 from FileUtilities import BinaryConversionUtilities
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 from RainbowFileReaders import R6Settings
-from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions
-from RainbowFileReaders.SOBModelReader import RSEGeometryListHeader, R6GeometryObject, SOBGeometryFlags
+from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions, RSEGeometryFlags
+from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 
@@ -80,7 +80,7 @@ class MAPLevelFile(FileFormatReader):
         self.portalList = RSEMAPPortalList()
         self.portalList.read(fileReader)
 
-        self.lightList = RSEMAPLightList()
+        self.lightList = R6MAPLightList()
         self.lightList.read(fileReader)
 
         self.objectList = RSEMAPObjectList()
@@ -291,7 +291,7 @@ class RSMAPCollisionMesh(BinaryFileDataStructure):
         self.read_name_string(filereader)
 
         self.geometryFlags = filereader.read_uint() #??
-        self.geometryFlagsEvaluated = SOBGeometryFlags.EvaluateFlags(self.geometryFlags)
+        self.geometryFlagsEvaluated = RSEGeometryFlags.EvaluateFlags(self.geometryFlags)
 
         self.faceCount = filereader.read_uint()
         self.faceIndices = filereader.read_vec_short_uint(self.faceCount)
@@ -344,9 +344,9 @@ class RSEMAPPortal(BinaryFileDataStructure):
         self.roomB = filereader.read_uint()
 
 
-class RSEMAPLightList(BinaryFileDataStructure):
+class R6MAPLightList(BinaryFileDataStructure):
     def __init__(self):
-        super(RSEMAPLightList, self).__init__()
+        super(R6MAPLightList, self).__init__()
 
     def read(self, filereader):
         super().read(filereader)
@@ -365,15 +365,15 @@ class RSEMAPLightList(BinaryFileDataStructure):
 
         self.lights = []
         for _ in range(self.lightCount):
-            newLight = RSEMAPLight()
+            newLight = R6MAPLight()
             newLight.read(filereader)
             self.lights.append(newLight)
 
 
 
-class RSEMAPLight(BinaryFileDataStructure):
+class R6MAPLight(BinaryFileDataStructure):
     def __init__(self):
-        super(RSEMAPLight, self).__init__()
+        super(R6MAPLight, self).__init__()
 
     def read(self, filereader):
         super().read(filereader)
