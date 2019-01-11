@@ -86,6 +86,15 @@ class MAPLevelFile(FileFormatReader):
         self.objectList = RSEMAPObjectList()
         self.objectList.read(fileReader)
 
+        self.roomList = RSEMAPRoomList()
+        self.roomList.read(fileReader)
+
+        self.planningLevelList = R6MAPPlanningLevelList()
+        self.planningLevelList.read(fileReader)
+
+        self.mapFooter = RSEMAPFooterDefinition()
+        self.mapFooter.read(fileReader)
+
         return
 
 
@@ -472,3 +481,205 @@ class RSEMAPObject(BinaryFileDataStructure):
         self.read_named_string(filereader, "unknownString")
         self.read_named_string(filereader, "hitsoundAssetString")
         self.read_named_string(filereader, "debrisParticleAssetString")
+
+class RSEMAPRoomList(BinaryFileDataStructure):
+    def __init__(self):
+        super(RSEMAPRoomList, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.read_header_info(filereader)
+        self.read_rooms(filereader)
+
+    def read_header_info(self, filereader):
+        self.roomListSize = filereader.read_uint()
+        self.ID = filereader.read_uint()
+        self.read_section_string(filereader)
+
+    def read_rooms(self, filereader):
+        self.roomCount = filereader.read_uint()
+
+        self.rooms = []
+        for _ in range(self.roomCount):
+            pass
+            newObject = RSEMAPRoomDefinition()
+            newObject.read(filereader)
+            self.rooms.append(newObject)
+
+class RSEMAPRoomDefinition(BinaryFileDataStructure):
+    def __init__(self):
+        super(RSEMAPRoomDefinition, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+        
+        self.ID = filereader.read_uint()
+        self.read_version_string(filereader)
+        self.versionNumber = filereader.read_uint()
+
+        self.read_name_string(filereader)
+
+        self.unknown1 = filereader.read_bytes(1)[0]
+        self.unknown2 = filereader.read_bytes(1)[0]
+        if(self.unknown1 == 0):
+            self.unknown3 = filereader.read_bytes(1)[0]
+
+        self.shermanLevelCount = filereader.read_uint()
+        self.shermanLevels = []
+        for _ in range(self.shermanLevelCount):
+            newObject = R6MAPShermanLevelDefinition()
+            newObject.read(filereader)
+            self.shermanLevels.append(newObject)
+
+        self.transitionCount = filereader.read_uint()
+        self.transitions = []
+        for _ in range(self.transitionCount):
+            tempTransition = R6MAPShermanLevelTransitionDefinition()
+            tempTransition.read(filereader)
+            self.transitions.append(tempTransition)
+
+        self.unknown4Count = filereader.read_uint()
+        self.unknown4 = filereader.read_vec_f(self.unknown4Count * 2)
+
+        self.unknown5Count = filereader.read_uint()
+        self.unknown5 = filereader.read_vec_f(self.unknown5Count)
+
+class R6MAPShermanLevelDefinition(BinaryFileDataStructure):
+    def __init__(self):
+        super(R6MAPShermanLevelDefinition, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.read_name_string(filereader)
+        self.unknown1 = filereader.read_vec_f(6)
+        
+        self.unknown2Count = filereader.read_uint()
+        self.unknown2 = filereader.read_vec_f(self.unknown2Count)
+
+        self.unknown3 = filereader.read_bytes(1)[0]
+        if self.unknown3 == 1:
+            self.unknown3Struct = R6MAPShermanLevelPlanAreaDefinition()
+            self.unknown3Struct.read(filereader)
+        
+
+class R6MAPShermanLevelPlanAreaDefinition(BinaryFileDataStructure):
+    def __init__(self):
+        super(R6MAPShermanLevelPlanAreaDefinition, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.unknown1 = filereader.read_uint()
+        self.ID = filereader.read_uint()
+
+        self.read_name_string(filereader)
+        if self.nameString == "Version":
+            self.versionString = self.nameString
+            self.versionStringRaw = self.nameStringRaw
+            self.versionStringLength = self.nameStringLength
+            self.versionNumber = filereader.read_uint()
+
+            self.read_name_string(filereader)
+
+        self.unknown2_bytes = filereader.read_bytes(4) #ABCD
+        self.unknown3 = filereader.read_uint() #U
+
+        self.vertexCount = filereader.read_uint()
+        self.vertices = [] #coordinate
+        for _ in range(self.vertexCount):
+            self.vertices.append(filereader.read_vec_f(3))
+
+        self.vertexParamCount = filereader.read_uint()
+        self.vertexParams = [] #coordinate2
+        for _ in range(self.vertexParamCount):
+            self.vertexParams.append(filereader.read_vec_f(9))
+
+        self.unknown4Count = filereader.read_uint()
+        self.unknown4DataStructs = [] #coordinate3
+        for _ in range(self.unknown4Count):
+            self.unknown4DataStructs.append(filereader.read_vec_uint(11))
+        self.unknown5 = filereader.read_uint()
+        self.unknown6 = filereader.read_uint()
+
+        self.read_named_string(filereader, "Unknown7String")
+
+        self.unknown8 = filereader.read_uint()
+        self.unknown9Count = filereader.read_uint()
+        self.unknown9 = filereader.read_vec_uint(self.unknown9Count)
+
+        self.unknown10 = filereader.read_uint()
+        self.read_named_string(filereader, "Unknown11String")
+        self.unknown12 = filereader.read_uint()
+
+class R6MAPShermanLevelTransitionDefinition(BinaryFileDataStructure):
+    def __init__(self):
+        super(R6MAPShermanLevelTransitionDefinition, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.read_name_string(filereader)
+
+        self.read_named_string(filereader, "levelAString")
+        self.read_named_string(filereader, "levelBString")
+
+        self.coords = filereader.read_vec_f(4)
+
+class R6MAPPlanningLevelList(BinaryFileDataStructure):
+    def __init__(self):
+        super(R6MAPPlanningLevelList, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.read_header_info(filereader)
+        self.read_planning_levels(filereader)
+
+        self.unknown1 = filereader.read_bytes(1)[0] #Y
+
+    def read_header_info(self, filereader):
+        self.planningLevelListSize = filereader.read_uint() #L, moved here to match other header structures
+        self.ID = filereader.read_uint()
+        self.read_section_string(filereader)
+
+    def read_planning_levels(self, filereader):
+        self.planningLevelCount = filereader.read_uint()
+        self.planningLevels = []
+        for _ in range(self.planningLevelCount):
+            planLevel = R6MAPPlanningLevelDefinition()
+            planLevel.read(filereader)
+            self.planningLevels.append(planLevel)
+
+class R6MAPPlanningLevelDefinition(BinaryFileDataStructure):
+    def __init__(self):
+        super(R6MAPPlanningLevelDefinition, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+
+        self.unknown1 = filereader.read_float() #A
+        self.unknown2 = filereader.read_float() #B
+        self.nameCount = filereader.read_uint()
+        self.names = []
+        for _ in range(self.nameCount):
+            string = SerializedCString()
+            string.read(filereader)
+            self.names.append(string)
+
+class SerializedCString(BinaryFileDataStructure):
+    def __init__(self):
+        super(SerializedCString, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+        self.read_name_string(filereader)
+
+class RSEMAPFooterDefinition(BinaryFileDataStructure):
+    def __init__(self):
+        super(RSEMAPFooterDefinition, self).__init__()
+
+    def read(self, filereader):
+        super().read(filereader)
+        self.read_named_string(filereader, "EndMapString")
