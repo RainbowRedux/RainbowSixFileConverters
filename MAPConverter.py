@@ -27,6 +27,12 @@ def strip_extra_data_for_json(mapFile):
                 facegroup.vertexParams = ["Stripped from JSON"]
                 facegroup.faceNormals = ["Stripped from JSON"]
                 facegroup.faceDistancesFromOrigin = ["Stripped from JSON"]
+
+            geometryObject.geometryData.collisionInformation.vertices = ["Stripped from JSON"]
+            geometryObject.geometryData.collisionInformation.normals = ["Stripped from JSON"]
+            geometryObject.geometryData.collisionInformation.faceDistancesFromOrigin = ["Stripped from JSON"]
+            geometryObject.geometryData.collisionInformation.faces = ["Stripped from JSON"]
+            geometryObject.geometryData.collisionInformation.collisionMeshDefinitions = ["Stripped from JSON"]
     pass
 
 flagErrors = []
@@ -35,10 +41,7 @@ def convert_MAP(filename):
     print("Processing: " + filename)
 
     mapFile = MAPLevelReader.MAPLevelFile()
-    mapFile.read_file(filename, False)
-
-    strip_extra_data_for_json(mapFile)
-
+    mapFile.read_file(filename, True)
     
     for geometryObject in mapFile.geometryObjects:
         if mapFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
@@ -62,6 +65,8 @@ def convert_MAP(filename):
             if light.type not in lightTypes:
                 lightTypes.append(light.type)
 
+    strip_extra_data_for_json(mapFile)
+
     meta = JSONMetaInfo.JSONMetaInfo()
     meta.add_info("filecontents", mapFile)
     meta.add_info("filename", filename)
@@ -79,8 +84,8 @@ def main():
 
     fp.processFunction = convert_MAP
 
-    #fp.run_sequential()
-    fp.run_async()
+    fp.run_sequential()
+    #fp.run_async()
 
     print("Light Types: ")
     print(lightTypes)
