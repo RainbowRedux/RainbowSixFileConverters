@@ -5,6 +5,7 @@ from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVe
 from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
+from RainbowFileReaders.RSDMPLightReader import RSDMPLightFile
 
 import pprint
 
@@ -98,6 +99,14 @@ class MAPLevelFile(FileFormatReader):
 
         self.mapFooter = RSEMAPFooterDefinition()
         self.mapFooter.read(fileReader)
+
+        #read in DMP file data
+        if self.gameVersion == RSEGameVersions.ROGUE_SPEAR:
+            if self.filepath.lower().endswith(".map"):
+                lightFileName = self.filepath[:-4] + ".dmp"
+                lightFile = RSDMPLightFile()
+                lightFile.read_file(lightFileName)
+                self.dmpLights = lightFile
 
         return
 

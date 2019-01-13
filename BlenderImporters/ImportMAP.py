@@ -201,7 +201,7 @@ def create_objects_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
     
     pass
 
-def create_spotlight_from_light_specification(lightSpec, name):
+def create_spotlight_from_r6_light_specification(lightSpec, name):
     #https://stackoverflow.com/a/17355744
     lamp_data = None
     lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_pointdata", type='POINT')
@@ -256,7 +256,7 @@ def create_spotlight_from_light_specification(lightSpec, name):
 
     return lamp_object
 
-def import_lights(lightlist):
+def import_r6_lights(lightlist):
     lightGroup = bpy.data.objects.new("LightGroup", None)
     lightGroup.location = (0,0,0)
     lightGroup.show_name = True
@@ -267,12 +267,72 @@ def import_lights(lightlist):
     for idx, light in enumerate(lightlist.lights):
         if light.type == RSELightTypes.SPOTLIGHT:
             name = light.nameString + "_idx" + str(idx)
-            newLamp = create_spotlight_from_light_specification(light, name)
+            newLamp = create_spotlight_from_r6_light_specification(light, name)
             newLamp.parent = lightGroup
         else:
             print("Skipping light: " + light.nameString)
 
+def create_spotlight_from_rs_light_specification(lightSpec, name):
+    #https://stackoverflow.com/a/17355744
+    lamp_data = None
+    lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_pointdata", type='POINT')
+    # Create new object with our lamp datablock
+    lamp_object = bpy.data.objects.new(name=name, object_data=lamp_data)
+    # Link lamp object to the scene so it'll appear in this scene
+    bpy.context.scene.collection.objects.link(lamp_object)
+    # And finally select it make active
+    lamp_object.select_set(True)
+    bpy.context.view_layer.objects.active = lamp_object
+
+    # Place lamp to a specified location
+    position = lightSpec.position
+    position[0] *= -1.0
+    lamp_object.location = position
+
+    #correct the incorrect rotation due to coordinate system conversion
+    # coordSystemConversionQuat = mathutils.Euler((radians(-90), 0, 0)).to_quaternion()
+    # finalQuat = importedQuat @ coordSystemConversionQuat
+    # lamp_object.rotation_euler = finalQuat.to_euler()
+
+    lamp_data.color = lightSpec.diffuseColor[:3]
+
+    lamp_data.falloff_type = 'INVERSE_COEFFICIENTS'
+    lamp_data.constant_coefficient = lightSpec.constantAttenuation
+    lamp_data.linear_coefficient = lightSpec.linearAttenuation
+    lamp_data.quadratic_coefficient = lightSpec.quadraticAttenuation
+
+    #TODO: Fix these approximations
+    lamp_data.energy = lightSpec.energy * 25
+    lamp_data.shadow_soft_size = lightSpec.falloff
+    #lamp_data.use_custom_distance = True
+    #lamp_data.distance = lightSpec.energy
+    lamp_data.use_shadow = False
+
+
+    #lamp_data.specular_factor = lightSpec.unknown7
+
+    return lamp_object
+
+def import_rs_lights(dmpLightFile):
+    lightGroup = bpy.data.objects.new("LightGroup", None)
+    lightGroup.location = (0,0,0)
+    lightGroup.show_name = True
+    # Link object to scene
+    bpy.context.scene.collection.objects.link(lightGroup)
+    lightGroup.rotation_euler = (radians(90),0,0)
+
+    for idx, light in enumerate(dmpLightFile.lights):
+        name = light.nameString + "_idx" + str(idx)
+        newLamp = create_spotlight_from_rs_light_specification(light, name)
+        newLamp.parent = lightGroup
+
 def import_MAP_to_scene(filename):
+    if filename.endswith("obstacletest.map"):
+        #I believe this is an early test map that was shipped by accident.
+        # It's data structures are not consistent with the rest of the map files
+        # and it is not used anywhere so it is safe to skip
+        print("Skipping test map: " + filename)
+        return False
     MAPObject = MAPLevelReader.MAPLevelFile()
     MAPObject.read_file(filename)
     
@@ -292,9 +352,14 @@ def import_MAP_to_scene(filename):
         for geoObj in MAPObject.geometryObjects:
             create_objects_from_RSMAPGeometryObject(geoObj, blenderMaterials)
 
-    import_lights(MAPObject.lightList)
+    if MAPObject.gameVersion == RSEGameVersions.RAINBOW_SIX:
+        import_r6_lights(MAPObject.lightList)
+    else:
+        import_rs_lights(MAPObject.dmpLights)
+    
+    print("Import Map Succeeded")
+    return True
 
-    print("Success")
 
 def save_blend_scene(path):
     bpy.ops.wm.save_as_mainfile(filepath=path)
@@ -306,9 +371,10 @@ def import_map_and_save(path):
     inPath = os.path.abspath(path)
     outBlendPath = inPath + ".blend"
     outFBXPath = inPath + ".fbx"
-    import_MAP_to_scene(inPath)
-    save_blend_scene(outBlendPath)
-    export_fbx_scene(outFBXPath)
+    importSuccess = import_MAP_to_scene(inPath)
+    if importSuccess:
+        save_blend_scene(outBlendPath)
+        export_fbx_scene(outFBXPath)
 
 
 if __name__ == "__main__":
