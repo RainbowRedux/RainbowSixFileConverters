@@ -265,12 +265,9 @@ def import_r6_lights(lightlist):
     lightGroup.rotation_euler = (radians(90),0,0)
 
     for idx, light in enumerate(lightlist.lights):
-        if light.type == RSELightTypes.SPOTLIGHT:
-            name = light.nameString + "_idx" + str(idx)
-            newLamp = create_spotlight_from_r6_light_specification(light, name)
-            newLamp.parent = lightGroup
-        else:
-            print("Skipping light: " + light.nameString)
+        name = light.nameString + "_idx" + str(idx)
+        newLamp = create_spotlight_from_r6_light_specification(light, name)
+        newLamp.parent = lightGroup
 
 def create_spotlight_from_rs_light_specification(lightSpec, name):
     #https://stackoverflow.com/a/17355744
