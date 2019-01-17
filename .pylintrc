@@ -44,7 +44,7 @@ suggestion-mode=yes
 # active Python interpreter and may run arbitrary code.
 unsafe-load-any-extension=no
 
-disable=C0103,C0413,W0201,E0401,W0235,C0326,C0301,R0902,R0205
+disable=C0103,C0413,W0201,E0401,W0235,C0326,C0301,R0902,R0205,R0903
 #disabled:
 #     snake_case: c0103 - Will improve over time as this is a new style change for this codebase
 #     import at top of file c0413 - can't improve while have to add in module path
@@ -55,6 +55,12 @@ disable=C0103,C0413,W0201,E0401,W0235,C0326,C0301,R0902,R0205
 #     Line too long C0301 - I don't care about line length
 #     Too many instance attributes R0902 - I have no control over the original data structures being read, and there is a lot of attributes
 #     Useless object inheritance R0205 - I don't want to stray too far from Python 2.x compatibility as this will probably be embedded in software package that uses python2.7 shortly
+#     Too few public methods R0903 - Classes are used like structs and enums in this codebase.
+
+#increase maximum number of statements
+max-statements=80
+#unfortunately trying to read these structures proves difficult as they are not consistent. Need more branches
+max-branches=15
 
 
 [MESSAGES CONTROL]
