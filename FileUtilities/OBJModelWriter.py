@@ -1,3 +1,5 @@
+from RainbowFileReaders.MathHelpers import sanitize_float
+
 class OBJModelWriter(object):
     def __init__(self):
         self.output_file = None
@@ -28,13 +30,10 @@ class OBJModelWriter(object):
     AxisOrdering = [0, 2, 1, 3]
     AxisOrdering = [2, 0, 1, 3]
 
-    def sanitize_float(self, inFloat):
-        return "{0:.8f}".format(inFloat)
-
     def write_vertex(self, vertex):
         newline = "v "
         for index in range(len(vertex)):
-            newline += self.sanitize_float(vertex[self.AxisOrdering[index]])
+            newline += sanitize_float(vertex[self.AxisOrdering[index]])
             newline += " "
         newline.strip()
         self.write_line(newline)
@@ -42,16 +41,16 @@ class OBJModelWriter(object):
     def write_normal(self, normal):
         newline = "vn "
         for index in range(len(normal)):
-            newline += self.sanitize_float(normal[self.AxisOrdering[index]])
+            newline += sanitize_float(normal[self.AxisOrdering[index]])
             newline += " "
         newline.strip()
         self.write_line(newline)
 
     def write_texture_coordinate(self, UV):
         newline = "vt "
-        newline += self.sanitize_float(UV[0])
+        newline += sanitize_float(UV[0])
         newline += " "
-        newline += self.sanitize_float(UV[1])
+        newline += sanitize_float(UV[1])
         self.write_line(newline)
 
     def write_face(self, vertex_indices, texture_coord_indices, normal_indices):
