@@ -14,10 +14,9 @@ sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFi
 from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders import R6Constants
-from RainbowFileReaders.R6Constants import UINT_MAX, RSEGameVersions, RSELightTypes
-from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float, pad_color
+from RainbowFileReaders.R6Constants import RSEGameVersions
+from RainbowFileReaders.MathHelpers import normalize_color, pad_color
 
-from BlenderImporters import ImportSOB
 from BlenderImporters.ImportSOB import create_objects_from_R6GeometryObject
 from BlenderImporters import BlenderUtils
 
@@ -42,9 +41,8 @@ def create_mesh_from_RSMAPCollisionInformation(geometryObjectDefinition, blender
     #reverse the scaling on the z axis, to correct LHS <-> RHS conversion
     #this must be done here to not change the face winding which would interfere with backface culling
     verts = geometryObjectDefinition.vertices.copy()
-    for idx, vert in enumerate(collisionObjectDefinition.vertices):
+    for vert in collisionObjectDefinition.vertices:
         vert[0] = vert[0] * -1
-        #verts[idx] = vert
 
     BlenderUtils.add_mesh_geometry(geoObjBlendMeshMaster, verts, faces)
 
@@ -66,13 +64,13 @@ def create_mesh_from_RSMAPCollisionInformation(geometryObjectDefinition, blender
     for index, meshdef in enumerate(collisionObjectDefinition.collisionMeshDefinitions):
         newObjectName = name + "_" + meshdef.nameString + "_idx" + str(index)
         uniqueFaceIndices = list(set(meshdef.faceIndices))
-        
+
         newSubBlendObject = BlenderUtils.clone_mesh_object_with_specified_faces(newObjectName, uniqueFaceIndices, geoObjBlendObjectMaster)
 
         if newSubBlendObject is not None:
             newSubBlendObject.parent = geoObjectParentObject
             createdSubMeshes.append(newSubBlendObject)
-            
+
             for flag in meshdef.geometryFlagsEvaluated:
                 newSubBlendObject[flag] = meshdef.geometryFlagsEvaluated[flag]
 
@@ -148,15 +146,15 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
 
     #Reverse face winding, to ensure backface culling is correct
     bmesh.ops.reverse_faces(newBmesh, faces=newBmesh.faces)
-    
+
     ########################################
     # Copy from bmesh back to mesh
     ########################################
-    
+
     newBmesh.to_mesh(geoObjBlendMesh)
     newBmesh.free()
     geoObjBlendMesh.update(calc_edges=True)
-    
+
     #Map materials to faces
     #TODO: Also remove the reduced material index mapping code which is overcomplicating this block
     materialMapping = {}
@@ -172,7 +170,7 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
             reducedMaterials.append(blenderMaterials[materialIndex])
             geoObjBlendObject.data.materials.append(blenderMaterials[materialIndex])
             materialMapping[materialIndex] = len(reducedMaterials) - 1
-        
+
         poly.material_index = materialMapping[materialIndex]
 
     return geoObjBlendObject
@@ -198,8 +196,6 @@ def create_objects_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
     collisionName = geoObjName + "_collision"
     collisionObj = create_mesh_from_RSMAPCollisionInformation(geometryObject.geometryData, blenderMaterials, collisionName)
     collisionObj.parent = geoObjectParentObject
-    
-    pass
 
 def create_spotlight_from_r6_light_specification(lightSpec, name):
     #https://stackoverflow.com/a/17355744
@@ -232,7 +228,7 @@ def create_spotlight_from_r6_light_specification(lightSpec, name):
     finalQuat = importedQuat @ coordSystemConversionQuat
     lamp_object.rotation_euler = finalQuat.to_euler()
 
-    
+
 
     color = []
     for color_el in lightSpec.color:
@@ -332,7 +328,7 @@ def import_MAP_to_scene(filename):
         return False
     MAPObject = MAPLevelReader.MAPLevelFile()
     MAPObject.read_file(filename)
-    
+
     BlenderUtils.setup_blank_scene()
 
     print("")
@@ -353,7 +349,7 @@ def import_MAP_to_scene(filename):
         import_r6_lights(MAPObject.lightList)
     else:
         import_rs_lights(MAPObject.dmpLights)
-    
+
     print("Import Map Succeeded")
     return True
 
