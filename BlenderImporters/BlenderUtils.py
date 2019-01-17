@@ -266,4 +266,3 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
 
 
     return newMaterial
-

@@ -306,4 +306,3 @@ def read_uint_array(bytearray, numelements):
         temp = bytes_to_uint(bytearray[i*4])
         tempArray.append(temp)
     return tempArray
-

@@ -1,1 +1,1 @@
-__all__ = ["BinaryConversionUtilities", "RSBImageReader", "SOBModelReader", "MathHelpers", "CXPMaterialPropertiesReader"]
+__all__ = ["RSBImageReader", "SOBModelReader", "MathHelpers", "CXPMaterialPropertiesReader"]
