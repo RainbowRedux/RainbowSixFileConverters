@@ -85,10 +85,10 @@ class BinaryFileReader(object):
 
     def read_bgra_color_8bpp_byte(self):
         """reads 4 bytes into a BGRA color, and then converts to RGBA."""
-        bytearray = self.read_bytes(4)
+        byteStream = self.read_bytes(4)
         color = []
         for j in range(4):
-            color.append(ord(bytearray[j:j + 1]))
+            color.append(ord(byteStream[j:j + 1]))
         tempblue = color[0]
         color[0] = color[2]
         color[2] = tempblue
@@ -187,34 +187,34 @@ class BinaryFileDataStructure(object):
 
 
 
-def bytes_to_int(bytearray):
+def bytes_to_int(byteStream):
     """Converts 4 bytes to an integer"""
     #https://stackoverflow.com/a/444610
-    if len(bytearray) < 4:
+    if len(byteStream) < 4:
         return 0
-    return struct.unpack("<i", bytearray[0:4])[0]
+    return struct.unpack("<i", byteStream[0:4])[0]
 
-def bytes_to_uint(bytearray):
+def bytes_to_uint(byteStream):
     """Converts 4 bytes to an integer"""
     #https://stackoverflow.com/a/444610
-    if len(bytearray) < 4:
+    if len(byteStream) < 4:
         return 0
-    return struct.unpack("<I", bytearray[0:4])[0]
+    return struct.unpack("<I", byteStream[0:4])[0]
 
-def bytes_to_shortint(bytearray):
+def bytes_to_shortint(byteStream):
     """Converts 2 bytes to a short integer"""
-    return struct.unpack('H', bytearray)
+    return struct.unpack('H', byteStream)
 
-def bytes_to_float(bytearray):
+def bytes_to_float(byteStream):
     """Converts 2 bytes to a short integer"""
-    return struct.unpack('f', bytearray[0:4])
+    return struct.unpack('f', byteStream[0:4])
 
 
-def read_bgra_color(bytearray):
+def read_bgra_color(byteStream):
     """reads 4 bytes into a BGRA color, and then converts to RGBA"""
     color = []
     for j in range(4):
-        color.append(ord(bytearray[j:j + 1]))
+        color.append(ord(byteStream[j:j + 1]))
     tempblue = color[0]
     color[0] = color[2]
     color[2] = tempblue
@@ -260,9 +260,9 @@ def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):
     previousMasks[key] = masks
     return masks
 
-def read_bitmask_ARGB_color(bytearray, bdR, bdG, bdB, bdA):
+def read_bitmask_ARGB_color(byteStream, bdR, bdG, bdB, bdA):
     """Reads an ARGB color with custom bit depths for each channel, returns in RGBA format"""
-    colorVal = bytes_to_shortint(bytearray)[0]
+    colorVal = bytes_to_shortint(byteStream)[0]
     masks = calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA)
     redMask = masks[0]
     greenMask = masks[1]
@@ -300,9 +300,9 @@ def read_bitmask_ARGB_color(bytearray, bdR, bdG, bdB, bdA):
 
     return [redColor, greenColor, blueColor, alphaColor]
 
-def read_uint_array(bytearray, numelements):
+def read_uint_array(byteStream, numelements):
     tempArray = []
     for i in range(numelements):
-        temp = bytes_to_uint(bytearray[i*4])
+        temp = bytes_to_uint(byteStream[i*4])
         tempArray.append(temp)
     return tempArray
