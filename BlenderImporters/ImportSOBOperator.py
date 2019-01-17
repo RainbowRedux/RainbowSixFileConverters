@@ -1,8 +1,6 @@
-import bpy
-import random
 import sys
-import os.path
-import os
+
+import bpy
 
 # TODO: find a better way to load this module from Blender.
 sys.path.insert(0, 'E:/Dropbox/Development/Rainbow/RainbowSixFileConverters')

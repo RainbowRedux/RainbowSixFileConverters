@@ -1,7 +1,7 @@
 import random
 import multiprocessing
 import os
-from os.path import isfile, join
+from os.path import join
 
 def processorNotImplementedDefault(path):
     print("No processor has been assigned, so no processing will be performed on: " + str(path))

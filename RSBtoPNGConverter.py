@@ -12,8 +12,6 @@
 #Files with DXT compressed images don't recover the image, since i haven't worked on decompressing DXT images
 #Files with a format version later than 1 also store information after the image, currently this is discarded but can easily be added.
 
-from PIL import Image
-import json
 import os
 
 from RainbowFileReaders.RSBImageReader import RSBImageFile
@@ -47,11 +45,6 @@ def convert_RSB(filename):
 
     print("Finished converting: " + filename)
     print("")
-
-def convert_RSBs(paths):
-    for path in paths:
-        convert_RSB(path)
-
 
 def main():
     """Main function that converts test data files"""
