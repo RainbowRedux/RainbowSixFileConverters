@@ -105,8 +105,6 @@ class MAPLevelFile(FileFormatReader):
                 lightFile.read_file(lightFileName)
                 self.dmpLights = lightFile
 
-        return
-
 
 class MAPHeader(BinaryFileDataStructure):
     def __init__(self):
