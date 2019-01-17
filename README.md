@@ -4,12 +4,12 @@ These collection of python scripts will allow you to extract data from Rainbow S
 
 [![CodeFactor](https://www.codefactor.io/repository/github/boristsr/rainbowsixfileconverters/badge)](https://www.codefactor.io/repository/github/boristsr/rainbowsixfileconverters)
 
-## Modules
-This project consists of several python modules.
+## Packages
+This project consists of several python packages.
 
-- RainbowFileReaders - This module is dedicated to reading the Files from Rainbow Six, Rogue Spear and other Red Storm Entertainment games.
-- FileUtilities - This module consists of a few utility classes which are used in RainbowFileReaders
-- BlenderImporters - Uses RainbowFileReaders to read files and then import the data to Blender.
+- RainbowFileReaders - This package is dedicated to reading the Files from Rainbow Six, Rogue Spear and other Red Storm Entertainment games.
+- FileUtilities - This package consists of a few utility classes which are used in RainbowFileReaders
+- BlenderImporters - This package uses RainbowFileReaders to read files and then imports the data to Blender. Blender specific code resides here.
 
 ## Requirements
 
