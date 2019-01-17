@@ -98,15 +98,15 @@ def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
                 vert[uv_layer].uv.y = 0.0
             else:
                 vert[uv_layer].uv.y = importedUV[1] * -1
-            
+
 
     #Reverse face winding, to ensure backface culling is correct
     bmesh.ops.reverse_faces(newBmesh, faces=newBmesh.faces)
-    
+
     ########################################
     # Copy from bmesh back to mesh
     ########################################
-    
+
     newBmesh.to_mesh(geoObjBlendMeshMaster)
     newBmesh.free()
     geoObjBlendMeshMaster.update(calc_edges=True)
@@ -128,7 +128,7 @@ def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
             reducedMaterials.append(blenderMaterials[faceProperties.materialIndex])
             geoObjBlendObjectMaster.data.materials.append(blenderMaterials[faceProperties.materialIndex])
             materialMapping[faceProperties.materialIndex] = len(reducedMaterials) - 1
-        
+
         poly.material_index = materialMapping[faceProperties.materialIndex]
 
     #TODO: Import normals
@@ -139,30 +139,30 @@ def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
     for index, rsemesh in enumerate(geometryObject.meshes):
         newObjectName = geometryObject.nameString + "_" + rsemesh.nameString + "_idx" + str(index)
         uniqueFaceIndicies = list(set(rsemesh.faceIndices))
-        
+
         newSubBlendObject = BlenderUtils.clone_mesh_object_with_specified_faces(newObjectName, uniqueFaceIndicies, geoObjBlendObjectMaster)
 
         if newSubBlendObject is not None:
             newSubBlendObject.parent = geoObjectParentObject
             createdSubMeshes.append(newSubBlendObject)
-            
+
             for flag in rsemesh.geometryFlagsEvaluated:
                 newSubBlendObject[flag] = rsemesh.geometryFlagsEvaluated[flag]
 
 
     #clean used materials from each object
     objectsToCleanMaterialsFrom = createdSubMeshes.copy()
-    objectsToCleanMaterialsFrom.append( geoObjBlendObjectMaster)
+    objectsToCleanMaterialsFrom.append(geoObjBlendObjectMaster)
     for objectToClean in objectsToCleanMaterialsFrom:
         BlenderUtils.remove_unused_materials_from_mesh_object(objectToClean)
 
     bpy.data.meshes.remove(geoObjBlendMeshMaster)
-    
+
 
 def import_SOB_to_scene(filename):
     SOBObject = SOBModelReader.SOBModelFile()
     SOBObject.read_file(filename)
-    
+
     print("")
     print("Beginning import")
 

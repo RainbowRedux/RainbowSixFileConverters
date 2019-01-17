@@ -44,7 +44,8 @@ suggestion-mode=yes
 # active Python interpreter and may run arbitrary code.
 unsafe-load-any-extension=no
 
-disable=C0103
+disable=C0103,C0413,W0201,E0401
+#disabled snake_case, import at top of file, unknown module import, and variable defined outside __init__
 
 
 [MESSAGES CONTROL]
