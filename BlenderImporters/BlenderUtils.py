@@ -77,7 +77,7 @@ def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalO
     newObjMeshCopy = originalObject.data.copy()
     newObjMeshCopy, newSubBlendObject = create_blender_mesh_object(newObjectName, newObjMeshCopy)
     newObjMeshCopy.name = newObjectName + "Mesh"
-    
+
     #select the object
     newSubBlendObject.select_set(True)
     bpy.context.view_layer.objects.active = newSubBlendObject
@@ -88,7 +88,7 @@ def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalO
 
     #https://blender.stackexchange.com/a/31750
     bmDelFaces.faces.ensure_lookup_table()
-    
+
     selectedFaces = []
     for i in range(len(bmDelFaces.faces)):
         if i in faceIndices:
@@ -96,7 +96,7 @@ def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalO
         else:
             selectedFaces.append(bmDelFaces.faces[i])
 
-    bmesh.ops.delete(bmDelFaces, geom=selectedFaces, context="FACES")  
+    bmesh.ops.delete(bmDelFaces, geom=selectedFaces, context="FACES")
 
     # Push the changes back to edit mode and change to object mode
     bmesh.update_edit_mesh(newObjMeshCopy, True)
@@ -151,7 +151,7 @@ def create_blender_materials_from_list(materialList, texturePaths):
     for materialSpec in materialList:
         newMaterial = create_material_from_RSE_specification(materialSpec, texturePaths)
         blenderMaterials.append(newMaterial)
-    
+
     return blenderMaterials
 
 def fixup_texture_name(filename):
@@ -186,7 +186,7 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
     """Creates a material from an RSE specification.
     This does ignore some values that don't map well to PBR and don't influence model behaviour much.
     Materials will be more finely tuned in the game engine.
-    
+
     materialSpecification is an RSEMaterialDefinition as read by RSEModelReader
 
     gameDataPath is meant to be the Data folder within the games installation
@@ -196,7 +196,7 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
     newMaterial = bpy.data.materials.new(name=materialSpecification.materialName)
     newMaterialBSDFWrap = node_shader_utils.PrincipledBSDFWrapper(newMaterial, is_readonly=False)
 
-    textureName = materialSpecification.textureName    
+    textureName = materialSpecification.textureName
     texToLoad = None
 
     #Search for texture to load

@@ -48,7 +48,7 @@ def convert_MAP(filename):
 
     mapFile = MAPLevelReader.MAPLevelFile()
     mapFile.read_file(filename, True)
-    
+
     for geometryObject in mapFile.geometryObjects:
         if mapFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
             for mesh in geometryObject.meshes:
@@ -65,8 +65,8 @@ def convert_MAP(filename):
                     print(errorMessage)
         else:
             print("Unable to determine where geometryFlags are")
-    
-    
+
+
     for light in mapFile.lightList.lights:
             if light.type not in lightTypes:
                 lightTypes.append(light.type)

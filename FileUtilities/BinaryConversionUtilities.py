@@ -33,7 +33,7 @@ class BinaryFileReader(object):
             print("Data read not long enough, returning 0")
             return 0
         return struct.unpack("<I", data)[0]
-    
+
     def read_int(self):
         """Converts 4 bytes to an integer"""
         #https://stackoverflow.com/a/444610
@@ -84,7 +84,7 @@ class BinaryFileReader(object):
         for _ in range(size):
             vec.append(self.read_short_uint())
         return vec
-    
+
     def read_bgra_color_8bpp_byte(self):
         """reads 4 bytes into a BGRA color, and then converts to RGBA."""
         bytearray = self.read_bytes(4)
@@ -95,14 +95,14 @@ class BinaryFileReader(object):
         color[0] = color[2]
         color[2] = tempblue
         return color
-    
+
     def read_rgb_color_24bpp_uint(self):
         """Reads 3 uints"""
         color = []
         for _ in range(3):
             color.append(self.read_uint())
         return color
-    
+
     def read_rgba_color_32bpp_uint(self):
         """Reads 4 uints"""
         color = []
@@ -116,7 +116,7 @@ class BinaryFileReader(object):
         for _ in range(4):
             color.append(self.read_float())
         return color
-    
+
     def get_length(self):
         return len(self.bytes)
 
@@ -201,7 +201,7 @@ class BinaryFileDataStructure(object):
 
     def print_structure_info(self):
         pprint.pprint(vars(self))
-    
+
 
 
 def bytes_to_int(bytearray):
@@ -249,7 +249,7 @@ def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):
     if key in previousMasks:
         masks = previousMasks[key]
         return masks
-    
+
     redMask = 0
     greenMask = 0
     blueMask = 0
@@ -286,7 +286,7 @@ def read_bitmask_ARGB_color(bytearray, bdR, bdG, bdB, bdA):
     blueMask = masks[2]
     alphaMask = masks[3]
 
-    alphaColor = 255  
+    alphaColor = 255
     if bdA > 0:
         alphaColor = alphaMask & colorVal
         alphaColor = alphaColor >> (bdR + bdG + bdB)
