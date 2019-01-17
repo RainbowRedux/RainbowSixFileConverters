@@ -1,9 +1,6 @@
-from PIL import Image
-import time
-import json
 
 from RainbowFileReaders import MAPLevelReader
-from FileUtilities import JSONMetaInfo, OBJModelWriter, DirectoryProcessor
+from FileUtilities import JSONMetaInfo, DirectoryProcessor
 from RainbowFileReaders.R6Constants import RSEGameVersions
 
 lightTypes = []
@@ -19,7 +16,6 @@ def strip_extra_data_for_json(mapFile):
             for mesh in geometryObject.meshes:
                 mesh.faceIndices = ["Stripped from JSON"]
         else:
-            pass
             geometryObject.geometryData.vertices = ["Stripped from JSON"]
             for facegroup in geometryObject.geometryData.faceGroups:
                 facegroup.faceVertexIndices = ["Stripped from JSON"]
@@ -33,7 +29,6 @@ def strip_extra_data_for_json(mapFile):
             geometryObject.geometryData.collisionInformation.faceDistancesFromOrigin = ["Stripped from JSON"]
             geometryObject.geometryData.collisionInformation.faces = ["Stripped from JSON"]
             geometryObject.geometryData.collisionInformation.collisionMeshDefinitions = ["Stripped from JSON"]
-    pass
 
 flagErrors = []
 
@@ -68,8 +63,8 @@ def convert_MAP(filename):
 
 
     for light in mapFile.lightList.lights:
-            if light.type not in lightTypes:
-                lightTypes.append(light.type)
+        if light.type not in lightTypes:
+            lightTypes.append(light.type)
 
     strip_extra_data_for_json(mapFile)
 

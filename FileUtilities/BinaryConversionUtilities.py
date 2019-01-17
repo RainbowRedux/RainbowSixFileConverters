@@ -19,8 +19,6 @@ class BinaryFileReader(object):
         """Converts 2 bytes to a short integer"""
         if len(self.bytes) < self._seekg + size:
             raise ValueError("File not long enough to read " + str(size) + " bytes")
-            print("File not long enough, returning nothing")
-            return []
         val = self.bytes[self._seekg:self._seekg+size]
         self._seekg += size
         return val
@@ -128,13 +126,6 @@ class FileFormatReader(object):
         super(FileFormatReader, self).__init__()
         self.filepath = None
 
-    def __repr__(self):
-        #a toggle for verbose information or not
-        if False:
-            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
-        else:
-            return super(FileFormatReader, self).__repr__()
-
     def print_structure_info(self):
         pprint.pprint(vars(self))
 
@@ -163,14 +154,6 @@ class FileFormatReader(object):
 class BinaryFileDataStructure(object):
     def __init__(self):
         super().__init__()
-        pass
-
-    def __repr__(self):
-        #a toggle for verbose information or not
-        if False:
-            return pprint.pformat(vars(self), indent=1, width=80, depth=2)
-        else:
-            return super(BinaryFileDataStructure, self).__repr__()
 
     def read_section_string(self, filereader):
         self.sectionStringLength = filereader.read_uint()

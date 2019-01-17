@@ -1,13 +1,10 @@
+import os
+
 import bpy
 import bmesh
 from bpy_extras import node_shader_utils
 
-import os
-
-from RainbowFileReaders import R6Settings
-from RainbowFileReaders import R6Constants
-from RainbowFileReaders.R6Constants import UINT_MAX, RSEAlphaMethod
-from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float
+from RainbowFileReaders.R6Constants import RSEAlphaMethod
 
 def flip_normals_on_object(blendObject):
     #https://blenderartists.org/t/script-to-flip-normals-for-multiple-objects/533443/2
@@ -50,7 +47,6 @@ def setup_blank_scene():
     bpy.ops.wm.read_factory_settings()
     set_blender_render_unit_scale_options()
     set_environment_lighting_enabled(True)
-    pass
 
 def create_blender_blank_object(name):
     newBlankObject = bpy.data.objects.new(name, None)
@@ -127,8 +123,6 @@ def add_mesh_geometry(mesh, vertices, faces):
     mesh.update(calc_edges=True)
 
 def remove_unused_materials_from_mesh_object(objectToClean):
-    objectToClean.data.materials
-
     materialIndicesInUse = []
 
     for i in range(len(objectToClean.data.polygons)):
@@ -221,7 +215,6 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
         #textureSlot = newMaterial.texture_paint_slots.add()
 
         if materialSpecification.alphaMethod != RSEAlphaMethod.SAM_Opaque:
-            pass
             newMaterialBSDFWrap.base_color_texture.use_alpha = True
             #textureSlot.use_map_alpha = True
             #textureSlot.alpha_factor = materialSpecification.opacity
@@ -230,7 +223,7 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
 
     materialBlendMode = "opaque"
     if materialSpecification.alphaMethod == RSEAlphaMethod.SAM_MethodLookup:
-        if materialSpecification.CXPMaterialProperties != None:
+        if materialSpecification.CXPMaterialProperties is not None:
             materialBlendMode = materialSpecification.CXPMaterialProperties.blendMode
 
 

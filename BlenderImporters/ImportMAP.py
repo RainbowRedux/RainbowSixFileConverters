@@ -1,4 +1,3 @@
-import random
 import os
 import sys
 from math import radians
