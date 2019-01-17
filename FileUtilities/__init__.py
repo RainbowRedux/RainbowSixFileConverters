@@ -1,1 +1,1 @@
-__all__ = ["OBJModelWriter.py", "JSONMetaInfo"]
+__all__ = ["OBJModelWriter", "JSONMetaInfo"]
