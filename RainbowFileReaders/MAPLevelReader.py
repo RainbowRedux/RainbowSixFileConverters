@@ -52,7 +52,7 @@ class MAPLevelFile(FileFormatReader):
             if self.verboseOutput:
                 pass
 
-        if len(self.materials) > 0:
+        if self.materials:
             self.gameVersion = self.materials[0].get_material_game_version()
 
         self.geometryListHeader = RSEGeometryListHeader()

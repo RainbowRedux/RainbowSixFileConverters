@@ -32,7 +32,7 @@ class CXPMaterialProperties(object):
 
     def read(self, keywords):
         if keywords[0].strip() != "Material" and keywords[0] != "Surface":
-            raise ValueError("Not a valid material begin statement: " + keywords[0] + keywords[1])
+            raise ValueError("Not a valid material begin statement: " + keywords[0])
 
         self.type = keywords.pop(0)
         self.materialName = keywords.pop(0)
@@ -104,7 +104,7 @@ def _read_cxp_keywords(path):
 def read_cxp(path):
     keywords = _read_cxp_keywords(path)
     MaterialProperties = []
-    while len(keywords) > 0:
+    while keywords:
         newMat = CXPMaterialProperties()
         try:
             newMat.read(keywords)

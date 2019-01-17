@@ -1,6 +1,5 @@
 class OBJModelWriter(object):
     def __init__(self):
-        pass
         self.output_file = None
 
     def open_file(self, path):
