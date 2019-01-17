@@ -44,7 +44,7 @@ suggestion-mode=yes
 # active Python interpreter and may run arbitrary code.
 unsafe-load-any-extension=no
 
-disable=C0103,C0413,W0201,E0401,W0235,C0326,C0301,R0902
+disable=C0103,C0413,W0201,E0401,W0235,C0326,C0301,R0902,R0205
 #disabled:
 #     snake_case: c0103 - Will improve over time as this is a new style change for this codebase
 #     import at top of file c0413 - can't improve while have to add in module path
@@ -54,6 +54,7 @@ disable=C0103,C0413,W0201,E0401,W0235,C0326,C0301,R0902
 #     Exactly one space before assignment C0326 - by choice in certain lines to make it easier to read constants
 #     Line too long C0301 - I don't care about line length
 #     Too many instance attributes R0902 - I have no control over the original data structures being read, and there is a lot of attributes
+#     Useless object inheritance R0205 - I don't want to stray too far from Python 2.x compatibility as this will probably be embedded in software package that uses python2.7 shortly
 
 
 [MESSAGES CONTROL]
