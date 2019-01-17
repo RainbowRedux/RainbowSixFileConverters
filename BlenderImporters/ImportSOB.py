@@ -26,7 +26,7 @@ def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
     geoObjectParentObject = BlenderUtils.create_blender_blank_object(name)
 
     #fix up rotation
-    geoObjectParentObject.rotation_euler = (radians(90),0,0)
+    geoObjectParentObject.rotation_euler = (radians(90), 0, 0)
     #rot1 = mathutils.Euler((0, 0, radians(-90))).to_quaternion()
     #rot2 = mathutils.Euler((0, radians(90), 0)).to_quaternion()
     #finalRot = rot2*rot1

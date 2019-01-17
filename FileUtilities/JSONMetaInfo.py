@@ -24,8 +24,9 @@ class JSONMetaInfo(object):
 
 class CustomJSONEncoder(json.JSONEncoder):
     """A quick and  dirty custom JSON encoder that allows serialization of custom objects"""
-    #https://code.tutsplus.com/tutorials/serialization-and-deserialization-of-python-objects-part-1--cms-26183
-    def default(self, o):
+    # https://code.tutsplus.com/tutorials/serialization-and-deserialization-of-python-objects-part-1--cms-26183
+    # disabled pylint E0202 because it is desired to hide the parent definition
+    def default(self, o): # pylint: disable=E0202
         if hasattr(o, '__dict__'):
             return o.__dict__
         else:

@@ -1,5 +1,4 @@
 import sys
-import importlib
 
 # TODO: find a better way to load this module from Blender.
 sys.path.insert(0, 'E:/Dropbox/Development/Rainbow/RainbowSixFileConverters')

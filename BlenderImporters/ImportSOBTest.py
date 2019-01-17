@@ -10,7 +10,7 @@ from BlenderImporters import ImportSOB
 from RainbowFileReaders import MathHelpers
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders import R6Settings
-from RainbowFileReaders import BinaryConversionUtilities
+from FileUtilities import BinaryConversionUtilities
 
 importlib.reload(MathHelpers)
 importlib.reload(R6Settings)

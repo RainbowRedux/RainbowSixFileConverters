@@ -1,15 +1,12 @@
-from FileUtilities import BinaryConversionUtilities
+from datetime import datetime
+
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 from RainbowFileReaders import R6Settings
-from RainbowFileReaders.R6Constants import RSEMaterialFormatConstants, RSEGameVersions, RSEGeometryFlags
+from RainbowFileReaders.R6Constants import RSEGameVersions, RSEGeometryFlags
 from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 from RainbowFileReaders.RSDMPLightReader import RSDMPLightFile
-
-import pprint
-
-from datetime import datetime
 
 class MAPLevelFile(FileFormatReader):
     """Class to read full MAP files"""
@@ -131,13 +128,13 @@ class MAPHeader(BinaryFileDataStructure):
 class RSMAPGeometryObject(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAPGeometryObject, self).__init__()
-    
+
     def read(self, filereader):
         super().read(filereader)
-        
+
         self.size = filereader.read_uint()
         self.id = filereader.read_uint()
-        
+
         self.read_version_string(filereader)
         self.versionNumber = filereader.read_uint()
 
@@ -174,7 +171,7 @@ class RSMAPGeometryData(BinaryFileDataStructure):
     def read_header_info(self, filereader):
         self.size = filereader.read_uint()
         self.id = filereader.read_uint()
-        
+
         self.read_version_string(filereader)
         self.versionNumber = filereader.read_uint()
 
@@ -206,7 +203,7 @@ class RSMAPFaceGroup(BinaryFileDataStructure):
         self.materialIndex = filereader.read_uint()
 
         self.faceCount = filereader.read_uint()
-        
+
         self.faceNormals = []
         self.faceDistancesFromOrigin = []
 
@@ -242,7 +239,7 @@ class RSMAPVertexParameterCollection(BinaryFileDataStructure):
         self.UVs = []
         for _ in range(self.vertexParamCount):
             self.UVs.append(filereader.read_vec_f(2))
-        
+
         self.colors = []
         for _ in range(self.vertexParamCount):
             self.colors.append(filereader.read_vec_f(4))
@@ -306,7 +303,7 @@ class RSMAPCollisionFaceInformation(BinaryFileDataStructure):
 class RSMAPCollisionMesh(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAPCollisionMesh, self).__init__()
-    
+
     def read(self, filereader):
         super().read(filereader)
 
@@ -399,7 +396,7 @@ class R6MAPLight(BinaryFileDataStructure):
 
     def read(self, filereader):
         super().read(filereader)
-        
+
         self.lightSize = filereader.read_uint()
         self.ID = filereader.read_uint()
 
@@ -481,19 +478,6 @@ class RSEMAPObject(BinaryFileDataStructure):
         else:
             print("BIG ERROR UNSUPPORTED OBJECT VERSION: " + str(self.versionNumber))
             return
-        return
-
-        self.read_name_string(filereader)
-        self.read_named_string(filereader, "filenameString")
-
-        #3x3 matrix = 9 elements
-        self.transformMatrix = filereader.read_vec_f(9)
-
-        self.position = filereader.read_vec_f(3)
-
-        self.read_named_string(filereader, "unknownString")
-        self.read_named_string(filereader, "hitsoundAssetString")
-        self.read_named_string(filereader, "debrisParticleAssetString")
 
 class RSEMAPRoomList(BinaryFileDataStructure):
     def __init__(self):
@@ -528,7 +512,7 @@ class R6MAPRoomDefinition(BinaryFileDataStructure):
 
     def read(self, filereader):
         super().read(filereader)
-        
+
         self.ID = filereader.read_uint()
         self.read_version_string(filereader)
         self.versionNumber = filereader.read_uint()
@@ -537,7 +521,7 @@ class R6MAPRoomDefinition(BinaryFileDataStructure):
 
         self.unknown1 = filereader.read_bytes(1)[0]
         self.unknown2 = filereader.read_bytes(1)[0]
-        if(self.unknown1 == 0):
+        if self.unknown1 == 0:
             self.unknown3 = filereader.read_bytes(1)[0]
 
         self.shermanLevelCount = filereader.read_uint()
@@ -566,7 +550,7 @@ class RSMAPRoomDefinition(BinaryFileDataStructure):
 
     def read(self, filereader):
         super().read(filereader)
-        
+
         self.ID = filereader.read_uint()
         self.read_version_string(filereader)
         self.versionNumber = filereader.read_uint()
@@ -581,7 +565,7 @@ class RSMAPRoomDefinition(BinaryFileDataStructure):
 
         if self.unknown3 == 1:
             self.unknown5 = filereader.read_vec_f(6)
-        
+
         if hasattr(self, 'unknown4') and self.unknown4 == 1:
             self.unknown6 = filereader.read_vec_f(6)
 
@@ -610,7 +594,7 @@ class R6MAPShermanLevelDefinition(BinaryFileDataStructure):
 
         self.read_name_string(filereader)
         self.unknown1 = filereader.read_vec_f(6)
-        
+
         self.unknown2Count = filereader.read_uint()
         self.unknown2 = filereader.read_vec_f(self.unknown2Count)
 
@@ -633,7 +617,7 @@ class RSMAPShermanLevelDefinition(BinaryFileDataStructure):
             transformObj = RSMAPShermanLevelTransformInformation()
             transformObj.read(filereader)
             self.transforms.append(transformObj)
-        
+
         self.unknown3Count = filereader.read_uint()
         self.unknown3 = filereader.read_vec_f(self.unknown3Count)
 
@@ -644,7 +628,7 @@ class RSMAPShermanLevelTransformInformation(BinaryFileDataStructure):
         super(RSMAPShermanLevelTransformInformation, self).__init__()
 
     def read(self, filereader):
-        super().read(filereader) 
+        super().read(filereader)
 
         #3x3 matrix = 9 elements
         self.transformMatrix = filereader.read_vec_f(9)

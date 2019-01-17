@@ -44,8 +44,15 @@ suggestion-mode=yes
 # active Python interpreter and may run arbitrary code.
 unsafe-load-any-extension=no
 
-disable=C0103,C0413,W0201,E0401
-#disabled snake_case, import at top of file, unknown module import, and variable defined outside __init__
+disable=C0103,C0413,W0201,E0401,W0235,C0326,C0301
+#disabled:
+#     snake_case: c0103 - Will improve over time as this is a new style change for this codebase
+#     import at top of file c0413 - can't improve while have to add in module path
+#     unknown module import w0201 - Can't import bpy and bmesh outside of blender
+#     variable defined outside __init__ e0401 - Hard to adhere to while file formats are still being decoded
+#     Useless __init__ definition W0235 - will conform with at the same time E0401 is resolved
+#     Exactly one space before assignment C0326 - by choice in certain lines to make it easier to read constants
+#     Line too long C0301 - I don't care about line length
 
 
 [MESSAGES CONTROL]

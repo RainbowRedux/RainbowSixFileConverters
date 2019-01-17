@@ -5,7 +5,7 @@ class OBJModelWriter(object):
 
     def open_file(self, path):
         self.close_file()
-        if path is not None and len(path) != 0:
+        if path:
             self.output_file = open(path, "w")
         if self.output_file is None:
             print("Could not open file for output: " + str(path))
@@ -21,7 +21,7 @@ class OBJModelWriter(object):
             self.output_file.write(newline)
             self.output_file.write("\n")
 
-    def begin_new_object(self, ObjectName = "Undefined"):
+    def begin_new_object(self, ObjectName="Undefined"):
         newline = "o "
         newline += str(ObjectName)
         self.write_line(newline)

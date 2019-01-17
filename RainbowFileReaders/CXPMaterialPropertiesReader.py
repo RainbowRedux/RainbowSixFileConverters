@@ -10,7 +10,7 @@ class CXPMaterialProperties(object):
         self.materialName = None
         #Should be alpha-transparent in software rendering mode
         self.softwarealpha = False
-        #Default to opaque mode, 
+        #Default to opaque mode,
         self.blendMode = "opaque"
         #If this is not empty, this is the color that should act as the alpha mask. It's often slightly off by 1 due to imprecision in 16bit color images, so take that into accound when using this value
         self.colorkey = []
@@ -109,12 +109,12 @@ def read_cxp(path):
         try:
             newMat.read(keywords)
             MaterialProperties.append(newMat)
-        except:
+        except ValueError as ve:
             #In this instance, there is an invalid CXP material
             #One such instance is the Rommel.CXP file in the classic missions included with Urban Operations includes an extra "End" statement at the bottom, which is invalid
             #remove this errored keyword so that program can continue
             discardedWord = keywords.pop(0)
-            print("Skipping invalid material definition in CXP")
+            print("Skipping invalid material definition in CXP: " + str(ve))
             print("\tDiscarded keyword: " + discardedWord)
     return MaterialProperties
 
@@ -126,7 +126,7 @@ def load_relevant_cxps(datapath, modpath = None):
     modTexturePath = None
     if modpath is not None:
         modTexturePath = os.path.join(modpath, R6Settings.paths["TexturePath"])
-    
+
     CXPFilesToRead = []
 
     #Add the mod texture path first, so entries from here take priority
@@ -145,7 +145,7 @@ def load_relevant_cxps(datapath, modpath = None):
             CXPFilesToRead.append(dataShermanPath)
         if os.path.isfile(dataRommelPath):
             CXPFilesToRead.append(dataRommelPath)
-    
+
     CXPDefinitions = []
     for cxpPath in CXPFilesToRead:
         tempCXPDefs = read_cxp(cxpPath)
