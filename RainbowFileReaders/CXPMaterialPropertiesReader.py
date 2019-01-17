@@ -78,7 +78,7 @@ class CXPMaterialProperties(object):
                 self.animNumAdditionalTextures = int(keywords.pop(0))
                 for _ in range(self.animNumAdditionalTextures):
                     self.animAdditionalTextures.append(keywords.pop(0))
-            elif currKeyword == "scroll" or currKeyword == "scrolling":
+            elif currKeyword in ("scroll", "scrolling"):
                 self.scrollParams.append(keywords.pop(0))
                 self.scrollParams.append(keywords.pop(0))
                 self.scrollParams.append(keywords.pop(0))

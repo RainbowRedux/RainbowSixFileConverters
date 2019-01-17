@@ -62,7 +62,8 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
         sizeWithoutStrings -= self.textureNameLength
 
         #check if it's a rainbow six file, or rogue spear file
-        if sizeWithoutStrings == RSEMaterialFormatConstants.RSE_MATERIAL_SIZE_NO_STRINGS_RAINBOW_SIX or self.versionNumber is None:
+        #Pylint disabled R1705 because stylistically i prefer this way here so i can extend it easier
+        if sizeWithoutStrings == RSEMaterialFormatConstants.RSE_MATERIAL_SIZE_NO_STRINGS_RAINBOW_SIX or self.versionNumber is None:  # pylint: disable=R1705
             # Rainbow Six files typically have material sizes this size, or contain no version number
             return RSEGameVersions.RAINBOW_SIX
         else:

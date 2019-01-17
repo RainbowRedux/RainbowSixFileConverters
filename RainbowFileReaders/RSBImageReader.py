@@ -95,8 +95,9 @@ class RSBHeader(BinaryFileDataStructure):
 
     def calculate_bytes_per_pixel(self):
         """Calculates how many bytes per pixel are to be expected in the images"""
-        if self.isDXT:
-            if self.dxtType == 0:
+        #Pylint disabled R1705 because stylistically i prefer this way here so i can extend it easier
+        if self.isDXT: # pylint: disable=R1705
+            if self.dxtType == 0: # pylint: disable=R1705
                 return 1
             else:
                 return 2

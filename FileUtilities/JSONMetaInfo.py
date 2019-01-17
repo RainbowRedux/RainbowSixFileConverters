@@ -29,5 +29,4 @@ class CustomJSONEncoder(json.JSONEncoder):
     def default(self, o): # pylint: disable=E0202
         if hasattr(o, '__dict__'):
             return o.__dict__
-        else:
-            return str(o)
+        return str(o)

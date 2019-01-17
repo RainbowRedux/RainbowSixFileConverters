@@ -151,7 +151,7 @@ def create_blender_materials_from_list(materialList, texturePaths):
 def fixup_texture_name(filename):
     ext = filename.lower()[-4:]
     newfilename = filename
-    if ext == ".bmp" or ext == ".rsb" or ext == ".tga":
+    if ext in (".bmp", ".rsb", ".tga"):
         newfilename = newfilename[:-4]
         newfilename += ".PNG"
     return newfilename
