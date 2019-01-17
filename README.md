@@ -2,6 +2,8 @@
 
 These collection of python scripts will allow you to extract data from Rainbow Six, Eagle Watch and Rogue Spear.
 
+[![CodeFactor](https://www.codefactor.io/repository/github/boristsr/rainbowsixfileconverters/badge)](https://www.codefactor.io/repository/github/boristsr/rainbowsixfileconverters)
+
 ## Modules
 This project consists of several python modules.
 
