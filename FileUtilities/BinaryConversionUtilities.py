@@ -185,40 +185,9 @@ class BinaryFileDataStructure(object):
     def print_structure_info(self):
         pprint.pprint(vars(self))
 
-
-
-def bytes_to_int(byteStream):
-    """Converts 4 bytes to an integer"""
-    #https://stackoverflow.com/a/444610
-    if len(byteStream) < 4:
-        return 0
-    return struct.unpack("<i", byteStream[0:4])[0]
-
-def bytes_to_uint(byteStream):
-    """Converts 4 bytes to an integer"""
-    #https://stackoverflow.com/a/444610
-    if len(byteStream) < 4:
-        return 0
-    return struct.unpack("<I", byteStream[0:4])[0]
-
 def bytes_to_shortint(byteStream):
     """Converts 2 bytes to a short integer"""
     return struct.unpack('H', byteStream)
-
-def bytes_to_float(byteStream):
-    """Converts 2 bytes to a short integer"""
-    return struct.unpack('f', byteStream[0:4])
-
-
-def read_bgra_color(byteStream):
-    """reads 4 bytes into a BGRA color, and then converts to RGBA"""
-    color = []
-    for j in range(4):
-        color.append(ord(byteStream[j:j + 1]))
-    tempblue = color[0]
-    color[0] = color[2]
-    color[2] = tempblue
-    return color
 
 def isPowerOf2(number):
     """Checks if a number is a power of 2"""
@@ -299,10 +268,3 @@ def read_bitmask_ARGB_color(byteStream, bdR, bdG, bdB, bdA):
     blueColor = int(round(blueColor))
 
     return [redColor, greenColor, blueColor, alphaColor]
-
-def read_uint_array(byteStream, numelements):
-    tempArray = []
-    for i in range(numelements):
-        temp = bytes_to_uint(byteStream[i*4])
-        tempArray.append(temp)
-    return tempArray
