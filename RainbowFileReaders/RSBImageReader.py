@@ -1,5 +1,4 @@
 import PIL
-from  FileUtilities import BinaryConversionUtilities
 from FileUtilities.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader
 
 class RSBImageFile(FileFormatReader):
@@ -9,10 +8,10 @@ class RSBImageFile(FileFormatReader):
         self.header = None
         self.image256 = None
         self.imageFullColor = None
-    
+
     def read_data(self):
         super().read_data()
-        
+
         fileReader = self._filereader
 
         #read header
@@ -37,7 +36,7 @@ class RSBImageFile(FileFormatReader):
         if self.header.is_valid() is False:
             print("Header not valid, aborting")
             return
-        
+
         #read full color image
         self.imageFullColor = RSBImage()
         self.imageFullColor.read_image(self.header.width, self.header.height, self.header.calculate_bytes_per_pixel(), fileReader)
@@ -53,7 +52,7 @@ class RSBImageFile(FileFormatReader):
                 #alpha is ignored as it caused fully invisible PNGs
                 pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], 255) # set the colour accordingly, ignoring alpha
         return newImage
-                
+
 
     def convert_full_color_image(self):
         newImage = PIL.Image.new('RGBA', (self.header.width, self.header.height))
@@ -65,7 +64,7 @@ class RSBImageFile(FileFormatReader):
                 pixel_color = read_bitmask_ARGB_color(pixel_data, self.header.bitDepthRed, self.header.bitDepthGreen, self.header.bitDepthBlue, self.header.bitDepthAlpha)
                 pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], pixel_color[3]) # set the colour accordingly
         return newImage
-    
+
 
 class RSBHeader(BinaryFileDataStructure):
     """Reads and stores information in the header of RSB files"""
@@ -134,7 +133,7 @@ class RSBHeader(BinaryFileDataStructure):
             #bit depth information
             self.read_bit_mask(filereader)
 
-        if self.version >= 9: 
+        if self.version >= 9:
             self.unknown5 = filereader.read_uint()
 
             self.dxtType = filereader.read_uint()
@@ -148,8 +147,7 @@ class RSBPalette(BinaryFileDataStructure):
         super(RSBPalette, self).__init__()
         self.num_palette_entries = 256
         self.palette_entries = []
-        pass
-    
+
     def get_color(self, index):
         return self.palette_entries[index]
 
@@ -173,8 +171,7 @@ class RSBImage(BinaryFileDataStructure):
     def __init__(self):
         super(RSBImage, self).__init__()
         self.image = []
-        pass
-    
+
     def get_pixel(self, index):
         if index >= len(self.image):
             print("Invalid index: " + str(index))

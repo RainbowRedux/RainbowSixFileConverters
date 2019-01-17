@@ -78,7 +78,7 @@ def determine_data_paths_for_file(filename):
             gamePath = currDirParent
             modName = prevDir
         prevDir = currDir
-    
+
     baseDataPath = None
     modPath = None
     if gamePath is not None:

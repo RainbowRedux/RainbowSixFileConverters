@@ -21,7 +21,7 @@ class DirectoryProcessor(object):
             for name in dirs:
                 print("Walking directory: " + os.path.join(root, name))
         return filesToProcess
-    
+
     def gather_all_files(self):
         files = []
         for path in self.paths:
@@ -34,7 +34,6 @@ class DirectoryProcessor(object):
 
         # Large files tend to be grouped in folders, which can lead to many large files being assigned to one worker
         # A shuffle helps more evenly distribute processing workload
-        import random
         random.shuffle(self.allFiles)
 
         numWorkers = multiprocessing.cpu_count()
@@ -49,7 +48,8 @@ class DirectoryProcessor(object):
     def run_sequential(self):
         self.gather_all_files()
         for path in self.allFiles:
-            self.processFunction(path)
+            # Pylint disabled error E1121 as it is a false positive
+            self.processFunction(path) # pylint: disable=E1121
 
     def profileRun(self):
         self.run_sequential()

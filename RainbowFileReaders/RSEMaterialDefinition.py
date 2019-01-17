@@ -1,7 +1,6 @@
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEMaterialFormatConstants
-from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure
 from RainbowFileReaders.MathHelpers import normalize_color, unnormalize_color
-import pprint
+from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure
 
 class RSEMaterialListHeader(BinaryFileDataStructure):
     def __init__(self):
@@ -74,7 +73,7 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
             sizeWithoutStrings -= self.textureNameLength
             if sizeWithoutStrings == RSEMaterialFormatConstants.RSE_MATERIAL_SIZE_NO_STRINGS_ROGUE_SPEAR:
                 return RSEGameVersions.ROGUE_SPEAR
-            
+
         return RSEGameVersions.UNKNOWN
 
     def add_CXP_information(self, CXPDefinitions):
@@ -142,7 +141,7 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
             self.normalizedColors = True
         else:
             print("Unhandled case")
-            
+
         self.specularLevel = filereader.read_float()
         self.twoSidedRaw = filereader.read_bytes(1)
         self.twoSidedRaw = int.from_bytes(self.twoSidedRaw, byteorder='little')

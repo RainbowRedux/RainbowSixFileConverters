@@ -5,14 +5,9 @@
 #RSB Version 0 required looking into the bt file directly as the wiki is not complete
 #Texture and surface data extraction to JSON file is not complete
 
-from PIL import Image
-import time
-import os
 from FileUtilities import DirectoryProcessor
-import json
-
-from RainbowFileReaders import SOBModelReader
 from FileUtilities import JSONMetaInfo, OBJModelWriter
+from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders.MathHelpers import is_vector_normal
 
 def convert_SOB(filename):
@@ -35,7 +30,7 @@ def convert_SOB(filename):
                 countGoodNormals += 1
             else:
                 countBadNormals += 1
-            
+
     print("Num bad normals: " + str(countBadNormals))
     print("Num good normals: " + str(countGoodNormals))
 
