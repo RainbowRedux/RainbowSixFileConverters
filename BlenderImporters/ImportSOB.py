@@ -1,12 +1,9 @@
-import random
-import os
 import sys
 from math import radians
 import math
 
 import bpy
 import bmesh
-import mathutils
 
 sys.path.insert(0, 'E:/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
@@ -14,8 +11,7 @@ sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFi
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders import R6Constants
-from RainbowFileReaders.R6Constants import UINT_MAX
-from RainbowFileReaders.MathHelpers import normalize_color, sanitize_float, pad_color
+from RainbowFileReaders.MathHelpers import normalize_color, pad_color
 
 from BlenderImporters import BlenderUtils
 

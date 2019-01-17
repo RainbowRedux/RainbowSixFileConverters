@@ -44,6 +44,8 @@ suggestion-mode=yes
 # active Python interpreter and may run arbitrary code.
 unsafe-load-any-extension=no
 
+disable=C0103
+
 
 [MESSAGES CONTROL]
 
