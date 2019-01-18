@@ -1,6 +1,3 @@
-"""
-This module defines the fileformat and data structures specific to MAP files used in Rainbow Six and Rogue Spear
-"""
 from datetime import datetime
 
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
@@ -110,7 +107,6 @@ class MAPLevelFile(FileFormatReader):
 
 
 class MAPHeader(BinaryFileDataStructure):
-    """Header data structure for MAP files"""
     def __init__(self):
         super(MAPHeader, self).__init__()
         self.time = datetime.now()
@@ -128,7 +124,6 @@ class MAPHeader(BinaryFileDataStructure):
             self.time = datetime.fromtimestamp(self.timePOSIXRaw)
 
 class RSMAPGeometryObject(BinaryFileDataStructure):
-    """Geometry Object used in Rogue Spear maps"""
     def __init__(self):
         super(RSMAPGeometryObject, self).__init__()
 
@@ -148,7 +143,6 @@ class RSMAPGeometryObject(BinaryFileDataStructure):
 
 
 class RSMAPGeometryData(BinaryFileDataStructure):
-    """Datastructure within RSMAPGeometryObjects"""
     def __init__(self):
         super(RSMAPGeometryData, self).__init__()
         self.size = None
@@ -173,7 +167,6 @@ class RSMAPGeometryData(BinaryFileDataStructure):
         self.collisionInformation.read(filereader)
 
     def read_header_info(self, filereader):
-        """Reads top level information for this data structure"""
         self.size = filereader.read_uint()
         self.id = filereader.read_uint()
 
@@ -183,14 +176,12 @@ class RSMAPGeometryData(BinaryFileDataStructure):
         self.read_name_string(filereader)
 
     def read_vertices(self, filereader):
-        """Reads the list of vertices from the file"""
         self.vertexCount = filereader.read_uint()
         self.vertices = []
         for _ in range(self.vertexCount):
             self.vertices.append(filereader.read_vec_f(3))
 
     def read_face_groups(self, filereader):
-        """Reads the list of RSMAPFaceGroups from the file"""
         self.faceGroupCount = filereader.read_uint()
         self.faceGroups = []
 
@@ -201,7 +192,6 @@ class RSMAPGeometryData(BinaryFileDataStructure):
 
 
 class RSMAPFaceGroup(BinaryFileDataStructure):
-    """Data structure defining a group of face definitions and some associated data"""
     def __init__(self):
         super(RSMAPFaceGroup, self).__init__()
 
@@ -232,7 +222,6 @@ class RSMAPFaceGroup(BinaryFileDataStructure):
 
 
 class RSMAPVertexParameterCollection(BinaryFileDataStructure):
-    """A collection of vertex parameters including UVs, normals and colors"""
     def __init__(self):
         super(RSMAPVertexParameterCollection, self).__init__()
 
@@ -254,7 +243,6 @@ class RSMAPVertexParameterCollection(BinaryFileDataStructure):
             self.colors.append(filereader.read_vec_f(4))
 
 class RSMAPCollisionInformation(BinaryFileDataStructure):
-    """Stores more geometry which is specifically used for collision, pathing, and map planning etc"""
     def __init__(self):
         super(RSMAPCollisionInformation, self).__init__()
 
@@ -295,7 +283,6 @@ class RSMAPCollisionInformation(BinaryFileDataStructure):
             self.collisionMeshDefinitions.append(dataObject)
 
 class RSMAPCollisionFaceInformation(BinaryFileDataStructure):
-    """Defines a face for a mesh, specifically collision related"""
     def __init__(self):
         super(RSMAPCollisionFaceInformation, self).__init__()
 
@@ -312,7 +299,6 @@ class RSMAPCollisionFaceInformation(BinaryFileDataStructure):
 
 
 class RSMAPCollisionMesh(BinaryFileDataStructure):
-    """Defines a mesh used in collision. Specifies what faces are used and what GeometryFlags are applied"""
     def __init__(self):
         super(RSMAPCollisionMesh, self).__init__()
 
@@ -328,7 +314,6 @@ class RSMAPCollisionMesh(BinaryFileDataStructure):
         self.faceIndices = filereader.read_vec_short_uint(self.faceCount)
 
 class RSEMAPPortalList(BinaryFileDataStructure):
-    """Contains a list of RSEMAPPortals used for occlusion culling"""
     def __init__(self):
         super(RSEMAPPortalList, self).__init__()
 
@@ -339,14 +324,12 @@ class RSEMAPPortalList(BinaryFileDataStructure):
         self.read_portals(filereader)
 
     def read_header_info(self, filereader):
-        """Reads top level information for this data structure"""
         self.portalListSize = filereader.read_uint()
         self.ID = filereader.read_uint()
 
         self.read_section_string(filereader)
 
     def read_portals(self, filereader):
-        """reads all portals in list"""
         self.portalCount = filereader.read_uint()
         self.portals = []
         for _ in range(self.portalCount):
@@ -355,7 +338,6 @@ class RSEMAPPortalList(BinaryFileDataStructure):
             self.portals.append(newPortal)
 
 class RSEMAPPortal(BinaryFileDataStructure):
-    """Defines a portal used for visibility determination/occlusion culling"""
     def __init__(self):
         super(RSEMAPPortal, self).__init__()
 
@@ -380,7 +362,6 @@ class RSEMAPPortal(BinaryFileDataStructure):
 
 
 class R6MAPLightList(BinaryFileDataStructure):
-    """Contains a list of lights. Appears in both Rainbow Six and Rogue Spear maps, but is always empty in Rogue Spear"""
     def __init__(self):
         super(R6MAPLightList, self).__init__()
 
@@ -391,14 +372,12 @@ class R6MAPLightList(BinaryFileDataStructure):
         self.read_lights(filereader)
 
     def read_header_info(self, filereader):
-        """Reads top level information for this data structure"""
         self.lightListSize = filereader.read_uint()
         self.ID = filereader.read_uint()
 
         self.read_section_string(filereader)
 
     def read_lights(self, filereader):
-        """Reads all lights into list"""
         self.lightCount = filereader.read_uint()
 
         self.lights = []
@@ -407,8 +386,9 @@ class R6MAPLightList(BinaryFileDataStructure):
             newLight.read(filereader)
             self.lights.append(newLight)
 
+
+
 class R6MAPLight(BinaryFileDataStructure):
-    """A light definition for lights stored in Rainbow Six MAP files"""
     def __init__(self):
         super(R6MAPLight, self).__init__()
 
@@ -445,7 +425,6 @@ class R6MAPLight(BinaryFileDataStructure):
         self.type = filereader.read_bytes(1)[0]
 
 class RSEMAPObjectList(BinaryFileDataStructure):
-    """A list of all dynamic objects in the map, including doors, breakable glass, etc"""
     def __init__(self):
         super(RSEMAPObjectList, self).__init__()
 
@@ -456,13 +435,11 @@ class RSEMAPObjectList(BinaryFileDataStructure):
         self.read_objects(filereader)
 
     def read_header_info(self, filereader):
-        """Reads top level information for this data structure"""
         self.objectListSize = filereader.read_uint()
         self.ID = filereader.read_uint()
         self.read_section_string(filereader)
 
     def read_objects(self, filereader):
-        """Reads all objects into a list"""
         self.objectCount = filereader.read_uint()
 
         self.objects = []
@@ -472,7 +449,6 @@ class RSEMAPObjectList(BinaryFileDataStructure):
             self.objects.append(newObject)
 
 class RSEMAPObject(BinaryFileDataStructure):
-    """Stores a dynamic object such as doors, breakable glass etc"""
     def __init__(self):
         super(RSEMAPObject, self).__init__()
 
@@ -502,7 +478,6 @@ class RSEMAPObject(BinaryFileDataStructure):
             return
 
 class RSEMAPRoomList(BinaryFileDataStructure):
-    """Defines a list of rooms in the MAP"""
     def __init__(self):
         super(RSEMAPRoomList, self).__init__()
 
@@ -513,13 +488,11 @@ class RSEMAPRoomList(BinaryFileDataStructure):
         self.read_rooms(filereader, gameVer)
 
     def read_header_info(self, filereader):
-        """Reads top level information for this data structure"""
         self.roomListSize = filereader.read_uint()
         self.ID = filereader.read_uint()
         self.read_section_string(filereader)
 
     def read_rooms(self, filereader, gameVer):
-        """Reads every room in list. Will read appropriate data structure for gameVer"""
         self.roomCount = filereader.read_uint()
 
         self.rooms = []
@@ -532,7 +505,6 @@ class RSEMAPRoomList(BinaryFileDataStructure):
             self.rooms.append(newObject)
 
 class R6MAPRoomDefinition(BinaryFileDataStructure):
-    """Defines a Room as used in Rainbow Six. Contains information such as levels and transitions"""
     def __init__(self):
         super(R6MAPRoomDefinition, self).__init__()
 
@@ -571,7 +543,6 @@ class R6MAPRoomDefinition(BinaryFileDataStructure):
         self.unknown5 = filereader.read_vec_f(self.unknown5Count)
 
 class RSMAPRoomDefinition(BinaryFileDataStructure):
-    """Defines a Room as used in Rainbow Six. Contains information such as levels"""
     def __init__(self):
         super(RSMAPRoomDefinition, self).__init__()
 
@@ -613,7 +584,6 @@ class RSMAPRoomDefinition(BinaryFileDataStructure):
             self.unknown4.append(newUnknown4)
 
 class R6MAPShermanLevelDefinition(BinaryFileDataStructure):
-    """Contains a level definition as used in Rainbow Six"""
     def __init__(self):
         super(R6MAPShermanLevelDefinition, self).__init__()
 
@@ -632,7 +602,6 @@ class R6MAPShermanLevelDefinition(BinaryFileDataStructure):
             self.unknown3Struct.read(filereader)
 
 class RSMAPShermanLevelDefinition(BinaryFileDataStructure):
-    """Contains a level definition as used in Rogue Spear"""
     def __init__(self):
         super(RSMAPShermanLevelDefinition, self).__init__()
 
@@ -653,7 +622,6 @@ class RSMAPShermanLevelDefinition(BinaryFileDataStructure):
         self.unknown4 = filereader.read_bytes(1)[0]
 
 class RSMAPShermanLevelTransformInformation(BinaryFileDataStructure):
-    """Defines a transform used for a level? Still decoding"""
     def __init__(self):
         super(RSMAPShermanLevelTransformInformation, self).__init__()
 
@@ -806,7 +774,6 @@ class R6MAPPlanningLevelDefinition(BinaryFileDataStructure):
             self.names.append(string)
 
 class SerializedCString(BinaryFileDataStructure):
-    """A CString as stored in binary files."""
     def __init__(self):
         super(SerializedCString, self).__init__()
 
@@ -815,7 +782,6 @@ class SerializedCString(BinaryFileDataStructure):
         self.read_name_string(filereader)
 
 class RSEMAPFooterDefinition(BinaryFileDataStructure):
-    """Data stored at the end of a MAP file"""
     def __init__(self):
         super(RSEMAPFooterDefinition, self).__init__()
 
