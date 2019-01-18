@@ -1,9 +1,13 @@
+"""
+Classes and functions to load and parse CXP material property files
+"""
 import shlex
 import os
 
 from RainbowFileReaders import R6Settings
 
 class CXPMaterialProperties(object):
+    """Material properties associated with a single texture/material"""
     def __init__(self):
         super(CXPMaterialProperties, self).__init__()
         #Actually just texture name
@@ -31,6 +35,7 @@ class CXPMaterialProperties(object):
         self.scrollParams = []
 
     def read(self, keywords):
+        """Reads a single textures' set of material properties"""
         if keywords[0].strip() != "Material" and keywords[0] != "Surface":
             raise ValueError("Not a valid material begin statement: " + keywords[0])
 
@@ -102,6 +107,7 @@ def _read_cxp_keywords(path):
     return cxp_keywords
 
 def read_cxp(path):
+    """Loads and parses a CXP and returns a list of material properties"""
     keywords = _read_cxp_keywords(path)
     MaterialProperties = []
     while keywords:
@@ -119,6 +125,8 @@ def read_cxp(path):
     return MaterialProperties
 
 def load_relevant_cxps(datapath, modpath = None):
+    """Given the main datapath for a game installation, and optionally a modpath,
+    this will load the appropriate CXPs and then merge the results into a single list"""
     dataTexturePath = None
     if datapath is not None:
         dataTexturePath = os.path.join(datapath, R6Settings.paths["TexturePath"])
@@ -152,11 +160,3 @@ def load_relevant_cxps(datapath, modpath = None):
         CXPDefinitions.extend(tempCXPDefs)
 
     return CXPDefinitions
-
-def test():
-    #read_cxp("/Users/philipedwards/Dropbox/Development/Rainbow/Data/R6GOG/data/texture/Sherman.CXP")
-    read_cxp("E:\\Dropbox\\Development\\Rainbow\\Data\\Test\\CXPs\\Rommel.CXP")
-    read_cxp("E:\\Dropbox\\Development\\Rainbow\\Data\\Test\\CXPs\\Sherman.CXP")
-
-if __name__ == "__main__":
-    test()
