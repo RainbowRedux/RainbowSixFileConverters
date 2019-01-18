@@ -1,3 +1,6 @@
+"""
+Functions related to import SOB files into a blender scene
+"""
 import sys
 from math import radians
 import math
@@ -19,6 +22,7 @@ errorCount = 0
 errorList = []
 
 def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
+    """Imports geometry objects from Rainbow Six into blender"""
     name = geometryObject.nameString
 
     geoObjBlendMeshMaster, geoObjBlendObjectMaster = BlenderUtils.create_blender_mesh_object(name + "_TEMPMASTER")
@@ -160,6 +164,7 @@ def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
 
 
 def import_SOB_to_scene(filename):
+    """Opens SOB file and imports all relevant information"""
     SOBObject = SOBModelReader.SOBModelFile()
     SOBObject.read_file(filename)
 

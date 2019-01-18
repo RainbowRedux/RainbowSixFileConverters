@@ -1,3 +1,4 @@
+"""A script for unattended Map file importing and export to FBX"""
 import sys
 
 # TODO: find a better way to load this module from Blender.
@@ -9,6 +10,7 @@ from FileUtilities import DirectoryProcessor
 from BlenderImporters import ImportMAP
 
 def ExportAllMaps():
+    """Processes all maps in path and then exports to FBX"""
     paths = []
     paths.append("TestData/ReducedGames")
     #paths.append("FullGames")

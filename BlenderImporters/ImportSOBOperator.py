@@ -1,3 +1,7 @@
+"""
+Blender operator for giving an SOB import GUI interface
+"""
+
 import sys
 
 import bpy
@@ -14,6 +18,7 @@ sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFi
 from BlenderImporters import ImportSOB
 
 def import_SOB(context, filename, use_some_setting):
+    """Function that is called to import SOB file by GUI"""
     print("running read_some_data...")
     ImportSOB.import_SOB_to_scene(filename)
     return {'FINISHED'}
@@ -49,6 +54,7 @@ class ImportR6SOB(Operator, ImportHelper):
         )
 
     def execute(self, context):
+        """ """
         return import_SOB(context, self.filepath, self.use_setting)
 
 
