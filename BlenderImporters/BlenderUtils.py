@@ -1,3 +1,6 @@
+"""
+Defines generic and often used functions to perform operations in Blender
+"""
 import os
 
 import bpy
@@ -7,6 +10,7 @@ from bpy_extras import node_shader_utils
 from RainbowFileReaders.R6Constants import RSEAlphaMethod
 
 def flip_normals_on_object(blendObject):
+    """Flips the normals on specified object"""
     #https://blenderartists.org/t/script-to-flip-normals-for-multiple-objects/533443/2
     bpy.context.scene.objects.active = blendObject
     bpy.ops.object.editmode_toggle()
@@ -15,6 +19,7 @@ def flip_normals_on_object(blendObject):
     bpy.ops.object.mode_set()
 
 def set_blender_render_unit_scale_options():
+    """Sets the current blender scene to use 1cm units, and set appropriate clip planes"""
     ONE_KILOMETER = 100 * 1000 #100cm in a meter, 1000m in a km
     TEN_CENTIMETERS = 10
 
@@ -36,19 +41,14 @@ def set_blender_render_unit_scale_options():
     bpy.context.scene.unit_settings.system_rotation = 'DEGREES'
     bpy.context.scene.unit_settings.scale_length = 0.01
 
-def set_environment_lighting_enabled(bEnabled):
-    #TODO: Change how environment lighting is setup in Blender 2.8. This will be something to do with an HDRI
-    pass
-    #for world in bpy.data.worlds:
-    #    world.light_settings.use_environment_light = bEnabled
-
 def setup_blank_scene():
+    """Load a blank scene, unloading any existing imported models/materials etc"""
     #bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.wm.read_factory_settings()
     set_blender_render_unit_scale_options()
-    set_environment_lighting_enabled(True)
 
 def create_blender_blank_object(name):
+    """Create a blank object in blender and link to the current scene"""
     newBlankObject = bpy.data.objects.new(name, None)
     newBlankObject.location = (0,0,0)
     newBlankObject.show_name = True
@@ -58,6 +58,8 @@ def create_blender_blank_object(name):
     return newBlankObject
 
 def create_blender_mesh_object(name, existingMesh=None):
+    """Create a blender object and associated mesh.
+    If existingMesh is given a valid mesh, that will be used instead of creating a new one"""
     newMesh = existingMesh
     if newMesh is None:
         newMesh = bpy.data.meshes.new(name + 'Mesh')
@@ -69,6 +71,7 @@ def create_blender_mesh_object(name, existingMesh=None):
     return (newMesh, newObject)
 
 def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalObject ):
+    """Clones a mesh, and then will delete all but the faces with the specified indices"""
     #Copy master mesh into new object
     newObjMeshCopy = originalObject.data.copy()
     newObjMeshCopy, newSubBlendObject = create_blender_mesh_object(newObjectName, newObjMeshCopy)
@@ -111,11 +114,12 @@ def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalO
     return newSubBlendObject
 
 def attach_materials_to_blender_object(blenderObject, materials):
-    #This attaches all materials to the mesh, which is excessive in some circumstances
+    """Adds all materials in list to the specified blender object"""
     for material in materials:
         blenderObject.data.materials.append(material)
 
 def add_mesh_geometry(mesh, vertices, faces):
+    """Adds specified faces and vertices to the specified mesh"""
     #use this over bmesh, as it will allow faces that share vertices with different windings
     mesh.from_pydata(vertices, [], faces)
 
@@ -123,6 +127,7 @@ def add_mesh_geometry(mesh, vertices, faces):
     mesh.update(calc_edges=True)
 
 def remove_unused_materials_from_mesh_object(objectToClean):
+    """Attempts to identify all materials in use, and then will remove the unused materials"""
     materialIndicesInUse = []
 
     for i in range(len(objectToClean.data.polygons)):
@@ -140,6 +145,7 @@ def remove_unused_materials_from_mesh_object(objectToClean):
         j += 1
 
 def create_blender_materials_from_list(materialList, texturePaths):
+    """Takes a list of RSEMaterialDefinition and creates a list of blender materials"""
     blenderMaterials = []
 
     for materialSpec in materialList:
@@ -149,6 +155,7 @@ def create_blender_materials_from_list(materialList, texturePaths):
     return blenderMaterials
 
 def fixup_texture_name(filename):
+    """Match source texture names to new extracted texture names"""
     ext = filename.lower()[-4:]
     newfilename = filename
     if ext in (".bmp", ".rsb", ".tga"):
@@ -158,6 +165,8 @@ def fixup_texture_name(filename):
 
 
 def find_texture(filename, dataPath):
+    """Looks for a texture using the source name in the path.
+    Will perform texture name fixups to match new names"""
     if filename.lower() == "null":
         return None
     newfilename = fixup_texture_name(filename)
