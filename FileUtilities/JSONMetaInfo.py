@@ -1,3 +1,7 @@
+"""
+Provides a convenience class that allows easily attached meta data
+attached to an object that can be serialized quickly
+"""
 import json
 
 class JSONMetaInfo(object):
@@ -7,15 +11,19 @@ class JSONMetaInfo(object):
         pass
 
     def setFilename(self, filename):
+        """Set a filename parameter"""
         self.filename = filename
 
     def add_info(self, key, info):
+        """Set a given attribute allowing freeform meta data addition"""
         self.__setattr__(key, info)
 
     def getJSON(self):
+        """Returns the meta info object as a JSON string"""
         return json.dumps(self, cls=CustomJSONEncoder)
 
     def writeJSON(self, filename):
+        """Writes the meta info to a JSON file"""
         jsonString = json.dumps(self, cls=CustomJSONEncoder, indent=4)
         fp = open(filename, "w")
         fp.write(jsonString)
