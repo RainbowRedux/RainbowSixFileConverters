@@ -1,2 +1,0 @@
-float = struct.unpack('!f', bytes.fromhex('0000006e'))[0]
-round(float, 6)      
