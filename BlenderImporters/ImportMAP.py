@@ -1,3 +1,6 @@
+"""
+Functions to import MAP files into blender
+"""
 import os
 import sys
 from math import radians
@@ -20,7 +23,7 @@ from BlenderImporters.ImportSOB import create_objects_from_R6GeometryObject
 from BlenderImporters import BlenderUtils
 
 def create_mesh_from_RSMAPCollisionInformation(geometryObjectDefinition, blenderMaterials, name):
-
+    """Creates appropriate meshes off of RSMAPCollisionInformation objects"""
     collisionObjectDefinition = geometryObjectDefinition.collisionInformation
 
     geoObjBlendMeshMaster, geoObjBlendObjectMaster = BlenderUtils.create_blender_mesh_object(name + "_TEMPMASTER")
@@ -85,6 +88,7 @@ def create_mesh_from_RSMAPCollisionInformation(geometryObjectDefinition, blender
     return geoObjectParentObject
 
 def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
+    """Imports face groups from RS Map file geometry objects"""
     geoObjBlendMesh, geoObjBlendObject = BlenderUtils.create_blender_mesh_object(name)
 
     faces = []
@@ -175,6 +179,7 @@ def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
     return geoObjBlendObject
 
 def create_objects_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
+    """Creates all meshes associated with an RSMAPGeometryObject"""
     geoObjName = geometryObject.nameString
 
     geoObjectParentObject = BlenderUtils.create_blender_blank_object(geoObjName)
@@ -197,6 +202,7 @@ def create_objects_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
     collisionObj.parent = geoObjectParentObject
 
 def create_spotlight_from_r6_light_specification(lightSpec, name):
+    """Create a spotlight from a rainbow six light specification"""
     #https://stackoverflow.com/a/17355744
     lamp_data = None
     lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_pointdata", type='POINT')
@@ -252,6 +258,7 @@ def create_spotlight_from_r6_light_specification(lightSpec, name):
     return lamp_object
 
 def import_r6_lights(lightlist):
+    """Import all lights from a rainbow six map"""
     lightGroup = bpy.data.objects.new("LightGroup", None)
     lightGroup.location = (0,0,0)
     lightGroup.show_name = True
@@ -265,6 +272,7 @@ def import_r6_lights(lightlist):
         newLamp.parent = lightGroup
 
 def create_spotlight_from_rs_light_specification(lightSpec, name):
+    """Create a spotlight from a rogue spear light specification"""
     #https://stackoverflow.com/a/17355744
     lamp_data = None
     lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_pointdata", type='POINT')
@@ -306,6 +314,7 @@ def create_spotlight_from_rs_light_specification(lightSpec, name):
     return lamp_object
 
 def import_rs_lights(dmpLightFile):
+    """Import all lights from a rogue spear DMP file"""
     lightGroup = bpy.data.objects.new("LightGroup", None)
     lightGroup.location = (0,0,0)
     lightGroup.show_name = True
@@ -319,6 +328,8 @@ def import_rs_lights(dmpLightFile):
         newLamp.parent = lightGroup
 
 def import_MAP_to_scene(filename):
+    """Imports a given map to the blender scene.
+    Skips files named obstacletest.map since its an invalid test file on original rainbow six installations"""
     if filename.endswith("obstacletest.map"):
         #I believe this is an early test map that was shipped by accident.
         # It's data structures are not consistent with the rest of the map files
@@ -354,12 +365,15 @@ def import_MAP_to_scene(filename):
 
 
 def save_blend_scene(path):
+    """Saves the scene to a .blend file"""
     bpy.ops.wm.save_as_mainfile(filepath=path)
 
 def export_fbx_scene(path):
+    """exports the scene to a .fbx file"""
     bpy.ops.export_scene.fbx(filepath=path, path_mode='RELATIVE')
 
 def import_map_and_save(path):
+    """Wrapper method to import a map to scene, save and export"""
     inPath = os.path.abspath(path)
     outBlendPath = inPath + ".blend"
     outFBXPath = inPath + ".fbx"
