@@ -1,3 +1,7 @@
+"""
+Provides some utility classes and functions for reading data from binary files
+Also provides some functions to unpack data from packed structures
+"""
 import struct
 import pprint
 
@@ -9,6 +13,7 @@ class BinaryFileReader(object):
             self.openFile(path)
 
     def openFile(self, path):
+        """Opens the file at specified path and reads all data at once into buffer self.bytes"""
         #read entire file
         f = open(path, "rb")
         self.bytes = f.read()
@@ -66,18 +71,21 @@ class BinaryFileReader(object):
         return struct.unpack("f", data)[0]
 
     def read_vec_f(self, size):
+        """Reads a specified number of floats into a list"""
         vec = []
         for _ in range(size):
             vec.append(self.read_float())
         return vec
 
     def read_vec_uint(self, size):
+        """Reads a specified number of uints into a list"""
         vec = []
         for _ in range(size):
             vec.append(self.read_uint())
         return vec
 
     def read_vec_short_uint(self, size):
+        """Reads a specified number of short uints into a list"""
         vec = []
         for _ in range(size):
             vec.append(self.read_short_uint())
@@ -116,20 +124,27 @@ class BinaryFileReader(object):
         return color
 
     def get_length(self):
+        """Returns the length of the file that was read"""
         return len(self.bytes)
 
     def get_seekg(self):
+        """Returns the current location that is due to be read next operation"""
         return self._seekg
 
 class FileFormatReader(object):
+    """A helper class that provides a common interface for all file formats
+    Provides utility methods to print detailed information on class
+    Child classes just need to specify fields to perform detailed read operations in read_data"""
     def __init__(self):
         super(FileFormatReader, self).__init__()
         self.filepath = None
 
     def print_structure_info(self):
+        """Utility method to print detailed information on data stored"""
         pprint.pprint(vars(self))
 
     def read_file(self, filepath, verboseOutput=True):
+        """Reads the file specified into memory and then will call read_data to process"""
         self.filepath = filepath
         self.verboseOutput = verboseOutput
         if self.verboseOutput:
@@ -144,33 +159,33 @@ class FileFormatReader(object):
             print("Length: " + str(self._filereader.get_length()) + " bytes")
             print("Unprocessed: " + str(self._filereader.get_length() - self._filereader.get_seekg()) + " bytes")
 
-        self._filereader = None
         del self._filereader
+        self._filereader = None
 
     def read_data(self):
+        """The method to override with detailed data processing"""
         pass
 
 
 class BinaryFileDataStructure(object):
+    """A helper class to provide utility methods and a common interface to data structures"""
     def __init__(self):
         super().__init__()
 
     def read_section_string(self, filereader):
-        self.sectionStringLength = filereader.read_uint()
-        self.sectionStringRaw = filereader.read_bytes(self.sectionStringLength)
-        self.sectionString = self.sectionStringRaw[:-1].decode("utf-8")
+        """Read a string that stores the name of this section - header related"""
+        self.read_named_string(filereader, "sectionString")
 
     def read_name_string(self, filereader):
-        self.nameStringLength = filereader.read_uint()
-        self.nameStringRaw = filereader.read_bytes(self.nameStringLength)
-        self.nameString = self.nameStringRaw[:-1].decode("utf-8")
+        """Read a string for the name of this object"""
+        self.read_named_string(filereader, "nameString")
 
     def read_version_string(self, filereader):
-        self.versionStringLength = filereader.read_uint()
-        self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
-        self.versionString = self.versionStringRaw[:-1].decode("utf-8")
+        """Read the string for the version. Does not read associated version numbers"""
+        self.read_named_string(filereader, "versionString")
 
     def read_named_string(self, filereader, stringName):
+        """Read a string with the specified name"""
         newStringLength = filereader.read_uint()
         newStringRaw = filereader.read_bytes(newStringLength)
         newString = newStringRaw[:-1].decode("utf-8")
@@ -178,11 +193,12 @@ class BinaryFileDataStructure(object):
         self.__setattr__(stringName + "Raw", newStringRaw)
         self.__setattr__(stringName, newString)
 
-
     def read(self, filereader):
+        """This is to be overriden in child classes. This is where all data for this structure can be read from"""
         pass
 
     def print_structure_info(self):
+        """Helper method to output class information for debugging"""
         pprint.pprint(vars(self))
 
 def bytes_to_shortint(byteStream):
@@ -197,6 +213,7 @@ def isPowerOf2(number):
 previousMasks = {}
 
 def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):
+    """Calculates the appropriate bitmasks for a color stored in ARGB format."""
     key = str(bdA) + str(bdR) + str(bdG) + str(bdB)
     if key in previousMasks:
         masks = previousMasks[key]

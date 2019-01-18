@@ -54,7 +54,7 @@
         {
             "label": "Blender-Mac: Headless MAP Batch Import-Export",
             "type": "shell",
-            "command": "/Users⁩/philipedwards⁩/blender-2.80.0-git20181220.a91886e76ebd-x86_64⁩/blender.app/Contents/MacOS/blender",
+            "command": "/Users/philipedwards/blender-2.80.0-git20181220.a91886e76ebd-x86_64/blender.app/Contents/MacOS/blender",
             "args": [
                 "--background",
                 "--python",
