@@ -725,6 +725,7 @@ class RSMAPShermanLevelTransitionList(BinaryFileDataStructure):
         self.read_transition_objects(filereader)
 
     def read_header_info(self, filereader):
+        """Reads top level information for this data structure"""
         self.transitionListSize = filereader.read_uint() #L, moved here to match other header structures
         self.ID = filereader.read_uint()
         self.read_section_string(filereader)
@@ -777,6 +778,7 @@ class RSEMAPPlanningLevelList(BinaryFileDataStructure):
             self.unknown1 = filereader.read_bytes(1)[0] #Y
 
     def read_header_info(self, filereader):
+        """Reads top level information for this data structure"""
         self.planningLevelListSize = filereader.read_uint() #L, moved here to match other header structures
         self.ID = filereader.read_uint()
         self.read_section_string(filereader)

@@ -1,7 +1,9 @@
+"""Defines common geometry data structures used in many Red Storm Entertainment file formats"""
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure
 from RainbowFileReaders.R6Constants import RSEGeometryFlags
 
 class RSEGeometryListHeader(BinaryFileDataStructure):
+    """Stores the information about a Geometry List"""
     def __init__(self):
         super(RSEGeometryListHeader, self).__init__()
 
@@ -14,6 +16,7 @@ class RSEGeometryListHeader(BinaryFileDataStructure):
         self.count = filereader.read_uint()
 
 class R6GeometryObject(BinaryFileDataStructure):
+    """Reads and stores a Rainbow Six Geometry Object"""
     def __init__(self):
         super(R6GeometryObject, self).__init__()
         self.size = None
@@ -45,6 +48,7 @@ class R6GeometryObject(BinaryFileDataStructure):
         self.read_meshes(filereader)
 
     def read_header_info(self, filereader):
+        """Reads top level information for this data structure"""
         self.size = filereader.read_uint()
         self.ID = filereader.read_uint()
         self.read_version_string(filereader)
