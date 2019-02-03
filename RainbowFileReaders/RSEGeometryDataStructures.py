@@ -1,6 +1,7 @@
 """Defines common geometry data structures used in many Red Storm Entertainment file formats"""
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure
 from RainbowFileReaders.R6Constants import RSEGeometryFlags
+from RainbowFileReaders.MathHelpers import normalize_color, pad_color
 
 class RSEGeometryListHeader(BinaryFileDataStructure):
     """Stores the information about a Geometry List"""
@@ -85,9 +86,17 @@ class R6GeometryObject(BinaryFileDataStructure):
                 currentVertex = self.vertices[currentAttribSet[0]].copy()
                 currentVertexParams = self.vertexParams[currentAttribSet[1]]
                 currentRenderable.vertices.append(currentVertex)
-                currentRenderable.vertexColors.append(currentVertexParams.color.copy())
                 currentRenderable.normals.append(currentVertexParams.normal.copy())
                 currentRenderable.UVs.append(currentVertexParams.UV.copy())
+
+                # Convert color to RenderableArray standard format, RGBA 0.0-1.0 range
+                importedColor = currentVertexParams.color.copy()
+                # convert the color to 0.0-1.0 range, rather than 0-255
+                importedColor = normalize_color(importedColor)
+                # pad with an alpha value so it's RGBA
+                importedColor = pad_color(importedColor)
+                currentRenderable.vertexColors.append(importedColor)
+            # Assign the specified material
             currentRenderable.materialIndex = materialIdx
             # set the triangle indices
             currentRenderable.triangleIndices = triangleIndices

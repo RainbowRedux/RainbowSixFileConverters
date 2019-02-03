@@ -11,8 +11,6 @@ from bpy_extras import node_shader_utils
 from RainbowFileReaders.R6Constants import RSEAlphaMethod
 from RainbowFileReaders import R6Constants
 
-from RainbowFileReaders.MathHelpers import normalize_color, pad_color
-
 def flip_normals_on_object(blendObject):
     """Flips the normals on specified object"""
     #https://blenderartists.org/t/script-to-flip-normals-for-multiple-objects/533443/2
@@ -280,13 +278,13 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
 
     return newMaterial
 
-def import_renderable_array(renderable, blenderMaterials):
-    print(renderable.materialIndex)
+def import_renderable_array(renderable, blenderMaterials, meshNamePrefix=""):
+    """Creates a mesh in blender from a RenderableArray object"""
     meshName = ""
     if renderable.materialIndex == R6Constants.UINT_MAX:
-        meshName = str(renderable.materialIndex) + "_renderable"
+        meshName = meshNamePrefix + str(renderable.materialIndex) + "_renderable"
     else:
-        meshName = blenderMaterials[renderable.materialIndex].name + "_renderable"
+        meshName = meshNamePrefix + blenderMaterials[renderable.materialIndex].name + "_renderable"
     newMesh, meshObj = create_blender_mesh_object(meshName)
 
     for vert in renderable.vertices:
@@ -314,8 +312,6 @@ def import_renderable_array(renderable, blenderMaterials):
         sourceTriangleIndices = renderable.triangleIndices[face_index]
         for vert_index, vert in enumerate(face.loops):
             importedColor = renderable.vertexColors[sourceTriangleIndices[vert_index]]
-            importedColor = normalize_color(importedColor)
-            importedColor = pad_color(importedColor)
             vert[color_layer] = importedColor
 
     ########################################
@@ -351,7 +347,7 @@ def import_renderable_array(renderable, blenderMaterials):
     newMesh.update(calc_edges=True)
 
     ########################################
-    # Apply Materials per face
+    # Apply Material per face
     ########################################
     #Do not assign a material if index is UINT_MAX
     if renderable.materialIndex != R6Constants.UINT_MAX:

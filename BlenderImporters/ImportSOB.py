@@ -3,7 +3,6 @@ Functions related to import SOB files into a blender scene
 """
 import sys
 from math import radians
-import math
 
 import bpy
 import bmesh
@@ -13,8 +12,6 @@ sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixF
 sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders import R6Settings
-from RainbowFileReaders import R6Constants
-from RainbowFileReaders.MathHelpers import normalize_color, pad_color
 
 from BlenderImporters import BlenderUtils
 from BlenderImporters.BlenderUtils import import_renderable_array
