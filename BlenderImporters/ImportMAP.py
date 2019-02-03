@@ -17,10 +17,9 @@ from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders import R6Constants
 from RainbowFileReaders.R6Constants import RSEGameVersions
-from RainbowFileReaders.MathHelpers import normalize_color, pad_color
 
-from BlenderImporters.ImportSOB import create_objects_from_R6GeometryObject
 from BlenderImporters import BlenderUtils
+from BlenderImporters.BlenderUtils import import_renderable_array
 
 def create_mesh_from_RSMAPCollisionInformation(geometryObjectDefinition, blenderMaterials, name):
     """Creates appropriate meshes off of RSMAPCollisionInformation objects"""
@@ -350,7 +349,19 @@ def import_MAP_to_scene(filename):
 
     if MAPObject.gameVersion == RSEGameVersions.RAINBOW_SIX:
         for geoObj in MAPObject.geometryObjects:
-            create_objects_from_R6GeometryObject(geoObj, blenderMaterials)
+            geoObjectName = geoObj.nameString
+            geoBlendObj = BlenderUtils.create_blender_blank_object(geoObjectName)
+            geoBlendObj.rotation_euler = (radians(90), 0, 0)
+            for index, mesh in enumerate(geoObj.meshes):
+                meshName =  geoObj.nameString + "_" + mesh.nameString + "_idx" + str(index)
+                meshObj = BlenderUtils.create_blender_blank_object(meshName)
+                meshObj.parent = geoBlendObj
+                renderables = geoObj.generate_renderable_array_for_mesh(mesh)
+                for renderable in renderables:
+                    renderableMesh = import_renderable_array(renderable, blenderMaterials)
+                    renderableMesh.parent = meshObj
+
+            #create_objects_from_R6GeometryObject(geoObj, blenderMaterials)
     else:
         for geoObj in MAPObject.geometryObjects:
             create_objects_from_RSMAPGeometryObject(geoObj, blenderMaterials)

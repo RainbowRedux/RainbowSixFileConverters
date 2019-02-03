@@ -51,6 +51,7 @@ def convert_MAP(filename):
                     errorMessage = filename + " UnevaluatedFlags for:" + geometryObject.nameString + "_" + mesh.nameString
                     flagErrors.append(errorMessage)
                     print(errorMessage)
+                geometryObject.generate_renderable_array_for_mesh(mesh)
         elif mapFile.gameVersion == RSEGameVersions.ROGUE_SPEAR:
             #Rogue Spear
             for collisionMeshDefinition in geometryObject.geometryData.collisionInformation.collisionMeshDefinitions:

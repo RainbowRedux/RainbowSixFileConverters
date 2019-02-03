@@ -12,7 +12,7 @@ from BlenderImporters import ImportMAP
 def ExportAllMaps():
     """Processes all maps in path and then exports to FBX"""
     paths = []
-    paths.append("TestData/ReducedGames")
+    paths.append("TestData/ReducedGames/R6GOG")
     #paths.append("FullGames")
     import ProcessorPathsHelper
     paths = ProcessorPathsHelper.expand_paths(paths)

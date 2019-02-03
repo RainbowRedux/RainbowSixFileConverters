@@ -2,12 +2,16 @@
 Defines generic and often used functions to perform operations in Blender
 """
 import os
+import math
 
 import bpy
 import bmesh
 from bpy_extras import node_shader_utils
 
 from RainbowFileReaders.R6Constants import RSEAlphaMethod
+from RainbowFileReaders import R6Constants
+
+from RainbowFileReaders.MathHelpers import normalize_color, pad_color
 
 def flip_normals_on_object(blendObject):
     """Flips the normals on specified object"""
@@ -275,3 +279,85 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
 
 
     return newMaterial
+
+def import_renderable_array(renderable, blenderMaterials):
+    print(renderable.materialIndex)
+    meshName = ""
+    if renderable.materialIndex == R6Constants.UINT_MAX:
+        meshName = str(renderable.materialIndex) + "_renderable"
+    else:
+        meshName = blenderMaterials[renderable.materialIndex].name + "_renderable"
+    newMesh, meshObj = create_blender_mesh_object(meshName)
+
+    for vert in renderable.vertices:
+        vert[0] = vert[0] * -1
+
+    add_mesh_geometry(newMesh, renderable.vertices, renderable.triangleIndices)
+
+    ########################################
+    # Copy to bmesh from mesh
+    ########################################
+
+    newBmesh = bmesh.new()
+    newBmesh.from_mesh(newMesh)
+    color_layer = newBmesh.loops.layers.color.new("color")
+    uv_layer = newBmesh.loops.layers.uv.verify()
+
+    ########################################
+    # Apply Vertex Colors
+    ########################################
+
+    # Cobbled together from : https://blender.stackexchange.com/a/60730
+    for face_index, face in enumerate(newBmesh.faces):
+        if face is None:
+            continue
+        sourceTriangleIndices = renderable.triangleIndices[face_index]
+        for vert_index, vert in enumerate(face.loops):
+            importedColor = renderable.vertexColors[sourceTriangleIndices[vert_index]]
+            importedColor = normalize_color(importedColor)
+            importedColor = pad_color(importedColor)
+            vert[color_layer] = importedColor
+
+    ########################################
+    # Apply UV Mapping
+    ########################################
+    # Cobbled together from https://docs.blender.org/api/blender_python_api_2_67_release/bmesh.html#customdata-access
+    for face_index, face in enumerate(newBmesh.faces):
+        if face is None:
+            continue
+        sourceTriangleIndices = renderable.triangleIndices[face_index]
+        for vert_index, vert in enumerate(face.loops):
+            importedUV = renderable.UVs[sourceTriangleIndices[vert_index]]
+            if math.isnan(importedUV[0]):
+                vert[uv_layer].uv.x = 0.0
+            else:
+                vert[uv_layer].uv.x = importedUV[0]
+            # This coord seems to be inverted, this seems to look correct.
+            if math.isnan(importedUV[1]):
+                vert[uv_layer].uv.y = 0.0
+            else:
+                vert[uv_layer].uv.y = importedUV[1] * -1
+
+
+    #Reverse face winding, to ensure backface culling is correct
+    bmesh.ops.reverse_faces(newBmesh, faces=newBmesh.faces)
+
+    ########################################
+    # Copy from bmesh back to mesh
+    ########################################
+
+    newBmesh.to_mesh(newMesh)
+    newBmesh.free()
+    newMesh.update(calc_edges=True)
+
+    ########################################
+    # Apply Materials per face
+    ########################################
+    #Do not assign a material if index is UINT_MAX
+    if renderable.materialIndex != R6Constants.UINT_MAX:
+        meshObj.data.materials.append(blenderMaterials[renderable.materialIndex])
+        for i in range(len(newMesh.polygons)):
+            poly = newMesh.polygons[i]
+            poly.material_index = 0
+
+    return meshObj
