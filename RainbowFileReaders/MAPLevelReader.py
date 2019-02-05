@@ -6,10 +6,11 @@ from datetime import datetime
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEGeometryFlags
-from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject
+from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject, RenderableArray
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 from RainbowFileReaders.RSDMPLightReader import RSDMPLightFile
+from RainbowFileReaders.MathHelpers import normalize_color, pad_color
 
 class MAPLevelFile(FileFormatReader):
     """Class to read full MAP files"""
@@ -181,6 +182,51 @@ class RSMAPGeometryData(BinaryFileDataStructure):
         self.versionNumber = filereader.read_uint()
 
         self.read_name_string(filereader)
+
+    def generate_renderable_array_for_facegroup(self, facegroup):
+        """ Generates a RenderableArray object from the internal data structure """
+        renderable = RenderableArray()
+        renderable.materialIndex = facegroup.materialIndex
+
+        attribList = []
+        triangleIndices = []
+
+        for i in range(facegroup.faceCount):
+            # Pack triangle indices into sub arrays per face for consistency with RenderableArray format
+            currentTriangleIndices = []
+
+            currentVertIndices = facegroup.vertexIndices[i]
+            currentVertParamIndices = facegroup.vertexParamIndices[i]
+            numVerts = len(currentVertIndices)
+            for j in range(numVerts):
+                currentAttribs = (currentVertIndices[j], currentVertParamIndices[j])
+                if currentAttribs in attribList:
+                    currentTriangleIndices.append(attribList.index(currentAttribs))
+                else:
+                    attribList.append(currentAttribs)
+                    currentTriangleIndices.append(attribList.index(currentAttribs))
+
+            triangleIndices.append(currentTriangleIndices)
+
+        for currentAttribSet in attribList:
+            # Make sure to copy any arrays so any transforms don't get interferred with in other renderables
+            currentVertex = self.vertices[currentAttribSet[0]]
+            currentVertexParams = facegroup.vertexParams[currentAttribSet[1]]
+
+            renderable.vertices.append(currentVertex.copy())
+            renderable.normals.append(currentVertexParams.normal.copy())
+            renderable.UVs.append(currentVertexParams.UV.copy())
+
+            # Convert color to RenderableArray standard format, RGBA 0.0-1.0 range
+            importedColor = currentVertexParams.color.copy()
+            # convert the color to 0.0-1.0 range, rather than 0-255
+            importedColor = normalize_color(importedColor)
+            # pad with an alpha value so it's RGBA
+            importedColor = pad_color(importedColor)
+            renderable.vertexColors.append(importedColor)
+        # set the triangle indices
+        renderable.triangleIndices = triangleIndices
+
 
     def read_vertices(self, filereader):
         """Reads the list of vertices from the file"""

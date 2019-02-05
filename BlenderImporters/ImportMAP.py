@@ -356,7 +356,7 @@ def import_MAP_to_scene(filename):
                 meshName =  geoObj.nameString + "_" + mesh.nameString + "_idx" + str(index)
                 meshObj = BlenderUtils.create_blender_blank_object(meshName)
                 meshObj.parent = geoBlendObj
-                renderables = geoObj.generate_renderable_array_for_mesh(mesh)
+                renderables = geoObj.generate_renderable_arrays_for_mesh(mesh)
                 for renderable in renderables:
                     renderableMesh = import_renderable_array(renderable, blenderMaterials)
                     renderableMesh.parent = meshObj

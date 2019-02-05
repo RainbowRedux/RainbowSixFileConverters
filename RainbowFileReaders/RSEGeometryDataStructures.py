@@ -51,8 +51,8 @@ class R6GeometryObject(BinaryFileDataStructure):
         self.meshCount = None
         self.meshes = None
 
-    def generate_renderable_array_for_mesh(self, mesh):
-        """ Generates RenderableArray objects from this internal data structure """
+    def generate_renderable_arrays_for_mesh(self, mesh):
+        """ Generates a list of RenderableArray objects from the internal data structure """
         renderables = []
         uniqueMaterials = set()
         for faceIdx in mesh.faceIndices:
