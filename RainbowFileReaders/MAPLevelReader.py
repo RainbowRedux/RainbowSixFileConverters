@@ -195,8 +195,8 @@ class RSMAPGeometryData(BinaryFileDataStructure):
             # Pack triangle indices into sub arrays per face for consistency with RenderableArray format
             currentTriangleIndices = []
 
-            currentVertIndices = facegroup.vertexIndices[i]
-            currentVertParamIndices = facegroup.vertexParamIndices[i]
+            currentVertIndices = facegroup.faceVertexIndices[i]
+            currentVertParamIndices = facegroup.faceVertexParamIndices[i]
             numVerts = len(currentVertIndices)
             for j in range(numVerts):
                 currentAttribs = (currentVertIndices[j], currentVertParamIndices[j])
@@ -211,14 +211,15 @@ class RSMAPGeometryData(BinaryFileDataStructure):
         for currentAttribSet in attribList:
             # Make sure to copy any arrays so any transforms don't get interferred with in other renderables
             currentVertex = self.vertices[currentAttribSet[0]]
-            currentVertexParams = facegroup.vertexParams[currentAttribSet[1]]
+            currentVertParamIdx = currentAttribSet[1]
+
 
             renderable.vertices.append(currentVertex.copy())
-            renderable.normals.append(currentVertexParams.normal.copy())
-            renderable.UVs.append(currentVertexParams.UV.copy())
+            renderable.normals.append(facegroup.vertexParams.normals[currentVertParamIdx].copy())
+            renderable.UVs.append(facegroup.vertexParams.UVs[currentVertParamIdx].copy())
 
             # Convert color to RenderableArray standard format, RGBA 0.0-1.0 range
-            importedColor = currentVertexParams.color.copy()
+            importedColor = facegroup.vertexParams.colors[currentVertParamIdx].copy()
             # convert the color to 0.0-1.0 range, rather than 0-255
             importedColor = normalize_color(importedColor)
             # pad with an alpha value so it's RGBA
@@ -226,6 +227,8 @@ class RSMAPGeometryData(BinaryFileDataStructure):
             renderable.vertexColors.append(importedColor)
         # set the triangle indices
         renderable.triangleIndices = triangleIndices
+
+        return renderable
 
 
     def read_vertices(self, filereader):

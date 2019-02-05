@@ -19,7 +19,7 @@ from RainbowFileReaders import R6Constants
 from RainbowFileReaders.R6Constants import RSEGameVersions
 
 from BlenderImporters import BlenderUtils
-from BlenderImporters.BlenderUtils import import_renderable_array
+from BlenderImporters.BlenderUtils import import_renderable_array, create_objects_from_R6GeometryObject, create_objects_from_RSMAPGeometryObject
 
 def create_mesh_from_RSMAPCollisionInformation(geometryObjectDefinition, blenderMaterials, name):
     """Creates appropriate meshes off of RSMAPCollisionInformation objects"""
@@ -85,120 +85,6 @@ def create_mesh_from_RSMAPCollisionInformation(geometryObjectDefinition, blender
     bpy.data.meshes.remove(geoObjBlendMeshMaster)
 
     return geoObjectParentObject
-
-def import_face_group_as_mesh(faceGroup, vertices, blenderMaterials, name):
-    """Imports face groups from RS Map file geometry objects"""
-    geoObjBlendMesh, geoObjBlendObject = BlenderUtils.create_blender_mesh_object(name)
-
-    faces = []
-    #these faces appear to be stored as CCW winding, blender expects CW winding, can flip set of params on import, or flip all after import
-    for face in faceGroup.faceVertexIndices:
-        faces.append(face)
-    BlenderUtils.add_mesh_geometry(geoObjBlendMesh, vertices, faces)
-
-    numTotalFaces = faceGroup.faceCount
-    numCreatedFaces = len(geoObjBlendObject.data.polygons)
-
-    if numCreatedFaces != numTotalFaces:
-        raise ValueError("Not enough faces created")
-
-    ########################################
-    # Copy to bmesh from mesh
-    ########################################
-
-    newBmesh = bmesh.new()
-    newBmesh.from_mesh(geoObjBlendMesh)
-    color_layer = newBmesh.loops.layers.color.new("color")
-    uv_layer = newBmesh.loops.layers.uv.verify()
-    #newBmesh.faces.layers.tex.verify()  # currently blender needs both layers.
-
-    ########################################
-    # Apply Vertex Colors
-    ########################################
-
-    # Cobbled together from : https://blender.stackexchange.com/a/60730
-    for face_index, face in enumerate(newBmesh.faces):
-        if face is None:
-            continue
-        importedParamIndices = faceGroup.faceVertexParamIndices[face_index]
-        for vert_index, vert in enumerate(face.loops):
-            importedColor = faceGroup.vertexParams.colors[importedParamIndices[vert_index]]
-            importedColor = normalize_color(importedColor)
-            vert[color_layer] = pad_color(importedColor)
-
-    ########################################
-    # Apply UV Mapping
-    ########################################
-    # Cobbled together from https://docs.blender.org/api/blender_python_api_2_67_release/bmesh.html#customdata-access
-    for face_index, face in enumerate(newBmesh.faces):
-        if face is None:
-            continue
-        importedParamIndices = faceGroup.faceVertexParamIndices[face_index]
-        for vert_index, vert in enumerate(face.loops):
-            importedUV = faceGroup.vertexParams.UVs[importedParamIndices[vert_index]]
-            if math.isnan(importedUV[0]):
-                vert[uv_layer].uv.x = 0.0
-            else:
-                vert[uv_layer].uv.x = importedUV[0]
-            # This coord seems to be inverted, this seems to look correct.
-            if math.isnan(importedUV[1]):
-                vert[uv_layer].uv.y = 0.0
-            else:
-                vert[uv_layer].uv.y = importedUV[1] * -1
-
-    #Reverse face winding, to ensure backface culling is correct
-    bmesh.ops.reverse_faces(newBmesh, faces=newBmesh.faces)
-
-    ########################################
-    # Copy from bmesh back to mesh
-    ########################################
-
-    newBmesh.to_mesh(geoObjBlendMesh)
-    newBmesh.free()
-    geoObjBlendMesh.update(calc_edges=True)
-
-    #Map materials to faces
-    #TODO: Also remove the reduced material index mapping code which is overcomplicating this block
-    materialMapping = {}
-    reducedMaterials = []
-    for i in range(len(geoObjBlendMesh.polygons)):
-        poly = geoObjBlendMesh.polygons[i]
-        materialIndex = faceGroup.materialIndex
-        #Do not assign a material if index is UINT_MAX
-        if materialIndex == R6Constants.UINT_MAX:
-            continue
-
-        if materialIndex not in materialMapping:
-            reducedMaterials.append(blenderMaterials[materialIndex])
-            geoObjBlendObject.data.materials.append(blenderMaterials[materialIndex])
-            materialMapping[materialIndex] = len(reducedMaterials) - 1
-
-        poly.material_index = materialMapping[materialIndex]
-
-    return geoObjBlendObject
-
-def create_objects_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
-    """Creates all meshes associated with an RSMAPGeometryObject"""
-    geoObjName = geometryObject.nameString
-
-    geoObjectParentObject = BlenderUtils.create_blender_blank_object(geoObjName)
-
-    #fix up rotation
-    geoObjectParentObject.rotation_euler = (radians(90),0,0)
-
-    for vert in geometryObject.geometryData.vertices:
-        vert[0] = vert[0] * -1
-
-    subObjects = []
-    for idx, facegroup in enumerate(geometryObject.geometryData.faceGroups):
-        faceGroupName = geoObjName + "_idx" + str(idx) + "_mat" + str(facegroup.materialIndex)
-        subObject = import_face_group_as_mesh(facegroup, geometryObject.geometryData.vertices, blenderMaterials, faceGroupName)
-        subObject.parent = geoObjectParentObject
-        subObjects.append(subObject)
-
-    collisionName = geoObjName + "_collision"
-    collisionObj = create_mesh_from_RSMAPCollisionInformation(geometryObject.geometryData, blenderMaterials, collisionName)
-    collisionObj.parent = geoObjectParentObject
 
 def create_spotlight_from_r6_light_specification(lightSpec, name):
     """Create a spotlight from a rainbow six light specification"""
@@ -349,19 +235,7 @@ def import_MAP_to_scene(filename):
 
     if MAPObject.gameVersion == RSEGameVersions.RAINBOW_SIX:
         for geoObj in MAPObject.geometryObjects:
-            geoObjectName = geoObj.nameString
-            geoBlendObj = BlenderUtils.create_blender_blank_object(geoObjectName)
-            geoBlendObj.rotation_euler = (radians(90), 0, 0)
-            for index, mesh in enumerate(geoObj.meshes):
-                meshName =  geoObj.nameString + "_" + mesh.nameString + "_idx" + str(index)
-                meshObj = BlenderUtils.create_blender_blank_object(meshName)
-                meshObj.parent = geoBlendObj
-                renderables = geoObj.generate_renderable_arrays_for_mesh(mesh)
-                for renderable in renderables:
-                    renderableMesh = import_renderable_array(renderable, blenderMaterials)
-                    renderableMesh.parent = meshObj
-
-            #create_objects_from_R6GeometryObject(geoObj, blenderMaterials)
+            create_objects_from_R6GeometryObject(geoObj, blenderMaterials)
     else:
         for geoObj in MAPObject.geometryObjects:
             create_objects_from_RSMAPGeometryObject(geoObj, blenderMaterials)

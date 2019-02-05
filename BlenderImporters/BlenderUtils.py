@@ -357,3 +357,43 @@ def import_renderable_array(renderable, blenderMaterials, meshNamePrefix=""):
             poly.material_index = 0
 
     return meshObj
+
+def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
+    """ Generates blender objects from an R6GeometryObject and adds appropriate tags """
+    geoObjectName = geometryObject.nameString
+    geoBlendObj = create_blender_blank_object(geoObjectName)
+
+    #fix up rotation
+    geoBlendObj.rotation_euler = (math.radians(90), 0, 0)
+
+    for index, mesh in enumerate(geometryObject.meshes):
+        #TODO: Add GeometryFlags as custom properties, as well as unknown vars
+        meshName =  geometryObject.nameString + "_" + mesh.nameString + "_idx" + str(index)
+        meshObj = create_blender_blank_object(meshName)
+        meshObj.parent = geoBlendObj
+        renderables = geometryObject.generate_renderable_arrays_for_mesh(mesh)
+        renderable_prefix = meshName + "_"
+        for renderable in renderables:
+            renderableMesh = import_renderable_array(renderable, blenderMaterials, renderable_prefix)
+            renderableMesh.parent = meshObj
+
+def create_objects_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
+    """Creates all meshes associated with an RSMAPGeometryObject"""
+    geoObjName = geometryObject.nameString
+
+    geoObjectParentObject = create_blender_blank_object(geoObjName)
+
+    #fix up rotation
+    geoObjectParentObject.rotation_euler = (math.radians(90),0,0)
+
+    subObjects = []
+    for idx, facegroup in enumerate(geometryObject.geometryData.faceGroups):
+        faceGroupPrefix = geoObjName + "_idx" + str(idx) + "_mat" + str(facegroup.materialIndex)
+        renderable = geometryObject.geometryData.generate_renderable_array_for_facegroup(facegroup)
+        subObject = import_renderable_array(renderable, blenderMaterials, faceGroupPrefix)
+        subObject.parent = geoObjectParentObject
+        subObjects.append(subObject)
+
+    collisionName = geoObjName + "_collision"
+    #collisionObj = create_mesh_from_RSMAPCollisionInformation(geometryObject.geometryData, blenderMaterials, collisionName)
+    #collisionObj.parent = geoObjectParentObject

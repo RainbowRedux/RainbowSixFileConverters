@@ -14,7 +14,7 @@ from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders import R6Settings
 
 from BlenderImporters import BlenderUtils
-from BlenderImporters.BlenderUtils import import_renderable_array
+from BlenderImporters.BlenderUtils import import_renderable_array, create_objects_from_R6GeometryObject
 
 errorCount = 0
 errorList = []
@@ -32,17 +32,7 @@ def import_SOB_to_scene(filename):
     blenderMaterials = BlenderUtils.create_blender_materials_from_list(SOBObject.materials, texturePaths)
 
     for geoObj in SOBObject.geometryObjects:
-        geoObjectName = geoObj.nameString
-        geoBlendObj = BlenderUtils.create_blender_blank_object(geoObjectName)
-        geoBlendObj.rotation_euler = (radians(90), 0, 0)
-        for index, mesh in enumerate(geoObj.meshes):
-            meshName =  geoObj.nameString + "_" + mesh.nameString + "_idx" + str(index)
-            meshObj = BlenderUtils.create_blender_blank_object(meshName)
-            meshObj.parent = geoBlendObj
-            renderables = geoObj.generate_renderable_arrays_for_mesh(mesh)
-            for renderable in renderables:
-                renderableMesh = import_renderable_array(renderable, blenderMaterials)
-                renderableMesh.parent = meshObj
+        create_objects_from_R6GeometryObject(geoObj, blenderMaterials)
 
     print("Success")
 
