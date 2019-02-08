@@ -82,7 +82,7 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
         for cxp in CXPDefinitions:
             #Match on lowercase since it's a windows game and windows has no concept of case sensitive filenames
             if cxp.materialName.lower() == self.textureName.lower():
-                print("Matched CXP: " + cxp.materialName)
+                #print("Matched CXP: " + cxp.materialName)
                 self.CXPMaterialProperties = cxp
 
     def read(self, filereader):

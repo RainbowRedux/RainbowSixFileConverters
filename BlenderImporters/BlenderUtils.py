@@ -339,6 +339,8 @@ def import_renderable_array(renderable, blenderMaterials, meshNamePrefix=""):
     #Reverse face winding, to ensure backface culling is correct
     bmesh.ops.reverse_faces(newBmesh, faces=newBmesh.faces)
 
+    #TODO: Import normals
+
     ########################################
     # Copy from bmesh back to mesh
     ########################################
