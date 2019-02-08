@@ -83,9 +83,9 @@ class R6GeometryObject(BinaryFileDataStructure):
             # fill out new renderable by unravelling and expanding the vertex and param pairs
             for currentAttribSet in attribList:
                 # Make sure to copy any arrays so any transforms don't get interferred with in other renderables
-                currentVertex = self.vertices[currentAttribSet[0]].copy()
+                currentVertex = self.vertices[currentAttribSet[0]]
                 currentVertexParams = self.vertexParams[currentAttribSet[1]]
-                currentRenderable.vertices.append(currentVertex)
+                currentRenderable.vertices.append(currentVertex.copy())
                 currentRenderable.normals.append(currentVertexParams.normal.copy())
                 currentRenderable.UVs.append(currentVertexParams.UV.copy())
 

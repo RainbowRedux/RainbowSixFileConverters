@@ -214,7 +214,8 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
     if texToLoad is None:
         print("Failed to find texture: " + str(textureName))
     else:
-        print("Final texture to load: " + str(texToLoad))
+        pass
+        #print("Final texture to load: " + str(texToLoad))
 
     #TODO: Refactor texture loading, expand to support image sequences
     if texToLoad is not None:
@@ -295,44 +296,44 @@ def import_renderable_array(renderable, blenderMaterials, meshNamePrefix=""):
     ########################################
     # Copy to bmesh from mesh
     ########################################
-
     newBmesh = bmesh.new()
     newBmesh.from_mesh(newMesh)
     color_layer = newBmesh.loops.layers.color.new("color")
     uv_layer = newBmesh.loops.layers.uv.verify()
 
     ########################################
-    # Apply Vertex Colors
+    # Apply Vertex Colors if they exist
     ########################################
-
-    # Cobbled together from : https://blender.stackexchange.com/a/60730
-    for face_index, face in enumerate(newBmesh.faces):
-        if face is None:
-            continue
-        sourceTriangleIndices = renderable.triangleIndices[face_index]
-        for vert_index, vert in enumerate(face.loops):
-            importedColor = renderable.vertexColors[sourceTriangleIndices[vert_index]]
-            vert[color_layer] = importedColor
+    if renderable.vertexColors is not None:
+        # Cobbled together from : https://blender.stackexchange.com/a/60730
+        for face_index, face in enumerate(newBmesh.faces):
+            if face is None:
+                continue
+            sourceTriangleIndices = renderable.triangleIndices[face_index]
+            for vert_index, vert in enumerate(face.loops):
+                importedColor = renderable.vertexColors[sourceTriangleIndices[vert_index]]
+                vert[color_layer] = importedColor
 
     ########################################
     # Apply UV Mapping
     ########################################
-    # Cobbled together from https://docs.blender.org/api/blender_python_api_2_67_release/bmesh.html#customdata-access
-    for face_index, face in enumerate(newBmesh.faces):
-        if face is None:
-            continue
-        sourceTriangleIndices = renderable.triangleIndices[face_index]
-        for vert_index, vert in enumerate(face.loops):
-            importedUV = renderable.UVs[sourceTriangleIndices[vert_index]]
-            if math.isnan(importedUV[0]):
-                vert[uv_layer].uv.x = 0.0
-            else:
-                vert[uv_layer].uv.x = importedUV[0]
-            # This coord seems to be inverted, this seems to look correct.
-            if math.isnan(importedUV[1]):
-                vert[uv_layer].uv.y = 0.0
-            else:
-                vert[uv_layer].uv.y = importedUV[1] * -1
+    if renderable.UVs is not None:
+        # Cobbled together from https://docs.blender.org/api/blender_python_api_2_67_release/bmesh.html#customdata-access
+        for face_index, face in enumerate(newBmesh.faces):
+            if face is None:
+                continue
+            sourceTriangleIndices = renderable.triangleIndices[face_index]
+            for vert_index, vert in enumerate(face.loops):
+                importedUV = renderable.UVs[sourceTriangleIndices[vert_index]]
+                if math.isnan(importedUV[0]):
+                    vert[uv_layer].uv.x = 0.0
+                else:
+                    vert[uv_layer].uv.x = importedUV[0]
+                # This coord seems to be inverted, this seems to look correct.
+                if math.isnan(importedUV[1]):
+                    vert[uv_layer].uv.y = 0.0
+                else:
+                    vert[uv_layer].uv.y = importedUV[1] * -1
 
 
     #Reverse face winding, to ensure backface culling is correct
@@ -371,6 +372,10 @@ def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
         meshName =  geometryObject.nameString + "_" + mesh.nameString + "_idx" + str(index)
         meshObj = create_blender_blank_object(meshName)
         meshObj.parent = geoBlendObj
+
+        for flag in mesh.geometryFlagsEvaluated:
+            meshObj[flag] = mesh.geometryFlagsEvaluated[flag]
+
         renderables = geometryObject.generate_renderable_arrays_for_mesh(mesh)
         renderable_prefix = meshName + "_"
         for renderable in renderables:
@@ -395,5 +400,24 @@ def create_objects_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
         subObjects.append(subObject)
 
     collisionName = geoObjName + "_collision"
+    collisionData = geometryObject.geometryData.collisionInformation
+    for i, collMesh in enumerate(collisionData.collisionMeshDefinitions):
+        if collMesh.geometryFlagsEvaluated["GF_INVISIBLE"] is True:
+            #Do not process invalid and unused meshes
+            continue
+        subCollisionName = collisionName + "_idx" + str(i)
+        renderable = collisionData.generate_renderable_array_for_collisionmesh(collMesh, geometryObject.geometryData)
+        subObject = import_renderable_array(renderable, blenderMaterials, subCollisionName)
+        subObject.parent = geoObjectParentObject
+        subObjects.append(subObject)
+
+        for flag in collMesh.geometryFlagsEvaluated:
+            subObject[flag] = collMesh.geometryFlagsEvaluated[flag]
+
+        if collMesh.geometryFlagsEvaluated["GF_INVISIBLE"] is True:
+            # Pretty sure GF_INVISIBLE on collision geometry means ignored
+            subObject.hide_viewport = True
+            subObject.hide_render = True
+            subObject.hide_select = True
     #collisionObj = create_mesh_from_RSMAPCollisionInformation(geometryObject.geometryData, blenderMaterials, collisionName)
     #collisionObj.parent = geoObjectParentObject

@@ -4,7 +4,7 @@ This module defines the fileformat and data structures specific to MAP files use
 from datetime import datetime
 
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
-from RainbowFileReaders import R6Settings
+from RainbowFileReaders import R6Settings, R6Constants
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEGeometryFlags
 from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject, RenderableArray
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
@@ -307,6 +307,72 @@ class RSMAPCollisionInformation(BinaryFileDataStructure):
     def __init__(self):
         super(RSMAPCollisionInformation, self).__init__()
 
+        # These vertices and normals don't line up with the vertex and normal indices.
+        # I suspect these are used for bounding boxes / simplified geometry
+        self.vertexCount = 0
+        self.vertices = []
+        self.normalCount = 0
+        self.normals = []
+
+        # Face definitions
+        self.faceCount = 0
+        self.faces = []
+
+        # collision mesh definitions, collection of faces and geometry flags
+        self.collisionMeshDefinitionsCount = 0
+        self.collisionMeshDefinitions = []
+
+    def generate_renderable_array_for_collisionmesh(self, collisionMesh, geometryData):
+        """Generates RenderableArray objects for each collision mesh defined"""
+        attribList = []
+        triangleIndices = []
+
+        for faceIdx in collisionMesh.faceIndices:
+            currentFace = self.faces[faceIdx]
+            currentVertIndices = currentFace.vertexIndices
+            currentVertNormIndices = currentFace.normalIndices
+
+            currentTriangleIndices = []
+
+            numVerts = len(currentVertIndices)
+            for j in range(numVerts):
+                currentAttribs = (currentVertIndices[j], currentVertNormIndices[j])
+                if currentAttribs in attribList:
+                    currentTriangleIndices.append(attribList.index(currentAttribs))
+                else:
+                    attribList.append(currentAttribs)
+                    currentTriangleIndices.append(attribList.index(currentAttribs))
+
+            triangleIndices.append(currentTriangleIndices)
+
+        currentRenderable = RenderableArray()
+        currentRenderable.materialIndex = R6Constants.UINT_MAX
+
+        for currentAttribSet in attribList:
+            currentVertex = None
+            try:
+                currentVertex = geometryData.vertices[currentAttribSet[0]]
+                #currentNormal = geometryData.normals[currentAttribSet[1]]
+            except:
+                print("Error in mesh. Vertex index out of range")
+                print(str(currentAttribSet[0]))
+                import pprint
+                pprint.pprint(collisionMesh.geometryFlagsEvaluated)
+                exit(1)
+            
+
+            currentRenderable.vertices.append(currentVertex.copy())
+            #currentRenderable.normals.append(currentNormal.copy())
+
+        #Explicitly state that there are no values for these attributes
+        currentRenderable.UVs = None
+        currentRenderable.vertexColors = None
+        currentRenderable.triangleIndices = triangleIndices
+
+        return currentRenderable
+
+
+
     def read(self, filereader):
         super().read(filereader)
 
@@ -326,9 +392,6 @@ class RSMAPCollisionInformation(BinaryFileDataStructure):
             self.faceDistancesFromOrigin.append(filereader.read_float())
 
         self.faceCount = filereader.read_uint()
-        # self.unknown2IndexCollection = []
-        # for _ in range(self.faceCount):
-        #     self.unknown2IndexCollection.append(filereader.read_vec_short_uint(8))
 
         self.faces = []
         for _ in range(self.faceCount):
