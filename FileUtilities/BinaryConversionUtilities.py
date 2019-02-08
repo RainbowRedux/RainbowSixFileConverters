@@ -143,7 +143,7 @@ class FileFormatReader(object):
         """Utility method to print detailed information on data stored"""
         pprint.pprint(vars(self))
 
-    def read_file(self, filepath, verboseOutput=True):
+    def read_file(self, filepath, verboseOutput=False):
         """Reads the file specified into memory and then will call read_data to process"""
         self.filepath = filepath
         self.verboseOutput = verboseOutput
