@@ -89,14 +89,14 @@ class MAPLevelFile(FileFormatReader):
         self.objectList.read(fileReader)
 
         self.roomList = RSEMAPRoomList()
-        self.roomList.read(fileReader, self.gameVersion)
+        self.roomList.read_room_list(fileReader, self.gameVersion)
 
         if self.gameVersion == RSEGameVersions.ROGUE_SPEAR:
             self.transitionList = RSMAPShermanLevelTransitionList()
             self.transitionList.read(fileReader)
 
         self.planningLevelList = RSEMAPPlanningLevelList()
-        self.planningLevelList.read(fileReader, self.gameVersion)
+        self.planningLevelList.read_planning_level_list(fileReader, self.gameVersion)
 
         self.mapFooter = RSEMAPFooterDefinition()
         self.mapFooter.read(fileReader)
@@ -617,7 +617,10 @@ class RSEMAPRoomList(BinaryFileDataStructure):
     def __init__(self):
         super(RSEMAPRoomList, self).__init__()
 
-    def read(self, filereader, gameVer):
+    def read(self, filereader):
+        raise NotImplementedError("This method is not implemented on this class as additional information is required. Please use read_room_list")
+    
+    def read_room_list(self, filereader, gameVer):
         super().read(filereader)
 
         self.read_header_info(filereader)
@@ -879,7 +882,10 @@ class RSEMAPPlanningLevelList(BinaryFileDataStructure):
     def __init__(self):
         super(RSEMAPPlanningLevelList, self).__init__()
 
-    def read(self, filereader, gameVer):
+    def read(self, filereader):
+        raise NotImplementedError("This method is not implemented on this class as additional information is required. Please use read_planning_level_list")
+
+    def read_planning_level_list(self, filereader, gameVer):
         super().read(filereader)
 
         self.read_header_info(filereader)
