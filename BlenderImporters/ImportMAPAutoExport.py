@@ -14,6 +14,8 @@ def ExportAllMaps():
     paths = []
     #paths.append("TestData/ReducedGames/R6GOG")
     paths.append("TestData/ReducedGames/")
+    #paths.append("FullGames/R6EWCD")
+    #paths.append("FullGames/RSUOCD")
     #paths.append("FullGames")
     import ProcessorPathsHelper
     paths = ProcessorPathsHelper.expand_paths(paths)

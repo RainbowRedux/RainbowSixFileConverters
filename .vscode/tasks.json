@@ -10,7 +10,7 @@
             "args":["--background",
                 "--python",
                 "${workspaceRoot}\\BlenderImporters\\ImportSOB.py",
-                "D:\\R6Data\\Test\\ReducedGames\\R6GOG/data/model/cessna.sob"]
+                "D:\\R6Data\\TestData\\ReducedGames\\R6GOG/data/model/cessna.sob"]
         },
         {
             "label": "Blender-Win: Headless MAP Import",
