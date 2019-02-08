@@ -1,3 +1,4 @@
+"""Provides classes that will read and parse RSB Image files."""
 import PIL
 from FileUtilities.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader
 
@@ -42,6 +43,7 @@ class RSBImageFile(FileFormatReader):
         self.imageFullColor.read_image(self.header.width, self.header.height, self.header.calculate_bytes_per_pixel(), fileReader)
 
     def convert_palette_image(self):
+        """Converts the stored palettized version of the image into a full color RGBA image"""
         newImage = PIL.Image.new('RGBA', (self.header.width, self.header.height))
         pixels = newImage.load()
         for x in range(newImage.size[0]):    # for every col:
@@ -55,6 +57,7 @@ class RSBImageFile(FileFormatReader):
 
 
     def convert_full_color_image(self):
+        """Converts the stored "full color" version of the image into a full color RGBA image with 8bpp"""
         newImage = PIL.Image.new('RGBA', (self.header.width, self.header.height))
         pixels = newImage.load()
         for x in range(newImage.size[0]):    # for every col:
@@ -150,9 +153,11 @@ class RSBPalette(BinaryFileDataStructure):
         self.palette_entries = []
 
     def get_color(self, index):
+        """Retrieves the color stored at the index"""
         return self.palette_entries[index]
 
     def print_palette(self):
+        """Debug function to print all colors stored in the palette"""
         for color in self.palette_entries:
             print("R: " + str(color[0]) + "\tG: " + str(color[1]) + "\tB: " + str(color[2]) + "\tA: " + str(color[3]))
 
@@ -174,6 +179,7 @@ class RSBImage(BinaryFileDataStructure):
         self.image = []
 
     def get_pixel(self, index):
+        """Retrieves the pixel stored at the specified index"""
         if index >= len(self.image):
             print("Invalid index: " + str(index))
             return "0"
@@ -184,6 +190,7 @@ class RSBImage(BinaryFileDataStructure):
         print("Error! This class does not support the base read operation as it requires extra parameters")
 
     def read_image(self, width, height, bytes_per_pixel, filereader):
+        """Reads data from the file that is to be interpreted as an image. Size of data read is determined by resolution and bytes per pixel. Image is not converted to RGBA image here, as the data can be a number of internal formats"""
         self.image = []
         for _ in range(width*height):
             self.image.append(filereader.read_bytes(bytes_per_pixel))

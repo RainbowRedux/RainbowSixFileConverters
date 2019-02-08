@@ -1,4 +1,4 @@
-
+""" A commandline utilty to read map files and output their data into JSON files """
 from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders.R6Constants import RSEGameVersions
 from FileUtilities import JSONMetaInfo, DirectoryProcessor
@@ -7,7 +7,7 @@ lightTypes = []
 
 
 def strip_extra_data_for_json(mapFile):
-    #strip out lengthy data which is already being interpreted correctly to make it easier for humans to view the json file
+    """ Strips out lengthy data which is already being interpreted correctly to make it easier for humans to view the json file """
     for geometryObject in mapFile.geometryObjects:
         if mapFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
             geometryObject.vertices = ["Stripped from JSON"]

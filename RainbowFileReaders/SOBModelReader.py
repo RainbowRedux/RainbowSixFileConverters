@@ -1,3 +1,4 @@
+"""Provides classes that will read and parse SOB model files."""
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
@@ -61,6 +62,7 @@ class SOBModelFile(FileFormatReader):
 
 
 class SOBHeader(BinaryFileDataStructure):
+    """Contains the information stored in the file formats header structure"""
     def __init__(self):
         super(SOBHeader, self).__init__()
 
@@ -71,6 +73,7 @@ class SOBHeader(BinaryFileDataStructure):
 
 
 class SOBFooterDefinition(BinaryFileDataStructure):
+    """Contains the information stored in the file formats footer structure"""
     def __init__(self):
         super(SOBFooterDefinition, self).__init__()
 
