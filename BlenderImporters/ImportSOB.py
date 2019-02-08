@@ -2,10 +2,6 @@
 Functions related to import SOB files into a blender scene
 """
 import sys
-from math import radians
-
-import bpy
-import bmesh
 
 sys.path.insert(0, 'E:/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
@@ -14,7 +10,7 @@ from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders import R6Settings
 
 from BlenderImporters import BlenderUtils
-from BlenderImporters.BlenderUtils import import_renderable_array, create_objects_from_R6GeometryObject
+from BlenderImporters.BlenderUtils import create_objects_from_R6GeometryObject
 
 errorCount = 0
 errorList = []

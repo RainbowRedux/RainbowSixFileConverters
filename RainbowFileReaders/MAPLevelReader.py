@@ -353,13 +353,12 @@ class RSMAPCollisionInformation(BinaryFileDataStructure):
             try:
                 currentVertex = geometryData.vertices[currentAttribSet[0]]
                 #currentNormal = geometryData.normals[currentAttribSet[1]]
-            except:
+            except IndexError:
                 print("Error in mesh. Vertex index out of range")
                 print(str(currentAttribSet[0]))
                 import pprint
                 pprint.pprint(collisionMesh.geometryFlagsEvaluated)
                 exit(1)
-            
 
             currentRenderable.vertices.append(currentVertex.copy())
             #currentRenderable.normals.append(currentNormal.copy())

@@ -33,6 +33,7 @@ def strip_extra_data_for_json(mapFile):
 flagErrors = []
 
 def convert_MAP(filename):
+    """ Reads in MAP files, and then converts to JSON """
     print("Processing: " + filename)
     if filename.endswith("obstacletest.map"):
         #I believe this is an early test map that was shipped by accident.

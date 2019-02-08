@@ -4,10 +4,8 @@ Functions to import MAP files into blender
 import os
 import sys
 from math import radians
-import math
 
 import bpy
-import bmesh
 import mathutils
 
 sys.path.insert(0, 'E:/Dropbox/Development/Rainbow/RainbowSixFileConverters')
@@ -15,11 +13,10 @@ sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixF
 sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders import R6Settings
-from RainbowFileReaders import R6Constants
 from RainbowFileReaders.R6Constants import RSEGameVersions
 
 from BlenderImporters import BlenderUtils
-from BlenderImporters.BlenderUtils import import_renderable_array, create_objects_from_R6GeometryObject, create_objects_from_RSMAPGeometryObject
+from BlenderImporters.BlenderUtils import create_objects_from_R6GeometryObject, create_objects_from_RSMAPGeometryObject
 
 def create_spotlight_from_r6_light_specification(lightSpec, name):
     """Create a spotlight from a rainbow six light specification"""
@@ -195,12 +192,10 @@ def export_fbx_scene(path):
 def import_map_and_save(path):
     """Wrapper method to import a map to scene, save and export"""
     inPath = os.path.abspath(path)
-    outBlendPath = inPath + ".blend"
-    outFBXPath = inPath + ".fbx"
     importSuccess = import_MAP_to_scene(inPath)
     if importSuccess:
+        outBlendPath = inPath + ".blend"
         save_blend_scene(outBlendPath)
-        #export_fbx_scene(outFBXPath)
 
 
 if __name__ == "__main__":

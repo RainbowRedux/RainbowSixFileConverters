@@ -290,7 +290,7 @@ def import_renderable_array(renderable, blenderMaterials, meshNamePrefix=""):
 
     for vert in renderable.vertices:
         vert[0] = vert[0] * -1
-    
+
     add_mesh_geometry(newMesh, renderable.vertices, renderable.triangleIndices)
 
     ########################################

@@ -133,12 +133,14 @@ class R6GeometryObject(BinaryFileDataStructure):
             self.nameString = self.versionString
 
     def read_vertices(self, filereader):
+        """ Reads a count of the number of vertices, followed by the list of vertices """
         self.vertexCount = filereader.read_uint()
         self.vertices = []
         for _ in range(self.vertexCount):
             self.vertices.append(filereader.read_vec_f(3))
 
     def read_vertex_params(self, filereader):
+        """ Reads a count of the number of vertex parameters, followed by the list of vertex parameters """
         self.vertexParamsCount = filereader.read_uint()
         self.vertexParams = []
         for _ in range(self.vertexParamsCount):
@@ -147,6 +149,7 @@ class R6GeometryObject(BinaryFileDataStructure):
             self.vertexParams.append(newParams)
 
     def read_faces(self, filereader):
+        """ Reads a count of the number of faces, followed by the list of faces """
         self.faceCount = filereader.read_uint()
         self.faces = []
         for _ in range(self.faceCount):
@@ -155,6 +158,7 @@ class R6GeometryObject(BinaryFileDataStructure):
             self.faces.append(newFace)
 
     def read_meshes(self, filereader):
+        """ Reads a count of the number of meshes, followed by the list of meshes """
         self.meshCount = filereader.read_uint()
         self.meshes = []
         for _ in range(self.meshCount):
@@ -163,6 +167,7 @@ class R6GeometryObject(BinaryFileDataStructure):
             self.meshes.append(newMesh)
 
 class R6VertexParameterCollection(BinaryFileDataStructure):
+    """ Contains a given pair/set of attributes for a particular vertex. Contains, normal, UV and color values """
     def __init__(self):
         super(R6VertexParameterCollection, self).__init__()
         self.normal = None
@@ -178,6 +183,7 @@ class R6VertexParameterCollection(BinaryFileDataStructure):
         self.color = filereader.read_rgb_color_24bpp_uint()
 
 class R6FaceDefinition(BinaryFileDataStructure):
+    """ Contains a list of properties for an individual face. Contains indices for the vertices and parameters, as well as the face normal and material assigned """
     def __init__(self):
         super(R6FaceDefinition, self).__init__()
 
@@ -191,6 +197,7 @@ class R6FaceDefinition(BinaryFileDataStructure):
 
 #TODO: Check if this is actually smoothing groups
 class R6MeshDefinition(BinaryFileDataStructure):
+    """ Contains a list of faces that make up this mesh, as well as some associated properties """
     def __init__(self):
         super(R6MeshDefinition, self).__init__()
         self.unknown6 = 0
