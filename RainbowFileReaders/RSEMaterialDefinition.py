@@ -1,8 +1,10 @@
+"""Provides classes that will read and parse Material definitions and related information in RSE game formats."""
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEMaterialFormatConstants
 from RainbowFileReaders.MathHelpers import normalize_color, unnormalize_color
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure
 
 class RSEMaterialListHeader(BinaryFileDataStructure):
+    """Reads and stores information in the header of a material list"""
     def __init__(self):
         super().__init__()
         self.size = None
@@ -24,6 +26,7 @@ class RSEMaterialListHeader(BinaryFileDataStructure):
 
 
 class RSEMaterialDefinition(BinaryFileDataStructure):
+    """Reads, stores and provides functionality to use material information stored in RSE game formats"""
     def __init__(self):
         super(RSEMaterialDefinition, self).__init__()
         self.size = None

@@ -1,5 +1,5 @@
-#This file stores constants and settings related to R6 files and directory formats
-#This also contains a few functions to determine some relevant settings such as game installation directory
+"""This file stores constants and settings related to R6 files and directory formats.
+This also contains a few functions to determine some relevant settings such as game installation directory """
 import os
 
 paths = {}
@@ -88,7 +88,9 @@ def determine_data_paths_for_file(filename):
 
     return (gamePath, baseDataPath, modPath)
 
-def get_relevant_texture_paths(filename):
+def get_relevant_global_texture_paths(filename):
+    """Returns a list of paths that are used as global texture paths in RSE games.
+    Expects a full filepath to be passed in which can then be used for searching for the appropriate folders"""
     filepath = os.path.dirname(filename)
     texturePaths = []
     texturePaths.append(filepath)

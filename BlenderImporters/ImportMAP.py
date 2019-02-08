@@ -161,7 +161,7 @@ def import_MAP_to_scene(filename):
     print("")
     print("Beginning import")
 
-    texturePaths = R6Settings.get_relevant_texture_paths(filename)
+    texturePaths = R6Settings.get_relevant_global_texture_paths(filename)
 
     blenderMaterials = BlenderUtils.create_blender_materials_from_list(MAPObject.materials, texturePaths)
 

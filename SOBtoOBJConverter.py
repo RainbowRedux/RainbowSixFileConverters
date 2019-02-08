@@ -1,9 +1,11 @@
-#Converts RSB files to png files and an acompanying JSON file with extra meta data
-#information for file format from here:
-#https://github.com/AlexKimov/RSE-file-formats/wiki/RSB-File-Format
-#https://github.com/AlexKimov/RSE-file-formats/blob/master/010Editor-templates/RSB.bt
-#RSB Version 0 required looking into the bt file directly as the wiki is not complete
-#Texture and surface data extraction to JSON file is not complete
+"""
+Converts RSB files to png files and an acompanying JSON file with extra meta data
+information for file format from here:
+https://github.com/AlexKimov/RSE-file-formats/wiki/RSB-File-Format
+https://github.com/AlexKimov/RSE-file-formats/blob/master/010Editor-templates/RSB.bt
+RSB Version 0 required looking into the bt file directly as the wiki is not complete
+Texture and surface data extraction to JSON file is not complete
+"""
 
 from FileUtilities import DirectoryProcessor
 from FileUtilities import JSONMetaInfo, OBJModelWriter
@@ -11,6 +13,7 @@ from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders.MathHelpers import is_vector_normal
 
 def convert_SOB(filename):
+    """ Reads an SOB file and then writes to OBJ format """
     print("Processing: " + filename)
 
     modelFile = SOBModelReader.SOBModelFile()
@@ -39,6 +42,7 @@ def convert_SOB(filename):
     print("===============================================")
 
 def write_OBJ(filename, SOBObject):
+    """Writes the given Geometry Object to an OBJ file """
     writer = OBJModelWriter.OBJModelWriter()
     writer.open_file(filename)
     for geoObject in SOBObject.geometryObjects:
