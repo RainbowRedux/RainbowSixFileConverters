@@ -621,6 +621,7 @@ class RSEMAPRoomList(BinaryFileDataStructure):
         raise NotImplementedError("This method is not implemented on this class as additional information is required. Please use read_room_list")
     
     def read_room_list(self, filereader, gameVer):
+        """Reads the list of rooms, based on game version for format change"""
         super().read(filereader)
 
         self.read_header_info(filereader)
@@ -886,6 +887,7 @@ class RSEMAPPlanningLevelList(BinaryFileDataStructure):
         raise NotImplementedError("This method is not implemented on this class as additional information is required. Please use read_planning_level_list")
 
     def read_planning_level_list(self, filereader, gameVer):
+        """Reads the list of planning levels, based on game version for slight format change"""
         super().read(filereader)
 
         self.read_header_info(filereader)
