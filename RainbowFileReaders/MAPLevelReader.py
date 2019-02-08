@@ -619,7 +619,7 @@ class RSEMAPRoomList(BinaryFileDataStructure):
 
     def read(self, filereader):
         raise NotImplementedError("This method is not implemented on this class as additional information is required. Please use read_room_list")
-    
+
     def read_room_list(self, filereader, gameVer):
         """Reads the list of rooms, based on game version for format change"""
         super().read(filereader)
@@ -781,6 +781,7 @@ class RSMAPShermanLevelTransformInformation(BinaryFileDataStructure):
         self.unknown2 = filereader.read_vec_f(6) #size?
 
 class R6MAPShermanLevelPlanAreaDefinition(BinaryFileDataStructure):
+    """This is related to the planning rendering, but exact details and usage is still TBD"""
     def __init__(self):
         super(R6MAPShermanLevelPlanAreaDefinition, self).__init__()
 
@@ -830,6 +831,7 @@ class R6MAPShermanLevelPlanAreaDefinition(BinaryFileDataStructure):
         self.unknown12 = filereader.read_uint()
 
 class RSMAPShermanLevelTransitionList(BinaryFileDataStructure):
+    """This is related to the portal system and traversal between floors, but exact details and usage is still TBD"""
     def __init__(self):
         super(RSMAPShermanLevelTransitionList, self).__init__()
 
@@ -846,6 +848,7 @@ class RSMAPShermanLevelTransitionList(BinaryFileDataStructure):
         self.read_section_string(filereader)
 
     def read_transition_objects(self, filereader):
+        """Reads the transition objects into a list"""
         self.transitionCount = filereader.read_uint()
         self.transitions = []
         for _ in range(self.transitionCount):
@@ -854,6 +857,7 @@ class RSMAPShermanLevelTransitionList(BinaryFileDataStructure):
             self.transitions.append(transition)
 
 class RSMAPShermanLevelTransitionDefinition(BinaryFileDataStructure):
+    """This is related to the portal system and traversal between floors, but exact details and usage is still TBD"""
     def __init__(self):
         super(RSMAPShermanLevelTransitionDefinition, self).__init__()
 
@@ -866,6 +870,7 @@ class RSMAPShermanLevelTransitionDefinition(BinaryFileDataStructure):
         self.coords = filereader.read_vec_f(6)
 
 class R6MAPShermanLevelTransitionDefinition(BinaryFileDataStructure):
+    """This is related to the portal system and traversal between floors, but exact details and usage is still TBD"""
     def __init__(self):
         super(R6MAPShermanLevelTransitionDefinition, self).__init__()
 
@@ -880,6 +885,7 @@ class R6MAPShermanLevelTransitionDefinition(BinaryFileDataStructure):
         self.coords = filereader.read_vec_f(4)
 
 class RSEMAPPlanningLevelList(BinaryFileDataStructure):
+    """This is related to the planning levels, but exact details and usage is still TBD"""
     def __init__(self):
         super(RSEMAPPlanningLevelList, self).__init__()
 
@@ -903,6 +909,7 @@ class RSEMAPPlanningLevelList(BinaryFileDataStructure):
         self.read_section_string(filereader)
 
     def read_planning_levels(self, filereader):
+        """Reads the planning level objects into a list"""
         self.planningLevelCount = filereader.read_uint()
         self.planningLevels = []
         for _ in range(self.planningLevelCount):
@@ -911,6 +918,7 @@ class RSEMAPPlanningLevelList(BinaryFileDataStructure):
             self.planningLevels.append(planLevel)
 
 class R6MAPPlanningLevelDefinition(BinaryFileDataStructure):
+    """This is related to the planning levels, but exact details and usage is still TBD"""
     def __init__(self):
         super(R6MAPPlanningLevelDefinition, self).__init__()
 
