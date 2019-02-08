@@ -1,3 +1,4 @@
+""" This module contains classes to read DMP files that are associated with Rainbow Six Rogue Spear maps. These are light definitions """
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 
 class RSDMPLightFile(FileFormatReader):

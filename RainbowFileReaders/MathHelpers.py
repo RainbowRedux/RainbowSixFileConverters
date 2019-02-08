@@ -1,3 +1,4 @@
+""" This module contains a number of useful math related functions that are used throughout this project """
 import math
 
 def normalize_color(color):
