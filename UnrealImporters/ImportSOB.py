@@ -4,7 +4,7 @@ import PIL
 from PIL import Image
 
 import unreal_engine as ue
-from unreal_engine.classes import Actor, ProceduralMeshComponent, KismetMathLibrary, Material, Texture2D
+from unreal_engine.classes import Actor, ProceduralMeshComponent, KismetMathLibrary, MaterialInterface, Texture2D
 from unreal_engine import FVector, FVector2D, FColor
 from unreal_engine.enums import EPixelFormat
 
@@ -14,6 +14,7 @@ from RainbowFileReaders import RSBImageReader
 from RainbowFileReaders import R6Constants
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
+from RainbowFileReaders.R6Constants import RSEAlphaMethod
 
 ue.log('Initializing SOB File importer')
 
@@ -71,6 +72,7 @@ class RSEResourceLoader(Actor):
     """A base class for RSE data formats which provides common functionality"""
     def __init__(self):
         self.generatedMaterials = []
+        self.loadedParentMaterials = {}
         self.materialDefinitions = []
         self.loadedTextures = {}
 
@@ -78,7 +80,7 @@ class RSEResourceLoader(Actor):
         """Called when the actor is beginning play, or the world is beginning play"""
         pass
 
-    def LoadTexture(self, texturePath: str) -> (Texture2D):
+    def LoadTexture(self, texturePath: str, colorKeyR: int, colorKeyG: int, colorKeyB: int) -> (Texture2D):
         """Attempts to load the texture at the specified path."""
         if texturePath in self.loadedTextures:
             return self.loadedTextures[texturePath]
@@ -95,7 +97,19 @@ class RSEResourceLoader(Actor):
             image = imageFile.convert_full_color_image()
             #Save this image as it will be quicker to load in future
             image.save(PNGFilename, "PNG")
+
         imageWidth, imageHeight = image.size
+
+        pixdata = image.load()
+
+        colorKey = [colorKeyR, colorKeyG, colorKeyB]
+        colorKeyWithAlpha = colorKey.copy()
+        colorKeyWithAlpha.append(0)
+        colorKeyWithAlpha = tuple(colorKeyWithAlpha)
+        for y in range(imageHeight):
+            for x in range(imageWidth):
+                if tuple(pixdata[x, y][:3]) == tuple(colorKey):
+                    pixdata[x, y] = colorKeyWithAlpha
 
         newTexture = ue.create_transient_texture(imageWidth, imageHeight, EPixelFormat.PF_R8G8B8A8)
         newTexture.texture_set_data(image.tobytes())
@@ -105,7 +119,40 @@ class RSEResourceLoader(Actor):
     def determine_parent_material_required(self, materialDefinition: RSEMaterialDefinition) -> (str):
         """Assesses the material definition and determines the correct parent material to use"""
         #TODO: Determine the correct material variant to load: opaque, masked, translucent and the two sided variants of all
-        return "test"
+        bTwoSided = False
+        if materialDefinition.twoSided:
+            bTwoSided = True
+
+        blendMode = "opaque"
+        if materialDefinition.alphaMethod == RSEAlphaMethod.SAM_MethodLookup:
+            cxpProps = materialDefinition.CXPMaterialProperties
+            if cxpProps is not None:
+                if cxpProps.blendMode == "alphablend":
+                    blendMode = "alpha"
+                if cxpProps.blendMode == "colorkey":
+                    if materialDefinition.opacity < 0.99:
+                        blendMode = "alpha"
+                    else:
+                        blendMode = "masked"
+
+        materialRequired = "ShermanRommel_" + blendMode
+        if bTwoSided:
+            materialRequired += "_twosided"
+
+        return materialRequired
+
+    def get_material(self, material_name: str) -> (MaterialInterface):
+        if material_name in self.loadedParentMaterials:
+            return self.loadedParentMaterials[material_name]
+
+        materialFullPath = "/Game/Rainbow/{}.{}".format(material_name, material_name)
+        loadedMaterial = None
+        try:
+            loadedMaterial = ue.load_object(MaterialInterface, materialFullPath)
+        except:
+            pass
+        self.loadedParentMaterials[material_name] = loadedMaterial
+        return loadedMaterial
 
     def LoadMaterials(self):
         """Creates Unreal Material Instances for each material definition"""
@@ -113,13 +160,32 @@ class RSEResourceLoader(Actor):
         for path in self.texturePaths:
             ue.log("Using Texture Path: " + path)
         #Material'/Game/Rainbow/ShermanRommelOpaque.ShermanRommelOpaque'
-        opaque_material = ue.load_object(Material, '/Game/Rainbow/ShermanRommelOpaque.ShermanRommelOpaque')
+        #opaque_material = ue.load_object(MaterialInterface, '/Game/Rainbow/ShermanRommel_opaque.ShermanRommel_opaque')
         for matDef in self.materialDefinitions:
-            mid = self.create_material_instance_dynamic(opaque_material)
+            ue.log(matDef.textureName)
+            parentMaterialName = self.determine_parent_material_required(matDef)
+            parentMaterial = self.get_material(parentMaterialName)
+            if parentMaterial is None:
+                ue.log("Error, could not load parent material: {}".format(parentMaterialName))
+                self.generatedMaterials.append(None)
+                continue
+            mid = self.create_material_instance_dynamic(parentMaterial)
 
             mid.set_material_scalar_parameter("EmissiveStrength", matDef.emissiveStrength)
             mid.set_material_scalar_parameter("SpecularLevel", matDef.specularLevel)
-            self.determine_parent_material_required("temp")
+            mid.set_material_scalar_parameter("Opacity", matDef.opacity)
+
+            colorKeyRGB = None
+
+            if matDef.CXPMaterialProperties is not None:
+                if matDef.CXPMaterialProperties.blendMode == "colorkey":
+                    cxpProps = matDef.CXPMaterialProperties
+                    colorKeyRGB = cxpProps.colorkey
+                    ue.log("setting up colorkey: {}".format(str(colorKeyRGB)))
+
+            if colorKeyRGB is None:
+                # set this to out of range values, so no special case handling is needed elsewhere as the comparison will always fail, and work will be skipped
+                colorKeyRGB = [257, 257, 257]
 
             #Determine, load and Set diffuse texture
             if matDef.textureName == "NULL":
@@ -132,7 +198,7 @@ class RSEResourceLoader(Actor):
                     if foundTexture is not None:
                         break
                 if foundTexture is not None:
-                    loadedTexture = self.LoadTexture(foundTexture)
+                    loadedTexture = self.LoadTexture(foundTexture, colorKeyRGB[0], colorKeyRGB[1], colorKeyRGB[2])
                     if loadedTexture is not None:
                         mid.set_material_texture_parameter('DiffuseTexture',loadedTexture)
 

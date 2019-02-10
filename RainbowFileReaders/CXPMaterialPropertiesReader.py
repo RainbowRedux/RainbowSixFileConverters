@@ -55,9 +55,8 @@ class CXPMaterialProperties(object):
             elif currKeyword == "colorkey":
                 #Set the blend mode, and grab the RGB color key
                 self.blendMode = currKeyword
-                self.colorkey.append(keywords.pop(0))
-                self.colorkey.append(keywords.pop(0))
-                self.colorkey.append(keywords.pop(0))
+                for _ in range(3):
+                    self.colorkey.append(int(keywords.pop(0)))
             elif currKeyword == "textureformat":
                 #read the 5 values specified with a texture format
                 #TODO: Work out what most of these values mean. Confirm final 4 values are RGBA bitdepth
