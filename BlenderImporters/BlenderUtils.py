@@ -180,6 +180,7 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
         texToLoad = find_texture(textureName, path)
         #if a texture was found, don't continue searching
         if texToLoad is not None:
+            texToLoad = texToLoad.replace(".RSB", ".PNG")
             break
 
     if texToLoad is None:

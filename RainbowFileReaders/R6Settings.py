@@ -63,6 +63,7 @@ def determine_data_paths_for_file(filename):
 
     #Get the absolute path
     absPath = os.path.abspath(filename)
+    absPath = os.path.normpath(absPath)
     #Base game path
     gamePath = None
     modName = None
@@ -92,22 +93,23 @@ def get_relevant_global_texture_paths(filename):
     """Returns a list of paths that are used as global texture paths in RSE games.
     Expects a full filepath to be passed in which can then be used for searching for the appropriate folders"""
     filepath = os.path.dirname(filename)
+    filepath = os.path.normpath(filepath)
     texturePaths = []
     texturePaths.append(filepath)
     dataPaths = determine_data_paths_for_file(filename)[1:]
     for path in dataPaths:
         if path is not None:
-            texturePaths.append(path + paths["TexturePath"])
+            texturePaths.append(os.path.join(path, paths["TexturePath"]))
 
     return texturePaths
 
 def fixup_texture_name(filename):
-    """Match source texture names to new extracted texture names"""
+    """Match source texture names to RSB texture names that were shipped"""
     ext = filename.lower()[-4:]
     newfilename = filename
-    if ext in (".bmp", ".rsb", ".tga"):
+    if ext in (".bmp", ".tga"):
         newfilename = newfilename[:-4]
-        newfilename += ".PNG"
+        newfilename += ".RSB"
     return newfilename
 
 

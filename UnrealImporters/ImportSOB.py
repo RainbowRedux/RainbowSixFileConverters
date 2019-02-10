@@ -1,18 +1,23 @@
 import unreal_engine as ue
-from unreal_engine.classes import Actor, ProceduralMeshComponent, SceneComponent, FloatProperty, KismetMathLibrary, Material
+from unreal_engine.classes import Actor, ProceduralMeshComponent, SceneComponent, FloatProperty, KismetMathLibrary, Material, Texture2D
 from unreal_engine import FVector, FVector2D, FColor
+from unreal_engine.enums import EPixelFormat
 
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders import MAPLevelReader
+from RainbowFileReaders import RSBImageReader
 from RainbowFileReaders import R6Constants
+from RainbowFileReaders import R6Settings
+from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
 
 ue.log('Initializing SOB File importer')
 
 class RenderableMeshComponent(ProceduralMeshComponent):
+    """A ProceduralMeshComponent with the ability to convert RenderableArray geometry"""
     def __init__(self):
         pass
         self.CurrentMeshSectionIndex = 0
-    
+
     def ReceiveBeginPlay(self):
         self.CurrentMeshSectionIndex = 0
 
@@ -48,45 +53,79 @@ class RenderableMeshComponent(ProceduralMeshComponent):
             indexArray.append(face[2])
             indexArray.append(face[1])
             indexArray.append(face[0])
-        
+
         self.CreateMeshSection(self.CurrentMeshSectionIndex, vertexArray, indexArray, normalArray, UV0=uvArray, VertexColors=colorArray, CreateCollision=True)
 
         if renderable.materialIndex != R6Constants.UINT_MAX:
-            print(str(renderable.materialIndex) + " of " + str(len(materials)))
             self.SetMaterial(self.CurrentMeshSectionIndex, materials[renderable.materialIndex])
 
         self.CurrentMeshSectionIndex += 1
-        ue.log("Created procedural mesh section")
 
 class RSEResourceLoader(Actor):
+    """A base class for RSE data formats which provides common functionality"""
     def __init__(self):
-        pass
+        self.generatedMaterials = []
+        self.materialDefinitions = []
+        self.loadedTextures = {}
 
     def ReceiveBeginPlay(self):
         pass
 
-class SOBModel(Actor):
+    def LoadTexture(self, texturePath: str) -> (Texture2D):
+        if texturePath in self.loadedTextures:
+            return self.loadedTextures[texturePath]
+        imageFile = RSBImageReader.RSBImageFile()
+        imageFile.read_file(texturePath.replace(".PNG", ".RSB"))
+        image = imageFile.convert_full_color_image()
+        newTexture = ue.create_transient_texture(imageFile.header.width, imageFile.header.height, EPixelFormat.PF_R8G8B8A8)
+        newTexture.texture_set_data(image.tobytes())
+        self.loadedTextures[texturePath] = newTexture
+        return newTexture
+
+    def determine_parent_material_required(self, materialDefinition: RSEMaterialDefinition) -> (str):
+        return "test"
+
+    def LoadMaterials(self):
+        self.texturePaths = R6Settings.get_relevant_global_texture_paths(self.filepath)
+        for path in self.texturePaths:
+            ue.log("Using Texture Path: " + path)
+        #Material'/Game/Rainbow/ShermanRommelOpaque.ShermanRommelOpaque'
+        opaque_material = ue.load_object(Material, '/Game/Rainbow/ShermanRommelOpaque.ShermanRommelOpaque')
+        for matDef in self.materialDefinitions:
+            mid = self.create_material_instance_dynamic(opaque_material)
+
+            mid.set_material_scalar_parameter("EmissiveStrength", matDef.emissiveStrength)
+            mid.set_material_scalar_parameter("SpecularLevel", matDef.specularLevel)
+            self.determine_parent_material_required("temp")
+
+            #Determine, load and Set diffuse texture
+            if matDef.textureName == "NULL":
+                mid.set_material_scalar_parameter('UseVertexColor', 1.0)
+            else:
+                mid.set_material_scalar_parameter('UseVertexColor', 0.0)
+                foundTexture = None
+                for path in self.texturePaths:
+                    foundTexture = R6Settings.find_texture(matDef.textureName, path)
+                    if foundTexture is not None:
+                        break
+                if foundTexture is not None:
+                    loadedTexture = self.LoadTexture(foundTexture)
+                    if loadedTexture is not None:
+                        mid.set_material_texture_parameter('DiffuseTexture',loadedTexture)
+                
+            self.generatedMaterials.append(mid)
+
+class SOBModel(RSEResourceLoader):
 
     # constructor adding a component
     def __init__(self):
-        self.generatedMaterials = []
-        self.materialDefinitions = []
         #self.defaultSceneComponent = self.add_actor_component(SceneComponent, 'DefaultSceneComponent')
         self.proceduralMeshComponent = self.add_actor_component(RenderableMeshComponent, 'ProceduralMesh')
 
-    def LoadMaterials(self):
-        ue.log("Loading materials: " + str(len(self.materialDefinitions)))
-        #Material'/Game/Rainbow/ShermanRommelOpaque.ShermanRommelOpaque'
-        parent_material = ue.load_object(Material, '/Game/Rainbow/ShermanRommelOpaque.ShermanRommelOpaque')
-        for matDef in self.materialDefinitions:
-            mid = self.create_material_instance_dynamic(parent_material)
-            if matDef.textureName == "NULL":
-                mid.set_material_scalar_parameter('UseVertexColor', 1.0)
-            self.generatedMaterials.append(mid)
-
     def LoadModel(self):
+        self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/model/cessna.sob"
         SOBFile = SOBModelReader.SOBModelFile()
-        SOBFile.read_file("D:/R6Data/TestData/ReducedGames/R6GOG/data/model/cessna.sob")
+        SOBFile.read_file(self.filepath)
         numGeoObjects = len(SOBFile.geometryObjects)
         ue.log("Num geoObjects: {}".format(numGeoObjects))
 
@@ -99,9 +138,9 @@ class SOBModel(Actor):
         for geoObj in SOBFile.geometryObjects:
             for sourceMesh in geoObj.meshes:
                 renderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
-        
-                for i, currentRenderable in enumerate(renderables):
-                    self.proceduralMeshComponent.import_renderable(currentRenderable, materials=self.generatedMaterials)
+
+                for _, currentRenderable in enumerate(renderables):
+                    self.proceduralMeshComponent.import_renderable(currentRenderable, self.generatedMaterials)
 
         ue.log("Created procedural mesh")
 
@@ -117,20 +156,23 @@ class MAPLevel(RSEResourceLoader):
         self.proceduralMeshComponent = self.add_actor_component(RenderableMeshComponent, 'ProceduralMesh')
 
     def LoadMap(self):
+        self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
         MAPFile = MAPLevelReader.MAPLevelFile()
-        MAPFile.read_file("D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map")
+        MAPFile.read_file(self.filepath)
         numGeoObjects = len(MAPFile.geometryObjects)
         ue.log("Num geoObjects: {}".format(numGeoObjects))
 
-        #self.LoadMaterials(MAPFile.materials)
+        ue.log("material definitions: " + str(len(MAPFile.materials)))
+        self.materialDefinitions = MAPFile.materials
+        self.LoadMaterials()
 
         renderables = []
 
         for geoObj in MAPFile.geometryObjects:
             for sourceMesh in geoObj.meshes:
                 renderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
-        
-                for i, currentRenderable in enumerate(renderables):
+
+                for _, currentRenderable in enumerate(renderables):
                     self.proceduralMeshComponent.import_renderable(currentRenderable, self.generatedMaterials)
 
         ue.log("Created procedural mesh")
@@ -138,4 +180,3 @@ class MAPLevel(RSEResourceLoader):
     # properties can only be set starting from begin play
     def ReceiveBeginPlay(self):
         self.LoadMap()
-        pass
