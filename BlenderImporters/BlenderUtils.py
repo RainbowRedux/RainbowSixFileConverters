@@ -10,6 +10,7 @@ from bpy_extras import node_shader_utils
 
 from RainbowFileReaders.R6Constants import RSEAlphaMethod
 from RainbowFileReaders import R6Constants
+from RainbowFileReaders.R6Settings import find_texture
 
 def flip_normals_on_object(blendObject):
     """Flips the normals on specified object"""
@@ -155,36 +156,6 @@ def create_blender_materials_from_list(materialList, texturePaths):
         blenderMaterials.append(newMaterial)
 
     return blenderMaterials
-
-def fixup_texture_name(filename):
-    """Match source texture names to new extracted texture names"""
-    ext = filename.lower()[-4:]
-    newfilename = filename
-    if ext in (".bmp", ".rsb", ".tga"):
-        newfilename = newfilename[:-4]
-        newfilename += ".PNG"
-    return newfilename
-
-
-def find_texture(filename, dataPath):
-    """Looks for a texture using the source name in the path.
-    Will perform texture name fixups to match new names"""
-    if filename.lower() == "null":
-        return None
-    newfilename = fixup_texture_name(filename)
-    result = None
-    for root, dirs, files in os.walk(dataPath):
-        for name in files:
-            # Compare lowercase versions since windows is case-insensitive
-            if name.lower() == newfilename.lower():
-                result = os.path.join(root, name)
-            if result is None and name.startswith("TGA"):
-                if name.lower()[3:] == newfilename.lower():
-                    result = os.path.join(root, name)
-
-        for name in dirs:
-            pass
-    return result
 
 
 def create_material_from_RSE_specification(materialSpecification, texturePaths):

@@ -101,6 +101,36 @@ def get_relevant_global_texture_paths(filename):
 
     return texturePaths
 
+def fixup_texture_name(filename):
+    """Match source texture names to new extracted texture names"""
+    ext = filename.lower()[-4:]
+    newfilename = filename
+    if ext in (".bmp", ".rsb", ".tga"):
+        newfilename = newfilename[:-4]
+        newfilename += ".PNG"
+    return newfilename
+
+
+def find_texture(filename, dataPath):
+    """Looks for a texture using the source name in the path.
+    Will perform texture name fixups to match new names"""
+    if filename.lower() == "null":
+        return None
+    newfilename = fixup_texture_name(filename)
+    result = None
+    for root, dirs, files in os.walk(dataPath):
+        for name in files:
+            # Compare lowercase versions since windows is case-insensitive
+            if name.lower() == newfilename.lower():
+                result = os.path.join(root, name)
+            if result is None and name.startswith("TGA"):
+                if name.lower()[3:] == newfilename.lower():
+                    result = os.path.join(root, name)
+
+        for name in dirs:
+            pass
+    return result
+
 
 if __name__ == "__main__":
     #A path that should work, with no mod
