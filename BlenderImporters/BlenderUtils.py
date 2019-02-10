@@ -1,7 +1,6 @@
 """
 Defines generic and often used functions to perform operations in Blender
 """
-import os
 import math
 
 import bpy

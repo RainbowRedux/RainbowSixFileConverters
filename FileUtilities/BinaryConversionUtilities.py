@@ -145,6 +145,7 @@ class FileFormatReader(object):
 
     def read_file(self, filepath, verboseOutput=False):
         """Reads the file specified into memory and then will call read_data to process"""
+        #TODO: Add error checking to see if this file was loaded
         self.filepath = filepath
         self.verboseOutput = verboseOutput
         if self.verboseOutput:

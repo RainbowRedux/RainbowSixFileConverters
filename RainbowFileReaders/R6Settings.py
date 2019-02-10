@@ -112,7 +112,6 @@ def fixup_texture_name(filename):
         newfilename += ".RSB"
     return newfilename
 
-
 def find_texture(filename, dataPath):
     """Looks for a texture using the source name in the path.
     Will perform texture name fixups to match new names"""

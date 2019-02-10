@@ -1,5 +1,10 @@
+"""This moduled defines classes and functions related to importing RSE assets into Unreal"""
+import os
+import PIL
+from PIL import Image
+
 import unreal_engine as ue
-from unreal_engine.classes import Actor, ProceduralMeshComponent, SceneComponent, FloatProperty, KismetMathLibrary, Material, Texture2D
+from unreal_engine.classes import Actor, ProceduralMeshComponent, KismetMathLibrary, Material, Texture2D
 from unreal_engine import FVector, FVector2D, FColor
 from unreal_engine.enums import EPixelFormat
 
@@ -15,13 +20,14 @@ ue.log('Initializing SOB File importer')
 class RenderableMeshComponent(ProceduralMeshComponent):
     """A ProceduralMeshComponent with the ability to convert RenderableArray geometry"""
     def __init__(self):
-        pass
         self.CurrentMeshSectionIndex = 0
 
     def ReceiveBeginPlay(self):
+        """Called when the actor is beginning play, or the world is beginning play"""
         self.CurrentMeshSectionIndex = 0
 
     def import_renderable(self, renderable, materials):
+        """Adds the specified renderable as a mesh section to this procedural mesh component"""
         vertexArray = []
         #Repack vertices into array of FVectors, and invert X coordinate
         for vertex in renderable.vertices:
@@ -69,23 +75,40 @@ class RSEResourceLoader(Actor):
         self.loadedTextures = {}
 
     def ReceiveBeginPlay(self):
+        """Called when the actor is beginning play, or the world is beginning play"""
         pass
 
     def LoadTexture(self, texturePath: str) -> (Texture2D):
+        """Attempts to load the texture at the specified path."""
         if texturePath in self.loadedTextures:
             return self.loadedTextures[texturePath]
-        imageFile = RSBImageReader.RSBImageFile()
-        imageFile.read_file(texturePath.replace(".PNG", ".RSB"))
-        image = imageFile.convert_full_color_image()
-        newTexture = ue.create_transient_texture(imageFile.header.width, imageFile.header.height, EPixelFormat.PF_R8G8B8A8)
+
+        image = None
+
+        # Attempt to load PNG version which will be quicker
+        PNGFilename = texturePath.replace(".RSB", ".PNG")
+        if os.path.isfile(PNGFilename):
+            image = PIL.Image.open(PNGFilename)
+        else:
+            imageFile = RSBImageReader.RSBImageFile()
+            imageFile.read_file(texturePath)
+            image = imageFile.convert_full_color_image()
+            #Save this image as it will be quicker to load in future
+            image.save(PNGFilename, "PNG")
+        imageWidth, imageHeight = image.size
+
+        newTexture = ue.create_transient_texture(imageWidth, imageHeight, EPixelFormat.PF_R8G8B8A8)
         newTexture.texture_set_data(image.tobytes())
         self.loadedTextures[texturePath] = newTexture
         return newTexture
 
     def determine_parent_material_required(self, materialDefinition: RSEMaterialDefinition) -> (str):
+        """Assesses the material definition and determines the correct parent material to use"""
+        #TODO: Determine the correct material variant to load: opaque, masked, translucent and the two sided variants of all
         return "test"
 
     def LoadMaterials(self):
+        """Creates Unreal Material Instances for each material definition"""
         self.texturePaths = R6Settings.get_relevant_global_texture_paths(self.filepath)
         for path in self.texturePaths:
             ue.log("Using Texture Path: " + path)
@@ -112,17 +135,18 @@ class RSEResourceLoader(Actor):
                     loadedTexture = self.LoadTexture(foundTexture)
                     if loadedTexture is not None:
                         mid.set_material_texture_parameter('DiffuseTexture',loadedTexture)
-                
+
             self.generatedMaterials.append(mid)
 
 class SOBModel(RSEResourceLoader):
-
+    """Loads an RSE SOB file into unreal assets"""
     # constructor adding a component
     def __init__(self):
         #self.defaultSceneComponent = self.add_actor_component(SceneComponent, 'DefaultSceneComponent')
         self.proceduralMeshComponent = self.add_actor_component(RenderableMeshComponent, 'ProceduralMesh')
 
     def LoadModel(self):
+        """Loads the file and creates appropriate assets in unreal"""
         self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/model/cessna.sob"
         SOBFile = SOBModelReader.SOBModelFile()
         SOBFile.read_file(self.filepath)
@@ -146,16 +170,18 @@ class SOBModel(RSEResourceLoader):
 
     # properties can only be set starting from begin play
     def ReceiveBeginPlay(self):
+        """Called when the actor is beginning play, or the world is beginning play"""
         self.LoadModel()
-        pass
 
 class MAPLevel(RSEResourceLoader):
+    """Loads an RSE MAP file into unreal assets"""
     # constructor adding a component
     def __init__(self):
         #self.defaultSceneComponent = self.add_actor_component(SceneComponent, 'DefaultSceneComponent')
         self.proceduralMeshComponent = self.add_actor_component(RenderableMeshComponent, 'ProceduralMesh')
 
     def LoadMap(self):
+        """Loads the file and creates appropriate assets in unreal"""
         self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
         MAPFile = MAPLevelReader.MAPLevelFile()
         MAPFile.read_file(self.filepath)
@@ -179,4 +205,5 @@ class MAPLevel(RSEResourceLoader):
 
     # properties can only be set starting from begin play
     def ReceiveBeginPlay(self):
+        """Called when the actor is beginning play, or the world is beginning play"""
         self.LoadMap()
