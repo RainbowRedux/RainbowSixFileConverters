@@ -109,3 +109,5 @@ wiki/
 
 #Ignore unreal asset files next to source assets
 *.uasset
+#Ignore embedded PIL library as it's only used for testing in Unreal
+PIL/
