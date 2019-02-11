@@ -152,7 +152,7 @@ class RSEResourceLoader(Actor):
         if material_name in self.loadedParentMaterials:
             return self.loadedParentMaterials[material_name]
 
-        materialFullPath = "/Game/Rainbow/{}.{}".format(material_name, material_name)
+        materialFullPath = "/Game/Rainbow/MasterMaterials/{}.{}".format(material_name, material_name)
         loadedMaterial = None
         try:
             loadedMaterial = ue.load_object(MaterialInterface, materialFullPath)
