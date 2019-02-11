@@ -197,17 +197,15 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
         # Add texture slot for color texture
         #textureSlot = newMaterial.texture_paint_slots.add()
 
-        if materialSpecification.alphaMethod != RSEAlphaMethod.SAM_Opaque:
-            newMaterialBSDFWrap.base_color_texture.use_alpha = True
-            #textureSlot.use_map_alpha = True
-            #textureSlot.alpha_factor = materialSpecification.opacity
+        newMaterialBSDFWrap.base_color_texture.use_alpha = True
+        #textureSlot.use_map_alpha = True
+        #textureSlot.alpha_factor = materialSpecification.opacity
         newMaterialBSDFWrap.base_color_texture.image = texImage
         newMaterialBSDFWrap.base_color_texture.texcoords = 'UV'
 
     materialBlendMode = "opaque"
-    if materialSpecification.alphaMethod == RSEAlphaMethod.SAM_MethodLookup:
-        if materialSpecification.CXPMaterialProperties is not None:
-            materialBlendMode = materialSpecification.CXPMaterialProperties.blendMode
+    if materialSpecification.CXPMaterialProperties is not None:
+        materialBlendMode = materialSpecification.CXPMaterialProperties.blendMode
 
 
     if materialBlendMode != "opaque":

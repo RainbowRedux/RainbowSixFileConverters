@@ -1,5 +1,6 @@
 """Provides classes that will read and parse RSB Image files."""
 import PIL
+from PIL import Image
 from FileUtilities.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader
 
 class RSBImageFile(FileFormatReader):
@@ -44,7 +45,7 @@ class RSBImageFile(FileFormatReader):
 
     def convert_palette_image(self):
         """Converts the stored palettized version of the image into a full color RGBA image"""
-        newImage = PIL.Image.new('RGBA', (self.header.width, self.header.height))
+        newImage = Image.new('RGBA', (self.header.width, self.header.height))
         pixels = newImage.load()
         for x in range(newImage.size[0]):    # for every col:
             for y in range(newImage.size[1]):    # For every row
@@ -58,7 +59,7 @@ class RSBImageFile(FileFormatReader):
 
     def convert_full_color_image(self):
         """Converts the stored "full color" version of the image into a full color RGBA image with 8bpp"""
-        newImage = PIL.Image.new('RGBA', (self.header.width, self.header.height))
+        newImage = Image.new('RGBA', (self.header.width, self.header.height))
         pixels = newImage.load()
         for x in range(newImage.size[0]):    # for every col:
             for y in range(newImage.size[1]):    # For every row
@@ -90,7 +91,7 @@ class RSBImageFile(FileFormatReader):
                 print("elKeyMin: " + str(elKeyMin))
                 print("elKeyMax: " + str(elKeyMax))
 
-            if elCol < elKeyMin or elCol > elKeyMax:
+            if elCol <= elKeyMin or elCol > elKeyMax:
                 bMatched = False
         return bMatched
 
