@@ -42,7 +42,7 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
         self.textureNameRaw = None
         self.opacity = None
         self.emissiveStrength = None
-        self.alphaMethod = None
+        self.textureAddressMode = None
 
         self.ambientColorUInt = None
         self.ambientColorFloat = None
@@ -114,7 +114,7 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
 
         self.opacity = filereader.read_float()
         self.emissiveStrength = filereader.read_float()
-        self.alphaMethod = filereader.read_uint() # Smoothing according to AK? Transparency method? Best guess at the moment is transparency method. 1 = SOLID, 2 = MASKED, 3 = ALPHA_BLEND
+        self.textureAddressMode = filereader.read_uint() #1 = WRAP, 3 = CLAMP. https://docs.microsoft.com/en-au/windows/desktop/direct3d9/d3dtextureaddress
 
         gameVer = self.get_material_game_version()
 

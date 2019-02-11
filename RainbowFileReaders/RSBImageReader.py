@@ -68,6 +68,39 @@ class RSBImageFile(FileFormatReader):
                 pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], pixel_color[3]) # set the colour accordingly
         return newImage
 
+    def check_color_key(self, imageColor, colorKey, bitmask):
+        """Checks if the image color matches the colorkey. Fuzzy match based on the precision allowed by the bitmask"""
+        #TODO: Improve matching
+        bMatched = True
+        for i in range(len(imageColor)):
+            elMaxValue = (2 ** bitmask[i]) - 1
+            bitmaskPrecision = (1 / elMaxValue * 255)
+            bitmaskPrecision = bitmaskPrecision * 0.75
+            elKey = colorKey[i]
+            elCol = imageColor[i]
+            if abs(elCol - elKey) > (bitmaskPrecision):
+                bMatched = False
+        return bMatched
+
+    def convert_full_color_image_with_colorkey_mask(self, colorkeyRGB):
+        """Converts the stored "full color" version of the image into a full color RGBA image with 8bpp
+        colorkeyRGB can be a list or tuple"""
+        newImage = self.convert_full_color_image()
+        imageWidth, imageHeight = newImage.size
+        pixdata = newImage.load()
+
+        colorKey = list(colorkeyRGB)
+        colorKeyWithAlpha = colorKey.copy()
+        colorKeyWithAlpha.append(0)
+        colorKeyWithAlpha = tuple(colorKeyWithAlpha)
+        bitmask = self.header.get_rgba_bitmask_tuple()
+        for y in range(imageHeight):
+            for x in range(imageWidth):
+                if self.check_color_key(pixdata[x, y][:3], colorKey, bitmask):
+                    pixdata[x, y] = colorKeyWithAlpha
+
+        return newImage
+
 
 class RSBHeader(BinaryFileDataStructure):
     """Reads and stores information in the header of RSB files"""
@@ -115,6 +148,10 @@ class RSBHeader(BinaryFileDataStructure):
         self.bitDepthGreen = filereader.read_uint()
         self.bitDepthBlue = filereader.read_uint()
         self.bitDepthAlpha = filereader.read_uint()
+
+    def get_rgba_bitmask_tuple(self):
+        """Returns the bitmask in RGBA order as a tuple"""
+        return (self.bitDepthRed, self.bitDepthGreen, self.bitDepthBlue, self.bitDepthAlpha)
 
     def read(self, filereader):
         super().read(filereader)

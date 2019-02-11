@@ -28,6 +28,8 @@ class CXPMaterialProperties(object):
         #This mainly appears to be a property used when generating RSB files.
         self.textureformat = []
         #additional textures that should be added to the image sequence
+        self.animated = False
+        self.animNumAdditionalTextures = 0
         self.animAdditionalTextures = []
         #disables mipmapping?
         self.nosubsamble = False
@@ -78,7 +80,7 @@ class CXPMaterialProperties(object):
             elif currKeyword == "animated":
                 self.animated = True
                 self.animtypeRaw = keywords.pop(0)
-                self.animInterval = keywords.pop(0)
+                self.animInterval = float(keywords.pop(0))
                 self.animNumAdditionalTextures = int(keywords.pop(0))
                 for _ in range(self.animNumAdditionalTextures):
                     self.animAdditionalTextures.append(keywords.pop(0))

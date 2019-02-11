@@ -5,7 +5,7 @@ Also provides some functions to unpack data from packed structures
 import struct
 import pprint
 
-from math import ceil
+from math import ceil, floor
 
 class BinaryFileReader(object):
     """A wrapper for reading and conversion operations on binary file data."""
@@ -265,26 +265,26 @@ def read_bitmask_ARGB_color(byteStream, bdR, bdG, bdB, bdA):
         alphaMaxValue = 2 ** bdA - 1
         #convert to full 255 range of color
         alphaColor = float(alphaColor) / float(alphaMaxValue) * 255
-        alphaColor = int(round(alphaColor))
+        alphaColor = int(floor(alphaColor))
 
     redColor = redMask & colorVal
     redColor = redColor >> (bdG + bdB)
     redMaxValue = (2 ** bdR) - 1
     #convert to full 255 range of color
     redColor = float(redColor) / float(redMaxValue) * 255
-    redColor = int(round(redColor))
+    redColor = int(floor(redColor))
 
     greenColor = greenMask & colorVal
     greenColor = greenColor >> (bdB)
     greenMaxValue = (2 ** bdG) - 1
     #convert to full 255 range of color
     greenColor = float(greenColor) / float(greenMaxValue) * 255
-    greenColor = int(round(greenColor))
+    greenColor = int(floor(greenColor))
 
     blueColor = blueMask & colorVal
     blueMaxValue = (2 ** bdB) - 1
     #convert to full 255 range of color
     blueColor = float(blueColor) / float(blueMaxValue) * 255
-    blueColor = int(round(blueColor))
+    blueColor = int(floor(blueColor))
 
     return [redColor, greenColor, blueColor, alphaColor]
