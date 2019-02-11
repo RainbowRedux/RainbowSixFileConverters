@@ -68,21 +68,33 @@ class RSBImageFile(FileFormatReader):
                 pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], pixel_color[3]) # set the colour accordingly
         return newImage
 
-    def check_color_key(self, imageColor, colorKey, bitmask):
+    def check_color_key(self, imageColor, colorKey, bitmask, verbose=False):
         """Checks if the image color matches the colorkey. Fuzzy match based on the precision allowed by the bitmask"""
         #TODO: Improve matching
         bMatched = True
+        if verbose:
+            print("==NewColorComparison==")
         for i in range(len(imageColor)):
-            elMaxValue = (2 ** bitmask[i]) - 1
-            bitmaskPrecision = (1 / elMaxValue * 255)
-            bitmaskPrecision = bitmaskPrecision * 0.75
             elKey = colorKey[i]
             elCol = imageColor[i]
-            if abs(elCol - elKey) > (bitmaskPrecision):
+            elMaxValue = (2 ** bitmask[i]) - 1
+            bitmaskPrecision = (1 / elMaxValue) * 255
+            elKeyFactor = elKey / bitmaskPrecision
+            elKeyMin = int(int(elKeyFactor) * bitmaskPrecision)
+            elKeyMax = int(round((int(elKeyFactor) + 1) * bitmaskPrecision))
+
+            if verbose:
+                print("elKey: " + str(elKey))
+                print("elCol: " + str(elCol))
+                print("bitmaskPrecision: " + str(bitmaskPrecision))
+                print("elKeyMin: " + str(elKeyMin))
+                print("elKeyMax: " + str(elKeyMax))
+
+            if elCol < elKeyMin or elCol > elKeyMax:
                 bMatched = False
         return bMatched
 
-    def convert_full_color_image_with_colorkey_mask(self, colorkeyRGB):
+    def convert_full_color_image_with_colorkey_mask(self, colorkeyRGB, verbose=False):
         """Converts the stored "full color" version of the image into a full color RGBA image with 8bpp
         colorkeyRGB can be a list or tuple"""
         newImage = self.convert_full_color_image()
@@ -96,7 +108,7 @@ class RSBImageFile(FileFormatReader):
         bitmask = self.header.get_rgba_bitmask_tuple()
         for y in range(imageHeight):
             for x in range(imageWidth):
-                if self.check_color_key(pixdata[x, y][:3], colorKey, bitmask):
+                if self.check_color_key(pixdata[x, y][:3], colorKey, bitmask, verbose):
                     pixdata[x, y] = colorKeyWithAlpha
 
         return newImage

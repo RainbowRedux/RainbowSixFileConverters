@@ -90,9 +90,9 @@ class RSEResourceLoader(Actor):
         # Attempt to load PNG version which will be quicker
         PNGFilename = texturePath.replace(".RSB", ".PNG")
         imageFile = None
-        if os.path.isfile(PNGFilename):
+        bUsePNGCache = True
+        if os.path.isfile(PNGFilename) and bUsePNGCache:
             image = PIL.Image.open(PNGFilename)
-            pass
         else:
             imageFile = RSBImageReader.RSBImageFile()
             imageFile.read_file(texturePath)
@@ -166,11 +166,15 @@ class RSEResourceLoader(Actor):
         self.texturePaths = R6Settings.get_relevant_global_texture_paths(self.filepath)
         for path in self.texturePaths:
             ue.log("Using Texture Path: " + path)
-        #Material'/Game/Rainbow/ShermanRommelOpaque.ShermanRommelOpaque'
-        #opaque_material = ue.load_object(MaterialInterface, '/Game/Rainbow/ShermanRommel_opaque.ShermanRommel_opaque')
+
+        verbose = False
         for matDef in self.materialDefinitions:
             parentMaterialName = self.determine_parent_material_required(matDef)
             parentMaterial = self.get_material(parentMaterialName)
+            if verbose:
+                ue.log("=====================")
+                ue.log(matDef.textureName)
+                ue.log(parentMaterialName)
             if parentMaterial is None:
                 ue.log("Error, could not load parent material: {}".format(parentMaterialName))
                 self.generatedMaterials.append(None)
@@ -187,7 +191,6 @@ class RSEResourceLoader(Actor):
                 if matDef.CXPMaterialProperties.blendMode == "colorkey":
                     cxpProps = matDef.CXPMaterialProperties
                     colorKeyRGB = cxpProps.colorkey
-                    #ue.log("setting up colorkey: {}".format(str(colorKeyRGB)))
 
             if colorKeyRGB is None:
                 # set this to out of range values, so no special case handling is needed elsewhere as the comparison will always fail, and work will be skipped
@@ -217,7 +220,6 @@ class RSEResourceLoader(Actor):
                         LastTexture = self.LoadTexture(foundTexture, colorKeyRGB[0], colorKeyRGB[1], colorKeyRGB[2], matDef.textureAddressMode)
                         if LastTexture is not None:
                             currentTextureSlotName = "DiffuseTexture" + str(i)
-                            ue.log(currentTextureSlotName)
                             #Add texture to appropriate slot
                             mid.set_material_texture_parameter(currentTextureSlotName,LastTexture)
 
@@ -231,6 +233,10 @@ class RSEResourceLoader(Actor):
                     else:
                         mid.set_material_scalar_parameter("AnimationInterval", 0.1)
                         mid.set_material_scalar_parameter("NumberOfAnimationFrames", 1)
+
+                    if matDef.CXPMaterialProperties.scrolling:
+                        mid.set_material_scalar_parameter("ScrollSpeedX", matDef.CXPMaterialProperties.scrollParams[1])
+                        mid.set_material_scalar_parameter("ScrollSpeedY", matDef.CXPMaterialProperties.scrollParams[2])
 
             self.generatedMaterials.append(mid)
 
@@ -278,8 +284,9 @@ class MAPLevel(RSEResourceLoader):
 
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
-        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
-        self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m02/mansion.map"
+        self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
+        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m02/mansion.map"
+        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m09/M09.map"
         MAPFile = MAPLevelReader.MAPLevelFile()
         MAPFile.read_file(self.filepath)
         numGeoObjects = len(MAPFile.geometryObjects)

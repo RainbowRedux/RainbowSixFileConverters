@@ -34,6 +34,7 @@ class CXPMaterialProperties(object):
         #disables mipmapping?
         self.nosubsamble = False
         #Scroll rates, empty if not enabled
+        self.scrolling = False
         self.scrollParams = []
 
     def read(self, keywords):
@@ -85,9 +86,9 @@ class CXPMaterialProperties(object):
                 for _ in range(self.animNumAdditionalTextures):
                     self.animAdditionalTextures.append(keywords.pop(0))
             elif currKeyword in ("scroll", "scrolling"):
-                self.scrollParams.append(keywords.pop(0))
-                self.scrollParams.append(keywords.pop(0))
-                self.scrollParams.append(keywords.pop(0))
+                self.scrolling = True
+                for _ in range(3):
+                    self.scrollParams.append(float(keywords.pop(0)))
             else:
                 print("Skipping: " + currKeyword)
 
