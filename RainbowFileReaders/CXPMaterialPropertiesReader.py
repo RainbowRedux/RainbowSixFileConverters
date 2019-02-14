@@ -63,11 +63,8 @@ class CXPMaterialProperties(object):
             elif currKeyword == "textureformat":
                 #read the 5 values specified with a texture format
                 #TODO: Work out what most of these values mean. Confirm final 4 values are RGBA bitdepth
-                self.textureformat.append(keywords.pop(0))
-                self.textureformat.append(keywords.pop(0))
-                self.textureformat.append(keywords.pop(0))
-                self.textureformat.append(keywords.pop(0))
-                self.textureformat.append(keywords.pop(0))
+                for _ in range(5):
+                    self.textureformat.append(int(keywords.pop(0)))
             elif currKeyword == "alphablend":
                 self.blendMode = currKeyword
             elif currKeyword == "gunpass":

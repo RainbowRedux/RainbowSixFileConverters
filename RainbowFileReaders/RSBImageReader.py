@@ -91,8 +91,14 @@ class RSBImageFile(FileFormatReader):
                 print("elKeyMin: " + str(elKeyMin))
                 print("elKeyMax: " + str(elKeyMax))
 
+            #elKeyMin is actually from the range before generally speaking. In the case of a white key, elKeyMin and elKeyMax will match, so special case handling required.
             if elCol <= elKeyMin or elCol > elKeyMax:
-                bMatched = False
+                if elCol == elKey and elKey == 255:
+                    pass
+                elif elCol == elKey and elKey == 0:
+                    pass
+                else:
+                    bMatched = False
         return bMatched
 
     def convert_full_color_image_with_colorkey_mask(self, colorkeyRGB, verbose=False):

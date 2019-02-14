@@ -85,6 +85,9 @@ class RSEResourceLoader(Actor):
         if texturePath in self.loadedTextures:
             return self.loadedTextures[texturePath]
 
+        if os.path.isfile(texturePath) is False:
+            ue.log("Could not find texture to load: " + texturePath)
+            return None
         image = None
 
         # Attempt to load PNG version which will be quicker
@@ -120,7 +123,7 @@ class RSEResourceLoader(Actor):
         #     newTexture.AddressY = TextureAddress.TA_Wrap
         # else:
         #     ue.log("WARNING: Unknown texture tiling method")
-
+        
         self.loadedTextures[texturePath] = newTexture
         return newTexture
 
@@ -141,6 +144,8 @@ class RSEResourceLoader(Actor):
                     blendMode = "alpha"
                 else:
                     blendMode = "masked"
+            if tuple(cxpProps.textureformat) == (0, 4, 4, 4, 4):
+                blendMode = "alpha"
 
         materialRequired = "ShermanRommel_" + blendMode
         if bTwoSided:
@@ -284,7 +289,9 @@ class MAPLevel(RSEResourceLoader):
 
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
-        self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
+        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
+        self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m04/M04.map"
+        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m07/M7.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m02/mansion.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m09/M09.map"
         MAPFile = MAPLevelReader.MAPLevelFile()
