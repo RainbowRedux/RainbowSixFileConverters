@@ -37,13 +37,8 @@ class CXPMaterialProperties(object):
         self.scrolling = False
         self.scrollParams = []
 
-    def read(self, keywords):
+    def read_properties(self, keywords):
         """Reads a single textures' set of material properties"""
-        if keywords[0].strip() != "Material" and keywords[0] != "Surface":
-            raise ValueError("Not a valid material begin statement: " + keywords[0])
-
-        self.type = keywords.pop(0)
-        self.materialName = keywords.pop(0)
         bFoundEnd = False
         while bFoundEnd is False:
             currKeyword = keywords.pop(0)
@@ -108,12 +103,26 @@ def _read_cxp_keywords(path):
 def read_cxp(path):
     """Loads and parses a CXP and returns a list of material properties"""
     keywords = _read_cxp_keywords(path)
-    MaterialProperties = []
+    MaterialPropertiesDict = {}
     while keywords:
-        newMat = CXPMaterialProperties()
         try:
-            newMat.read(keywords)
-            MaterialProperties.append(newMat)
+            if keywords[0].strip() != "Material" and keywords[0] != "Surface":
+                raise ValueError("Not a valid material begin statement: " + keywords[0])
+
+            newType = keywords.pop(0)
+            newMaterialName = keywords.pop(0)
+            # The CXP key is the lowercase texture name, since this was a windows game, filename case is irrelevant
+            materialKey = newMaterialName.lower()
+            newMat = None
+            if newMaterialName in MaterialPropertiesDict:
+                newMat = MaterialPropertiesDict[materialKey]
+            else:
+                newMat = CXPMaterialProperties()
+                newMat.type = newType
+                newMat.materialName = newMaterialName
+                MaterialPropertiesDict[materialKey] = newMat
+
+            newMat.read_properties(keywords)
         except ValueError as ve:
             #In this instance, there is an invalid CXP material
             #One such instance is the Rommel.CXP file in the classic missions included with Urban Operations includes an extra "End" statement at the bottom, which is invalid
@@ -121,6 +130,11 @@ def read_cxp(path):
             discardedWord = keywords.pop(0)
             print("Skipping invalid material definition in CXP: " + str(ve))
             print("\tDiscarded keyword: " + discardedWord)
+
+    # Create and return a list of CXP properties, as many CXP files will be combined, and the order is important for matching
+    MaterialProperties = []
+    for key, val in MaterialPropertiesDict.items():
+        MaterialProperties.append(val)
     return MaterialProperties
 
 def load_relevant_cxps(datapath, modpath = None):

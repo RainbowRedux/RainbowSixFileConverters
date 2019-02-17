@@ -14,7 +14,7 @@ from RainbowFileReaders import RSBImageReader
 from RainbowFileReaders import R6Constants
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
-from RainbowFileReaders.R6Constants import RSEAlphaMethod
+from RainbowFileReaders.R6Constants import RSEAlphaMethod, RSEGameVersions
 
 ue.log('Initializing SOB File importer')
 
@@ -91,7 +91,7 @@ class RSEResourceLoader(Actor):
         image = None
 
         # Attempt to load PNG version which will be quicker
-        PNGFilename = texturePath.replace(".RSB", ".PNG")
+        PNGFilename = texturePath + ".PNG"
         imageFile = None
         bUsePNGCache = True
         if os.path.isfile(PNGFilename) and bUsePNGCache:
@@ -174,6 +174,9 @@ class RSEResourceLoader(Actor):
 
         verbose = False
         for matDef in self.materialDefinitions:
+            verbose = False
+            if matDef.textureName.startswith("cl02_spray1"):
+                verbose = True
             parentMaterialName = self.determine_parent_material_required(matDef)
             parentMaterial = self.get_material(parentMaterialName)
             if verbose:
@@ -207,8 +210,9 @@ class RSEResourceLoader(Actor):
             else:
                 mid.set_material_scalar_parameter('UseVertexColor', 0.0)
                 texturesToLoad = []
+                #Add the first texture
                 texturesToLoad.append(matDef.textureName)
-                #Gather all texture names
+                #Gather all other texture names
                 if matDef.CXPMaterialProperties is not None:
                     for additionalTexture in matDef.CXPMaterialProperties.animAdditionalTextures:
                         texturesToLoad.append(additionalTexture)
@@ -227,13 +231,15 @@ class RSEResourceLoader(Actor):
                             currentTextureSlotName = "DiffuseTexture" + str(i)
                             #Add texture to appropriate slot
                             mid.set_material_texture_parameter(currentTextureSlotName,LastTexture)
+                    else:
+                        ue.log("Failed to find texture: " + currentTextureName)
 
                 #Setup animation properties
                 if matDef.CXPMaterialProperties is not None:
                     if matDef.CXPMaterialProperties.animated:
                         mid.set_material_scalar_parameter("AnimationInterval", matDef.CXPMaterialProperties.animInterval)
                         numFrames = len(texturesToLoad)
-                        ue.log("Textures to load: " + str(numFrames))
+                        ue.log("Number of animation frames: " + str(numFrames))
                         mid.set_material_scalar_parameter("NumberOfAnimationFrames", numFrames)
                     else:
                         mid.set_material_scalar_parameter("AnimationInterval", 0.1)
@@ -305,12 +311,18 @@ class MAPLevel(RSEResourceLoader):
 
         renderables = []
 
-        for geoObj in MAPFile.geometryObjects:
-            for sourceMesh in geoObj.meshes:
-                renderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
+        if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
+            for geoObj in MAPFile.geometryObjects:
+                for sourceMesh in geoObj.meshes:
+                    renderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
 
-                for _, currentRenderable in enumerate(renderables):
-                    self.proceduralMeshComponent.import_renderable(currentRenderable, self.generatedMaterials)
+                    for _, currentRenderable in enumerate(renderables):
+                        self.proceduralMeshComponent.import_renderable(currentRenderable, self.generatedMaterials)
+        else:
+            for geoObj in MAPFile.geometryObjects:
+                for idx, facegroup in enumerate(geoObj.geometryData.faceGroups):
+                    renderable = geoObj.geometryData.generate_renderable_array_for_facegroup(facegroup)
+                    self.proceduralMeshComponent.import_renderable(renderable, self.generatedMaterials)
 
         ue.log("Created procedural mesh")
 
