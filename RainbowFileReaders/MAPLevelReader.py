@@ -6,11 +6,12 @@ from datetime import datetime
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 from RainbowFileReaders import R6Settings, R6Constants
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEGeometryFlags
-from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject, RenderableArray
+from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 from RainbowFileReaders.RSDMPLightReader import RSDMPLightFile
 from RainbowFileReaders.MathHelpers import normalize_color, pad_color
+from RainbowFileReaders.RenderableArray import RenderableArray
 
 class MAPLevelFile(FileFormatReader):
     """Class to read full MAP files"""

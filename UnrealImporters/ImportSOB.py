@@ -4,7 +4,7 @@ import PIL
 from PIL import Image
 
 import unreal_engine as ue
-from unreal_engine.classes import Actor, ProceduralMeshComponent, KismetMathLibrary, MaterialInterface, Texture2D
+from unreal_engine.classes import Actor, SceneComponent, ProceduralMeshComponent, KismetMathLibrary, MaterialInterface, Texture2D
 from unreal_engine import FVector, FVector2D, FColor
 from unreal_engine.enums import EPixelFormat, TextureAddress
 
@@ -14,7 +14,8 @@ from RainbowFileReaders import RSBImageReader
 from RainbowFileReaders import R6Constants
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
-from RainbowFileReaders.R6Constants import RSEAlphaMethod, RSEGameVersions
+from RainbowFileReaders.R6Constants import RSEGameVersions
+from RainbowFileReaders.RenderableArray import AxisAlignedBoundingBox
 
 ue.log('Initializing SOB File importer')
 
@@ -290,8 +291,9 @@ class MAPLevel(RSEResourceLoader):
     """Loads an RSE MAP file into unreal assets"""
     # constructor adding a component
     def __init__(self):
-        #self.defaultSceneComponent = self.add_actor_component(SceneComponent, 'DefaultSceneComponent')
-        self.proceduralMeshComponent = self.add_actor_component(RenderableMeshComponent, 'ProceduralMesh')
+        self.defaultSceneComponent = self.add_actor_root_component(SceneComponent, 'DefaultSceneComponent')
+        self.proceduralMeshComponents = []
+        #self.proceduralMeshComponent = self.add_actor_component(RenderableMeshComponent, 'ProceduralMesh')
 
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
@@ -310,19 +312,74 @@ class MAPLevel(RSEResourceLoader):
         self.LoadMaterials()
 
         renderables = []
+        usedNames = []
 
         if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
-            for geoObj in MAPFile.geometryObjects:
+            for geoIdx, geoObj in enumerate(MAPFile.geometryObjects):
+                #Treat each geometryObject as a single component
+                newPMC = self.add_actor_component(RenderableMeshComponent, geoObj.nameString)
+                self.add_instance_component(newPMC)
+                #actor.modify()
+                self.modify()
+
                 for sourceMesh in geoObj.meshes:
                     renderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
-
                     for _, currentRenderable in enumerate(renderables):
-                        self.proceduralMeshComponent.import_renderable(currentRenderable, self.generatedMaterials)
+                        newPMC.import_renderable(currentRenderable, self.generatedMaterials)
         else:
-            for geoObj in MAPFile.geometryObjects:
-                for idx, facegroup in enumerate(geoObj.geometryData.faceGroups):
+            worldAABB = AxisAlignedBoundingBox()
+            for geoIdx, geoObj in enumerate(MAPFile.geometryObjects):
+                #Treat each geometryObject as a single component
+                #'ProceduralMesh' + str(geoIdx)
+                name = geoObj.nameString
+                if name in usedNames:
+                    ue.log("Duplicate name!")
+                else:
+                    usedNames.append(name)
+                newPMC = self.add_actor_component(RenderableMeshComponent, geoObj.nameString)
+                self.add_instance_component(newPMC)
+                #actor.modify()
+                self.modify()
+                self.proceduralMeshComponents.append(newPMC)
+                self.renderables = []
+                currentGeoObjAABB = AxisAlignedBoundingBox()
+
+                #Get all renderables and adjust the current AABB
+                for _, facegroup in enumerate(geoObj.geometryData.faceGroups):
                     renderable = geoObj.geometryData.generate_renderable_array_for_facegroup(facegroup)
-                    self.proceduralMeshComponent.import_renderable(renderable, self.generatedMaterials)
+                    rAABB = renderable.calculate_AABB()
+                    currentGeoObjAABB = currentGeoObjAABB.merge(rAABB)
+                    self.renderables.append(renderable)
+
+                #calculate the offset for this GeometryObject
+                currentAABBLoc = currentGeoObjAABB.get_center_position()
+                offsetVec = FVector(currentAABBLoc[0], currentAABBLoc[1], currentAABBLoc[2])
+                #Rotate offset to match unreals coordinate system
+                offsetVec = KismetMathLibrary.RotateAngleAxis(offsetVec, 90.0, FVector(1.0, 0.0, 0.0))
+                newPMC.set_relative_location(offsetVec)
+
+                #Adjust the world AABB
+                #Only consider objects very far away for the world AABB, since dynamic objects like doors are very close to the origin, whereas static elements are over 50,000 units away
+                #TODO: Use a similar check to set elements to static or moveable
+                if offsetVec.length() > 1000.0:
+                    worldAABB = worldAABB.merge(currentGeoObjAABB)
+
+                #Import each renderable as a mesh now, but translate the vertices according to the calculated AABB offset
+                for renderable in self.renderables:
+                    inverseLocation = []
+                    for el in currentAABBLoc:
+                        inverseLocation.append(el * -1)
+                    renderable.translate(inverseLocation)
+                    newPMC.import_renderable(renderable, self.generatedMaterials)
+
+            worldOffset = worldAABB.get_center_position()
+            worldOffsetVec = FVector(worldOffset[0], worldOffset[1], worldOffset[2])
+            worldOffsetVec = KismetMathLibrary.RotateAngleAxis(worldOffsetVec, 90.0, FVector(1.0, 0.0, 0.0))
+            for currentPMC in self.proceduralMeshComponents:
+                #Only shift static elements
+                if currentPMC.get_relative_location().length() > 1000.0:
+                    newLoc = currentPMC.get_relative_location() - worldOffsetVec
+                    currentPMC.set_relative_location(newLoc)
 
         ue.log("Created procedural mesh")
 
