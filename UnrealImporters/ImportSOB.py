@@ -15,7 +15,7 @@ from RainbowFileReaders import R6Constants
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
 from RainbowFileReaders.R6Constants import RSEGameVersions
-from RainbowFileReaders.RenderableArray import AxisAlignedBoundingBox
+from RainbowFileReaders.RenderableArray import AxisAlignedBoundingBox, RenderableArray
 
 ue.log('Initializing SOB File importer')
 
@@ -293,7 +293,10 @@ class MAPLevel(RSEResourceLoader):
     def __init__(self):
         self.defaultSceneComponent = self.add_actor_root_component(SceneComponent, 'DefaultSceneComponent')
         self.proceduralMeshComponents = []
-        #self.proceduralMeshComponent = self.add_actor_component(RenderableMeshComponent, 'ProceduralMesh')
+        # All AABBs for each static geometry object should be added to this worldAABB
+        # This will allow an offset to be calculated to shift the map closer to the world origin, buying back precision
+        self.worldAABB = AxisAlignedBoundingBox()
+        self.shift_origin = True
 
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
@@ -312,74 +315,92 @@ class MAPLevel(RSEResourceLoader):
         self.LoadMaterials()
 
         usedNames = []
-
-        # All AABBs for each static geometry object should be added to this worldAABB
-        # This will allow an offset to be calculated to shift the map closer to the world origin, buying back precision
-        worldAABB = AxisAlignedBoundingBox()
+        self.objectComponents = []
 
         for _, geoObj in enumerate(MAPFile.geometryObjects):
-            renderables = []
             name = geoObj.nameString
             if name in usedNames:
                 ue.log("Duplicate name!")
             else:
                 usedNames.append(name)
 
-            #Treat each geometryObject as a single component
-            newPMC = self.add_actor_component(RenderableMeshComponent, name)
-            self.add_instance_component(newPMC)
-            self.modify()
-            self.proceduralMeshComponents.append(newPMC)
-
-            currentGeoObjAABB = AxisAlignedBoundingBox()
-
-            #Gather all renderables
+            # Gather all renderables
             if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
-                for sourceMesh in geoObj.meshes:
+                geoObjComponent = self.add_actor_component(SceneComponent, name, self.defaultSceneComponent)
+                self.objectComponents.append(geoObjComponent)
+                self.add_instance_component(geoObjComponent)
+                self.modify()
+                for srcMeshIdx, sourceMesh in enumerate(geoObj.meshes):
+                    renderableName = name + "_" + sourceMesh.nameString + "_" + str(srcMeshIdx)
                     currRenderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
-                    renderables.extend(currRenderables)
-            else: #Rogue spear
+                    self.import_renderables_as_mesh_component(renderableName, currRenderables, self.shift_origin, geoObjComponent)
+            else: # Rogue spear
                 #Get all renderables and adjust the current AABB
+                renderables = []
                 for _, facegroup in enumerate(geoObj.geometryData.faceGroups):
                     renderable = geoObj.geometryData.generate_renderable_array_for_facegroup(facegroup)
                     renderables.append(renderable)
+                self.import_renderables_as_mesh_component(name, renderables, self.shift_origin, self.defaultSceneComponent)
 
-            #Calculate AABBs for each renderable
-            for renderable in renderables:
-                rAABB = renderable.calculate_AABB()
-                currentGeoObjAABB = currentGeoObjAABB.merge(rAABB)
+        if self.shift_origin:
+            # Once all meshes have been imported, the WorldAABB will properly encapsulate the entire level,
+            # and an appropriate offset can be calculated to bring each object back closer to the origin
+            worldOffset = self.worldAABB.get_center_position()
+            worldOffsetVec = FVector(worldOffset[0], worldOffset[1], worldOffset[2])
+            worldOffsetVec = KismetMathLibrary.RotateAngleAxis(worldOffsetVec, 90.0, FVector(1.0, 0.0, 0.0))
+            for currentMesh in self.proceduralMeshComponents:
+                # Only shift static elements
+                if currentMesh.get_relative_location().length() > 1000.0:
+                    newLoc = currentMesh.get_relative_location() - worldOffsetVec
+                    currentMesh.set_relative_location(newLoc)
 
-            #calculate the offset for this GeometryObject
-            currentAABBLoc = currentGeoObjAABB.get_center_position()
-            offsetVec = FVector(currentAABBLoc[0], currentAABBLoc[1], currentAABBLoc[2])
-            #Rotate offset to match unreals coordinate system
-            offsetVec = KismetMathLibrary.RotateAngleAxis(offsetVec, 90.0, FVector(1.0, 0.0, 0.0))
+        ue.log("Created procedural mesh")
+
+    def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], shift_origin, parent_component):
+        """Will import a list of renderables into a single Mesh Component.
+        shift_origin will determine whether or not to recenter the vertices around a local origin and shift the mesh component
+        parent_component is the component that the new mesh component will attach to. Currently cannot be None.
+        Returns a mesh component"""
+
+        # Treat each geometryObject as a single component
+        newPMC = self.add_actor_component(RenderableMeshComponent, name, parent_component)
+        self.add_instance_component(newPMC)
+        self.modify()
+        self.proceduralMeshComponents.append(newPMC)
+
+        currentGeoObjAABB = AxisAlignedBoundingBox()
+
+        # Calculate AABBs for each renderable
+        for renderable in renderables:
+            rAABB = renderable.calculate_AABB()
+            currentGeoObjAABB = currentGeoObjAABB.merge(rAABB)
+
+        # Calculate the offset for this GeometryObject
+        currentAABBLoc = currentGeoObjAABB.get_center_position()
+        offsetVec = FVector(currentAABBLoc[0], currentAABBLoc[1], currentAABBLoc[2])
+        # Rotate offset to match unreals coordinate system
+        offsetVec = KismetMathLibrary.RotateAngleAxis(offsetVec, 90.0, FVector(1.0, 0.0, 0.0))
+        if shift_origin:
             newPMC.set_relative_location(offsetVec)
 
-            #Adjust the world AABB
-            #Only consider objects very far away for the world AABB, since dynamic objects like doors are very close to the origin, whereas static elements are over 50,000 units away
-            #TODO: Use a similar check to set elements to static or moveable
-            if offsetVec.length() > 1000.0:
-                worldAABB = worldAABB.merge(currentGeoObjAABB)
+        # Adjust the world AABB
+        # Only consider objects very far away for the world AABB, since dynamic objects like doors are very close to the origin, whereas static elements are over 50,000 units away
+        # TODO: Use a similar check to set elements to static or moveable
+        if offsetVec.length() > 1000.0:
+            self.worldAABB = self.worldAABB.merge(currentGeoObjAABB)
 
-            #Import each renderable as a mesh now, but translate the vertices according to the calculated AABB offset
-            for renderable in renderables:
+        # Import each renderable as a mesh now
+        for renderable in renderables:
+            if shift_origin:
+                # If shifting the origin, calculate the offset by the AABB and invert it
                 inverseLocation = []
                 for el in currentAABBLoc:
                     inverseLocation.append(el * -1)
+                # Translate the vertices by the inverted offset so they are centred around the origin
                 renderable.translate(inverseLocation)
-                newPMC.import_renderable(renderable, self.generatedMaterials)
+            newPMC.import_renderable(renderable, self.generatedMaterials)
 
-        worldOffset = worldAABB.get_center_position()
-        worldOffsetVec = FVector(worldOffset[0], worldOffset[1], worldOffset[2])
-        worldOffsetVec = KismetMathLibrary.RotateAngleAxis(worldOffsetVec, 90.0, FVector(1.0, 0.0, 0.0))
-        for currentPMC in self.proceduralMeshComponents:
-            #Only shift static elements
-            if currentPMC.get_relative_location().length() > 1000.0:
-                newLoc = currentPMC.get_relative_location() - worldOffsetVec
-                currentPMC.set_relative_location(newLoc)
-
-        ue.log("Created procedural mesh")
+        return newPMC
 
     # properties can only be set starting from begin play
     def ReceiveBeginPlay(self):
