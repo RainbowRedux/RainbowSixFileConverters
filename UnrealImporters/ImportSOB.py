@@ -62,7 +62,7 @@ class RenderableMeshComponent(ProceduralMeshComponent):
             indexArray.append(face[1])
             indexArray.append(face[0])
 
-        self.CreateMeshSection(self.CurrentMeshSectionIndex, vertexArray, indexArray, normalArray, UV0=uvArray, VertexColors=colorArray, CreateCollision=True)
+        self.CreateMeshSection(self.CurrentMeshSectionIndex, vertexArray, indexArray, normalArray, UV0=uvArray, VertexColors=colorArray, bCreateCollision=True)
 
         if renderable.materialIndex != R6Constants.UINT_MAX:
             self.SetMaterial(self.CurrentMeshSectionIndex, materials[renderable.materialIndex])
