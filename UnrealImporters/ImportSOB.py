@@ -154,7 +154,8 @@ class RSEResourceLoader(Actor):
 
         return materialRequired
 
-    def get_material(self, material_name: str) -> (MaterialInterface):
+    def get_unreal_master_material(self, material_name: str) -> (MaterialInterface):
+        """Gets an unreal material for use. If it's not already loaded, it will load it automatically and cache it for next time"""
         if material_name in self.loadedParentMaterials:
             return self.loadedParentMaterials[material_name]
 
@@ -179,7 +180,7 @@ class RSEResourceLoader(Actor):
             if matDef.textureName.startswith("cl02_spray1"):
                 verbose = True
             parentMaterialName = self.determine_parent_material_required(matDef)
-            parentMaterial = self.get_material(parentMaterialName)
+            parentMaterial = self.get_unreal_master_material(parentMaterialName)
             if verbose:
                 ue.log("=====================")
                 ue.log(matDef.textureName)
