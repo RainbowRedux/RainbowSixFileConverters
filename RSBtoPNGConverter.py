@@ -29,14 +29,12 @@ def convert_RSB(filename):
     #create and save png from 256 color image
     if imageFile.image256 is not None:
         newImg1 = imageFile.convert_palette_image()
-        newFilename = filename.replace(".RSB", "-256.PNG")
-        newFilename = newFilename.replace(".rsb", "-256.PNG")
+        newFilename = filename + ".256.PNG"
         newImg1.save(newFilename, "PNG")
 
     #create and save png from full color image
     newImg2 = imageFile.convert_full_color_image()
-    newFilename = filename.replace(".RSB", ".PNG")
-    newFilename = newFilename.replace(".rsb", ".PNG")
+    newFilename = filename + ".PNG"
     newImg2.save(newFilename, "PNG")
 
     #save meta data to JSON file
