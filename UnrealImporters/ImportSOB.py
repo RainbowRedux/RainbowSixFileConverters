@@ -389,8 +389,18 @@ class MAPLevel(RSEResourceLoader):
         if offsetVec.length() > 1000.0:
             self.worldAABB = self.worldAABB.merge(currentGeoObjAABB)
 
-        # Import each renderable as a mesh now
+        # Merge renderables with the same material index
+        mergedRenderables = {}
         for renderable in renderables:
+            if renderable.materialIndex in mergedRenderables:
+                # There is already a renderable using this material index
+                masterRenderable = mergedRenderables[renderable.materialIndex]
+                masterRenderable.merge(renderable)
+            else:
+                mergedRenderables[renderable.materialIndex] = renderable
+
+        # Import each renderable as a mesh now
+        for key, renderable in mergedRenderables.items():
             if shift_origin:
                 # If shifting the origin, calculate the offset by the AABB and invert it
                 inverseLocation = []
