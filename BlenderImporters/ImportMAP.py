@@ -196,6 +196,8 @@ def import_map_and_save(path):
     if importSuccess:
         outBlendPath = inPath + ".blend"
         save_blend_scene(outBlendPath)
+        outFBXPath = inPath + ".FBX"
+        export_fbx_scene(outFBXPath)
 
 
 if __name__ == "__main__":
