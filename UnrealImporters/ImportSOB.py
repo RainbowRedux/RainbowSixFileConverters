@@ -4,8 +4,8 @@ import PIL
 from PIL import Image
 
 import unreal_engine as ue
-from unreal_engine.classes import Actor, SceneComponent, ProceduralMeshComponent, KismetMathLibrary, MaterialInterface, Texture2D
-from unreal_engine import FVector, FVector2D, FColor
+from unreal_engine.classes import Actor, SceneComponent, CustomProceduralMeshComponent, KismetMathLibrary, MaterialInterface, Texture2D, TestActor
+from unreal_engine import FVector, FVector2D, FColor, FRotator
 from unreal_engine.enums import EPixelFormat, TextureAddress
 
 from RainbowFileReaders import SOBModelReader
@@ -19,57 +19,7 @@ from RainbowFileReaders.RenderableArray import AxisAlignedBoundingBox, Renderabl
 
 ue.log('Initializing SOB File importer')
 
-class RenderableMeshComponent(ProceduralMeshComponent):
-    """A ProceduralMeshComponent with the ability to convert RenderableArray geometry"""
-    def __init__(self):
-        self.CurrentMeshSectionIndex = 0
-
-    def ReceiveBeginPlay(self):
-        """Called when the actor is beginning play, or the world is beginning play"""
-        self.CurrentMeshSectionIndex = 0
-
-    def import_renderable(self, renderable, materials):
-        """Adds the specified renderable as a mesh section to this procedural mesh component"""
-        vertexArray = []
-        #Repack vertices into array of FVectors, and invert X coordinate
-        for vertex in renderable.vertices:
-            tempVertex = FVector(vertex[0], vertex[1], vertex[2])
-            #tempVertex = tempVertex - FVector(32611.490234, 31651.273438, 32911.394531)
-            tempVertex = KismetMathLibrary.RotateAngleAxis(tempVertex, 90.0, FVector(1.0, 0.0, 0.0))
-            vertexArray.append(tempVertex)
-
-        normalArray = []
-        for normal in renderable.normals:
-            tempVertex = FVector(normal[0], normal[1], normal[2])
-            tempVertex = KismetMathLibrary.RotateAngleAxis(tempVertex, 90.0, FVector(1.0, 0.0, 0.0))
-            normalArray.append(tempVertex)
-
-        uvArray = []
-        for UV in renderable.UVs:
-            uvArray.append(FVector2D(UV[0], UV[1]))
-
-        colorArray = []
-        for color in renderable.vertexColors:
-            newColor = []
-            for element in color:
-                newColor.append(int(element * 255))
-            colorArray.append(FColor(newColor[0], newColor[1], newColor[2]))
-
-        indexArray = []
-        #Repack face vertex indices into flat array
-        for face in renderable.triangleIndices:
-            indexArray.append(face[2])
-            indexArray.append(face[1])
-            indexArray.append(face[0])
-
-        self.CreateMeshSection(self.CurrentMeshSectionIndex, vertexArray, indexArray, normalArray, UV0=uvArray, VertexColors=colorArray, bCreateCollision=True)
-
-        if renderable.materialIndex != R6Constants.UINT_MAX:
-            self.SetMaterial(self.CurrentMeshSectionIndex, materials[renderable.materialIndex])
-
-        self.CurrentMeshSectionIndex += 1
-
-class RSEResourceLoader(Actor):
+class RSEResourceLoader:
     """A base class for RSE data formats which provides common functionality"""
     def __init__(self):
         self.generatedMaterials = []
@@ -77,7 +27,7 @@ class RSEResourceLoader(Actor):
         self.materialDefinitions = []
         self.loadedTextures = {}
 
-    def ReceiveBeginPlay(self):
+    def begin_play(self):
         """Called when the actor is beginning play, or the world is beginning play"""
         pass
 
@@ -124,7 +74,7 @@ class RSEResourceLoader(Actor):
         #     newTexture.AddressY = TextureAddress.TA_Wrap
         # else:
         #     ue.log("WARNING: Unknown texture tiling method")
-        
+
         self.loadedTextures[texturePath] = newTexture
         return newTexture
 
@@ -189,7 +139,7 @@ class RSEResourceLoader(Actor):
                 ue.log("Error, could not load parent material: {}".format(parentMaterialName))
                 self.generatedMaterials.append(None)
                 continue
-            mid = self.create_material_instance_dynamic(parentMaterial)
+            mid = self.uobject.create_material_instance_dynamic(parentMaterial)
 
             mid.set_material_scalar_parameter("EmissiveStrength", matDef.emissiveStrength)
             mid.set_material_scalar_parameter("SpecularLevel", matDef.specularLevel)
@@ -257,8 +207,8 @@ class SOBModel(RSEResourceLoader):
     """Loads an RSE SOB file into unreal assets"""
     # constructor adding a component
     def __init__(self):
-        #self.defaultSceneComponent = self.add_actor_component(SceneComponent, 'DefaultSceneComponent')
-        self.proceduralMeshComponent = self.add_actor_component(RenderableMeshComponent, 'ProceduralMesh')
+        self.defaultSceneComponent = self.add_actor_root_component(SceneComponent, 'DefaultSceneComponent')
+        #self.proceduralMeshComponent = self.add_actor_component(CustomProceduralMeshComponent, 'ProceduralMesh')
 
     def LoadModel(self):
         """Loads the file and creates appropriate assets in unreal"""
@@ -274,12 +224,12 @@ class SOBModel(RSEResourceLoader):
 
         renderables = []
 
-        for geoObj in SOBFile.geometryObjects:
-            for sourceMesh in geoObj.meshes:
-                renderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
+        # for geoObj in SOBFile.geometryObjects:
+        #     for sourceMesh in geoObj.meshes:
+        #         renderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
 
-                for _, currentRenderable in enumerate(renderables):
-                    self.proceduralMeshComponent.import_renderable(currentRenderable, self.generatedMaterials)
+        #         for _, currentRenderable in enumerate(renderables):
+        #             self.proceduralMeshComponent.import_renderable(currentRenderable, self.generatedMaterials)
 
         ue.log("Created procedural mesh")
 
@@ -291,18 +241,19 @@ class SOBModel(RSEResourceLoader):
 class MAPLevel(RSEResourceLoader):
     """Loads an RSE MAP file into unreal assets"""
     # constructor adding a component
-    def __init__(self):
-        self.defaultSceneComponent = self.add_actor_root_component(SceneComponent, 'DefaultSceneComponent')
+    def begin_play(self):
+        self.defaultSceneComponent = self.uobject.add_actor_root_component(SceneComponent, 'DefaultSceneComponent')
         self.proceduralMeshComponents = []
         # All AABBs for each static geometry object should be added to this worldAABB
         # This will allow an offset to be calculated to shift the map closer to the world origin, buying back precision
         self.worldAABB = AxisAlignedBoundingBox()
         self.shift_origin = True
+        self.LoadMap()
 
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
-        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
-        self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m04/M04.map"
+        self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
+        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m04/M04.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m07/M7.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m02/mansion.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m09/M09.map"
@@ -318,6 +269,8 @@ class MAPLevel(RSEResourceLoader):
         usedNames = []
         self.objectComponents = []
 
+        self.worldOffsetVec = FVector(0, 0, 0)
+
         for _, geoObj in enumerate(MAPFile.geometryObjects):
             name = geoObj.nameString
             if name in usedNames:
@@ -327,10 +280,10 @@ class MAPLevel(RSEResourceLoader):
 
             # Gather all renderables
             if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
-                geoObjComponent = self.add_actor_component(SceneComponent, name, self.defaultSceneComponent)
+                geoObjComponent = self.uobject.add_actor_component(SceneComponent, name, self.defaultSceneComponent)
                 self.objectComponents.append(geoObjComponent)
-                self.add_instance_component(geoObjComponent)
-                self.modify()
+                self.uobject.add_instance_component(geoObjComponent)
+                self.uobject.modify()
                 for srcMeshIdx, sourceMesh in enumerate(geoObj.meshes):
                     renderableName = name + "_" + sourceMesh.nameString + "_" + str(srcMeshIdx)
                     currRenderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
@@ -347,13 +300,20 @@ class MAPLevel(RSEResourceLoader):
             # Once all meshes have been imported, the WorldAABB will properly encapsulate the entire level,
             # and an appropriate offset can be calculated to bring each object back closer to the origin
             worldOffset = self.worldAABB.get_center_position()
-            worldOffsetVec = FVector(worldOffset[0], worldOffset[1], worldOffset[2])
-            worldOffsetVec = KismetMathLibrary.RotateAngleAxis(worldOffsetVec, 90.0, FVector(1.0, 0.0, 0.0))
+            self.worldOffsetVec = FVector(worldOffset[0], worldOffset[1], worldOffset[2])
+            self.worldOffsetVec = KismetMathLibrary.RotateAngleAxis(self.worldOffsetVec, 90.0, FVector(1.0, 0.0, 0.0))
             for currentMesh in self.proceduralMeshComponents:
                 # Only shift static elements
                 if currentMesh.get_relative_location().length() > 1000.0:
-                    newLoc = currentMesh.get_relative_location() - worldOffsetVec
+                    newLoc = currentMesh.get_relative_location() - self.worldOffsetVec
                     currentMesh.set_relative_location(newLoc)
+
+        #lights_actor = self.actor_spawn(ue.find_class('RSLightActor'), FVector(0, 0, 0), FRotator(0, 0, 90))
+        self.uobject.SpawnLightActor()
+        light_actor = self.uobject.LightActor
+
+        for lightDef in MAPFile.lightList.lights:
+            pass
 
         ue.log("Created procedural mesh")
 
@@ -364,9 +324,9 @@ class MAPLevel(RSEResourceLoader):
         Returns a mesh component"""
 
         # Treat each geometryObject as a single component
-        newPMC = self.add_actor_component(RenderableMeshComponent, name, parent_component)
-        self.add_instance_component(newPMC)
-        self.modify()
+        newPMC = self.uobject.add_actor_component(CustomProceduralMeshComponent, name, parent_component)
+        self.uobject.add_instance_component(newPMC)
+        self.uobject.modify()
         self.proceduralMeshComponents.append(newPMC)
 
         currentGeoObjAABB = AxisAlignedBoundingBox()
@@ -409,11 +369,51 @@ class MAPLevel(RSEResourceLoader):
                     inverseLocation.append(el * -1)
                 # Translate the vertices by the inverted offset so they are centred around the origin
                 renderable.translate(inverseLocation)
-            newPMC.import_renderable(renderable, self.generatedMaterials)
+            self.import_renderable(newPMC, renderable, self.generatedMaterials)
 
         return newPMC
 
-    # properties can only be set starting from begin play
-    def ReceiveBeginPlay(self):
-        """Called when the actor is beginning play, or the world is beginning play"""
-        self.LoadMap()
+    def import_renderable(self, mesh_component, renderable, materials):
+        """Adds the specified renderable as a mesh section to this procedural mesh component"""
+        vertexArray = []
+        #Repack vertices into array of FVectors, and invert X coordinate
+        for vertex in renderable.vertices:
+            tempVertex = FVector(vertex[0], vertex[1], vertex[2])
+            #tempVertex = tempVertex - FVector(32611.490234, 31651.273438, 32911.394531)
+            tempVertex = KismetMathLibrary.RotateAngleAxis(tempVertex, 90.0, FVector(1.0, 0.0, 0.0))
+            vertexArray.append(tempVertex)
+
+        normalArray = []
+        for normal in renderable.normals:
+            tempVertex = FVector(normal[0], normal[1], normal[2])
+            tempVertex = KismetMathLibrary.RotateAngleAxis(tempVertex, 90.0, FVector(1.0, 0.0, 0.0))
+            normalArray.append(tempVertex)
+
+        uvArray = []
+        for UV in renderable.UVs:
+            uvArray.append(FVector2D(UV[0], UV[1]))
+
+        colorArray = []
+        for color in renderable.vertexColors:
+            newColor = []
+            for element in color:
+                newColor.append(int(element * 255))
+            colorArray.append(FColor(newColor[0], newColor[1], newColor[2]))
+
+        indexArray = []
+        #Repack face vertex indices into flat array
+        for face in renderable.triangleIndices:
+            indexArray.append(face[2])
+            indexArray.append(face[1])
+            indexArray.append(face[0])
+
+        newMeshSectionIdx = mesh_component.AutoCreateMeshSection(vertexArray, indexArray, normalArray, UV0=uvArray, VertexColors=colorArray, bCreateCollision=True)
+        newMeshSectionIdx = mesh_component.GetLastCreatedMeshIndex()
+
+        if renderable.materialIndex != R6Constants.UINT_MAX:
+            mesh_component.SetMaterial(newMeshSectionIdx, materials[renderable.materialIndex])
+
+    # # properties can only be set starting from begin play
+    # def ReceiveBeginPlay(self):
+    #     """Called when the actor is beginning play, or the world is beginning play"""
+    #     self.LoadMap()
