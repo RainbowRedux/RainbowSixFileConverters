@@ -5,7 +5,7 @@ from PIL import Image
 
 import unreal_engine as ue
 from unreal_engine.classes import Actor, SceneComponent, CustomProceduralMeshComponent, KismetMathLibrary, MaterialInterface, Texture2D, TestActor
-from unreal_engine import FVector, FVector2D, FColor, FRotator
+from unreal_engine import FVector, FVector2D, FColor, FRotator, FLinearColor
 from unreal_engine.enums import EPixelFormat, TextureAddress
 
 from RainbowFileReaders import SOBModelReader
@@ -313,9 +313,33 @@ class MAPLevel(RSEResourceLoader):
         light_actor = self.uobject.LightActor
 
         for lightDef in MAPFile.lightList.lights:
+            # Place lamp to a specified location
+            position = self.PositionListToFVector(lightDef.position, True)
+            position = position - self.worldOffsetVec
+
+            color = []
+            for color_el in lightDef.color:
+                color.append(color_el / 255.0)
+            linearColor = FLinearColor(color[0], color[1], color[2])
+
+            constAtten = lightDef.constantAttenuation
+            linAtten = lightDef.linearAttenuation
+            quadAtten = lightDef.quadraticAttenuation
+            energy = lightDef.energy
+            falloff = lightDef.falloff
+            lightType = lightDef.type
+            lightName = lightDef.nameString
+
+            light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, name)
             pass
 
         ue.log("Created procedural mesh")
+
+    def PositionListToFVector(self, position, performRotation=False):
+        newVec = FVector(position[0], position[1], position[2])
+        if performRotation:
+            newVec = KismetMathLibrary.RotateAngleAxis(newVec, 90.0, FVector(1.0, 0.0, 0.0))
+        return newVec
 
     def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], shift_origin, parent_component):
         """Will import a list of renderables into a single Mesh Component.
@@ -351,6 +375,7 @@ class MAPLevel(RSEResourceLoader):
             self.worldAABB = self.worldAABB.merge(currentGeoObjAABB)
 
         # Merge renderables with the same material index
+        # Rogue spear maps in particular seem to have meshes broken up to each polygon. Collapsing these into a single mesh significantly reduces draw calls.
         mergedRenderables = {}
         for renderable in renderables:
             if renderable.materialIndex in mergedRenderables:
