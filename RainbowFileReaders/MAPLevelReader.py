@@ -25,6 +25,7 @@ class MAPLevelFile(FileFormatReader):
         self.portalList = []
         self.lightList = []
         self.objectList = []
+        self.dmpLights = None
 
         self.footer = None
         #Game version is not stored in file, and has to be determined by analysing the structure of stored materials. Stored here for easy use

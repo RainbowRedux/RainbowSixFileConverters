@@ -5,6 +5,8 @@ class RSDMPLightFile(FileFormatReader):
     """Class to read full RSB files"""
     def __init__(self):
         super(RSDMPLightFile, self).__init__()
+        self.header = None
+        self.lights = []
 
     def read_data(self):
         super().read_data()

@@ -19,6 +19,8 @@ from RainbowFileReaders.RenderableArray import AxisAlignedBoundingBox, Renderabl
 
 ue.log('Initializing SOB File importer')
 
+PNG_CACHE_FILE_SUFFIX = ".CACHE.PNG"
+
 class RSEResourceLoader:
     """A base class for RSE data formats which provides common functionality"""
     def __init__(self):
@@ -42,7 +44,7 @@ class RSEResourceLoader:
         image = None
 
         # Attempt to load PNG version which will be quicker
-        PNGFilename = texturePath + ".PNG"
+        PNGFilename = texturePath + PNG_CACHE_FILE_SUFFIX
         imageFile = None
         bUsePNGCache = True
         if os.path.isfile(PNGFilename) and bUsePNGCache:
@@ -250,9 +252,14 @@ class MAPLevel(RSEResourceLoader):
         self.shift_origin = True
         self.LoadMap()
 
+    def tick(self, delta_time):
+        pass
+
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
         self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
+        #self.filepath = "D:/R6Data/TestData/ReducedGames/RSDemo/mods/CLASSIC MISSIONS/map/cl02/cl02.map"
+        #self.filepath = "D:/R6Data/TestData/ReducedGames/RSDemo/data/map/rm01/rm01.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m04/M04.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m07/M7.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m02/mansion.map"
@@ -287,9 +294,21 @@ class MAPLevel(RSEResourceLoader):
                 for srcMeshIdx, sourceMesh in enumerate(geoObj.meshes):
                     renderableName = name + "_" + sourceMesh.nameString + "_" + str(srcMeshIdx)
                     currRenderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
-                    self.import_renderables_as_mesh_component(renderableName, currRenderables, self.shift_origin, geoObjComponent)
+                    newMeshComponent = self.import_renderables_as_mesh_component(renderableName, currRenderables, self.shift_origin, geoObjComponent)
+
+                    newMeshComponent.bCollisionOnly = False;
+                    newMeshComponent.bHasRSEGeometryFlags = True;
+                    newMeshComponent.bGF_Climbable = sourceMesh.geometryFlagsEvaluated["GF_CLIMBABLE"]
+                    newMeshComponent.bGF_NoCollide2D = sourceMesh.geometryFlagsEvaluated["GF_NOCOLLIDE2D"]
+                    newMeshComponent.bGF_Invisible = sourceMesh.geometryFlagsEvaluated["GF_INVISIBLE"]
+                    newMeshComponent.bGF_Unknown2 = sourceMesh.geometryFlagsEvaluated["GF_UNKNOWN2"]
+                    newMeshComponent.bGF_FloorPolygon = sourceMesh.geometryFlagsEvaluated["GF_FLOORPOLYGON"]
+                    newMeshComponent.bGF_NoCollide3D = sourceMesh.geometryFlagsEvaluated["GF_NOCOLLIDE3D"]
+                    newMeshComponent.bGF_Unknown4 = sourceMesh.geometryFlagsEvaluated["GF_UNKNOWN4"]
+                    newMeshComponent.bGF_NotShownInPlan = sourceMesh.geometryFlagsEvaluated["GF_NOTSHOWNINPLAN"]
+
             else: # Rogue spear
-                #Get all renderables and adjust the current AABB
+                #Get all renderables and import
                 renderables = []
                 for _, facegroup in enumerate(geoObj.geometryData.faceGroups):
                     renderable = geoObj.geometryData.generate_renderable_array_for_facegroup(facegroup)
@@ -330,9 +349,32 @@ class MAPLevel(RSEResourceLoader):
             lightType = lightDef.type
             lightName = lightDef.nameString
 
-            light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, name)
+            light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
             pass
 
+        if MAPFile.dmpLights is not None:
+            for lightDef in MAPFile.dmpLights.lights:
+                # Place lamp to a specified location
+                position = self.PositionListToFVector(lightDef.position, True)
+                position = position - self.worldOffsetVec
+
+                color = []
+                for color_el in lightDef.diffuseColor:
+                    color.append(color_el)
+                linearColor = FLinearColor(color[0], color[1], color[2])
+
+                constAtten = lightDef.constantAttenuation
+                linAtten = lightDef.linearAttenuation
+                quadAtten = lightDef.quadraticAttenuation
+                energy = lightDef.energy
+                falloff = lightDef.falloff
+                lightType = lightDef.type
+                lightName = lightDef.nameString
+
+                light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
+                pass
+
+        self.refresh_geometry_flag_settings()
         ue.log("Created procedural mesh")
 
     def PositionListToFVector(self, position, performRotation=False):
@@ -340,6 +382,12 @@ class MAPLevel(RSEResourceLoader):
         if performRotation:
             newVec = KismetMathLibrary.RotateAngleAxis(newVec, 90.0, FVector(1.0, 0.0, 0.0))
         return newVec
+
+    def refresh_geometry_flag_settings(self):
+        # Force the meshes to update their visibility based on their flags and materials
+        for currentMesh in self.proceduralMeshComponents:
+            currentMesh.UpdateFlagSettings()
+            pass
 
     def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], shift_origin, parent_component):
         """Will import a list of renderables into a single Mesh Component.

@@ -198,6 +198,7 @@ class R6MeshDefinition(BinaryFileDataStructure):
         self.faceIndices = []
 
         self.geometryFlags = 0
+        self.geometryFlagsEvaluated = {}
 
         self.unknown9 = 0
 
