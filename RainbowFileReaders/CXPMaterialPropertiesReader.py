@@ -91,6 +91,7 @@ def _read_cxp_keywords(path):
     lines = inFile.readlines()
     cxp_keywords = []
     for line in lines:
+        filteredLine = line.replace("ZOMBIE'S", "") #specific fix for Covert Operations, which breaks the parser since it looks for an ending quotation
         line_values = shlex.split(line)
         for value in line_values:
             if value.startswith("//"):
