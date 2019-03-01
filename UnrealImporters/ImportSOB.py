@@ -255,11 +255,76 @@ class MAPLevel(RSEResourceLoader):
     def tick(self, delta_time):
         pass
 
+    def import_lights(self, MAPFile):
+        self.uobject.SpawnLightActor()
+        light_actor = self.uobject.LightActor
+
+        for lightDef in MAPFile.lightList.lights:
+            # Place lamp to a specified location
+            position = self.PositionListToFVector(lightDef.position, True)
+            if self.shift_origin:
+                position = position - self.worldOffsetVec
+
+            color = []
+            for color_el in lightDef.color:
+                color.append(color_el / 255.0)
+            linearColor = FLinearColor(color[0], color[1], color[2])
+
+            constAtten = lightDef.constantAttenuation
+            linAtten = lightDef.linearAttenuation
+            quadAtten = lightDef.quadraticAttenuation
+            energy = lightDef.energy
+            falloff = lightDef.falloff
+            lightType = lightDef.type
+            lightName = lightDef.nameString
+
+            light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
+
+        if MAPFile.dmpLights is not None:
+            for lightDef in MAPFile.dmpLights.lights:
+                # Place lamp to a specified location
+                position = self.PositionListToFVector(lightDef.position, True)
+                if self.shift_origin:
+                    position = position - self.worldOffsetVec
+
+                color = []
+                for color_el in lightDef.diffuseColor:
+                    color.append(color_el)
+                linearColor = FLinearColor(color[0], color[1], color[2])
+
+                constAtten = lightDef.constantAttenuation
+                linAtten = lightDef.linearAttenuation
+                quadAtten = lightDef.quadraticAttenuation
+                energy = lightDef.energy
+                falloff = lightDef.falloff
+                lightType = lightDef.type
+                lightName = lightDef.nameString
+
+                light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
+
+    def set_geometry_flags(self, mesh_component, collision_only, flags_dict):
+        if flags_dict is None:
+            return
+
+        if mesh_component is None:
+            return
+
+        mesh_component.bCollisionOnly = collision_only
+        mesh_component.bHasRSEGeometryFlags = True
+        mesh_component.bGF_Climbable = flags_dict["GF_CLIMBABLE"]
+        mesh_component.bGF_NoCollide2D = flags_dict["GF_NOCOLLIDE2D"]
+        mesh_component.bGF_Invisible = flags_dict["GF_INVISIBLE"]
+        mesh_component.bGF_Unknown2 = flags_dict["GF_UNKNOWN2"]
+        mesh_component.bGF_FloorPolygon = flags_dict["GF_FLOORPOLYGON"]
+        mesh_component.bGF_NoCollide3D = flags_dict["GF_NOCOLLIDE3D"]
+        mesh_component.bGF_Unknown4 = flags_dict["GF_UNKNOWN4"]
+        mesh_component.bGF_NotShownInPlan = flags_dict["GF_NOTSHOWNINPLAN"]
+
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
-        self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
+        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/RSDemo/mods/CLASSIC MISSIONS/map/cl02/cl02.map"
-        #self.filepath = "D:/R6Data/TestData/ReducedGames/RSDemo/data/map/rm01/rm01.map"
+        self.filepath = "D:/R6Data/TestData/ReducedGames/RSDemo/data/map/rm01/rm01.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m04/M04.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m07/M7.map"
         #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m02/mansion.map"
@@ -285,7 +350,6 @@ class MAPLevel(RSEResourceLoader):
             else:
                 usedNames.append(name)
 
-            # Gather all renderables
             if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
                 geoObjComponent = self.uobject.add_actor_component(SceneComponent, name, self.defaultSceneComponent)
                 self.objectComponents.append(geoObjComponent)
@@ -296,24 +360,31 @@ class MAPLevel(RSEResourceLoader):
                     currRenderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
                     newMeshComponent = self.import_renderables_as_mesh_component(renderableName, currRenderables, self.shift_origin, geoObjComponent)
 
-                    newMeshComponent.bCollisionOnly = False;
-                    newMeshComponent.bHasRSEGeometryFlags = True;
-                    newMeshComponent.bGF_Climbable = sourceMesh.geometryFlagsEvaluated["GF_CLIMBABLE"]
-                    newMeshComponent.bGF_NoCollide2D = sourceMesh.geometryFlagsEvaluated["GF_NOCOLLIDE2D"]
-                    newMeshComponent.bGF_Invisible = sourceMesh.geometryFlagsEvaluated["GF_INVISIBLE"]
-                    newMeshComponent.bGF_Unknown2 = sourceMesh.geometryFlagsEvaluated["GF_UNKNOWN2"]
-                    newMeshComponent.bGF_FloorPolygon = sourceMesh.geometryFlagsEvaluated["GF_FLOORPOLYGON"]
-                    newMeshComponent.bGF_NoCollide3D = sourceMesh.geometryFlagsEvaluated["GF_NOCOLLIDE3D"]
-                    newMeshComponent.bGF_Unknown4 = sourceMesh.geometryFlagsEvaluated["GF_UNKNOWN4"]
-                    newMeshComponent.bGF_NotShownInPlan = sourceMesh.geometryFlagsEvaluated["GF_NOTSHOWNINPLAN"]
+                    self.set_geometry_flags(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
 
             else: # Rogue spear
-                #Get all renderables and import
+                #Setup all visual geometry
                 renderables = []
                 for _, facegroup in enumerate(geoObj.geometryData.faceGroups):
                     renderable = geoObj.geometryData.generate_renderable_array_for_facegroup(facegroup)
                     renderables.append(renderable)
+                #TODO: Refactor the merging here to take into account surfaces properties, so objects with different collision properties can be separated
                 self.import_renderables_as_mesh_component(name, renderables, self.shift_origin, self.defaultSceneComponent)
+
+                #setup collision geometry
+                collisionName = name + "_collision"
+                collisionComponent = self.uobject.add_actor_component(SceneComponent, collisionName, self.defaultSceneComponent)
+                collisionData = geoObj.geometryData.collisionInformation
+                for i, collMesh in enumerate(collisionData.collisionMeshDefinitions):
+                    if collMesh.geometryFlagsEvaluated["GF_INVISIBLE"] is True:
+                        #Do not process invalid and unused meshes
+                        pass
+                        #continue
+                    subCollisionName = collisionName + "_idx" + str(i)
+                    renderable = collisionData.generate_renderable_array_for_collisionmesh(collMesh, geoObj.geometryData)
+                    newMeshComponent = self.import_renderables_as_mesh_component(subCollisionName, [renderable], self.shift_origin, collisionComponent)
+
+                    self.set_geometry_flags(newMeshComponent, True, collMesh.geometryFlagsEvaluated)
 
         if self.shift_origin:
             # Once all meshes have been imported, the WorldAABB will properly encapsulate the entire level,
@@ -327,52 +398,7 @@ class MAPLevel(RSEResourceLoader):
                     newLoc = currentMesh.get_relative_location() - self.worldOffsetVec
                     currentMesh.set_relative_location(newLoc)
 
-        #lights_actor = self.actor_spawn(ue.find_class('RSLightActor'), FVector(0, 0, 0), FRotator(0, 0, 90))
-        self.uobject.SpawnLightActor()
-        light_actor = self.uobject.LightActor
-
-        for lightDef in MAPFile.lightList.lights:
-            # Place lamp to a specified location
-            position = self.PositionListToFVector(lightDef.position, True)
-            position = position - self.worldOffsetVec
-
-            color = []
-            for color_el in lightDef.color:
-                color.append(color_el / 255.0)
-            linearColor = FLinearColor(color[0], color[1], color[2])
-
-            constAtten = lightDef.constantAttenuation
-            linAtten = lightDef.linearAttenuation
-            quadAtten = lightDef.quadraticAttenuation
-            energy = lightDef.energy
-            falloff = lightDef.falloff
-            lightType = lightDef.type
-            lightName = lightDef.nameString
-
-            light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
-            pass
-
-        if MAPFile.dmpLights is not None:
-            for lightDef in MAPFile.dmpLights.lights:
-                # Place lamp to a specified location
-                position = self.PositionListToFVector(lightDef.position, True)
-                position = position - self.worldOffsetVec
-
-                color = []
-                for color_el in lightDef.diffuseColor:
-                    color.append(color_el)
-                linearColor = FLinearColor(color[0], color[1], color[2])
-
-                constAtten = lightDef.constantAttenuation
-                linAtten = lightDef.linearAttenuation
-                quadAtten = lightDef.quadraticAttenuation
-                energy = lightDef.energy
-                falloff = lightDef.falloff
-                lightType = lightDef.type
-                lightName = lightDef.nameString
-
-                light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
-                pass
+        self.import_lights(MAPFile)
 
         self.refresh_geometry_flag_settings()
         ue.log("Created procedural mesh")
@@ -386,6 +412,7 @@ class MAPLevel(RSEResourceLoader):
     def refresh_geometry_flag_settings(self):
         # Force the meshes to update their visibility based on their flags and materials
         for currentMesh in self.proceduralMeshComponents:
+            #print(currentMesh.GetDisplayName())
             currentMesh.UpdateFlagSettings()
             pass
 
@@ -463,15 +490,17 @@ class MAPLevel(RSEResourceLoader):
             normalArray.append(tempVertex)
 
         uvArray = []
-        for UV in renderable.UVs:
-            uvArray.append(FVector2D(UV[0], UV[1]))
+        if renderable.UVs is not None:
+            for UV in renderable.UVs:
+                uvArray.append(FVector2D(UV[0], UV[1]))
 
         colorArray = []
-        for color in renderable.vertexColors:
-            newColor = []
-            for element in color:
-                newColor.append(int(element * 255))
-            colorArray.append(FColor(newColor[0], newColor[1], newColor[2]))
+        if renderable.vertexColors is not None:
+            for color in renderable.vertexColors:
+                newColor = []
+                for element in color:
+                    newColor.append(int(element * 255))
+                colorArray.append(FColor(newColor[0], newColor[1], newColor[2]))
 
         indexArray = []
         #Repack face vertex indices into flat array
