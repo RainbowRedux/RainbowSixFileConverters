@@ -17,9 +17,9 @@ from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
 from RainbowFileReaders.R6Constants import RSEGameVersions
 from RainbowFileReaders.RenderableArray import AxisAlignedBoundingBox, RenderableArray
 
-ue.log('Initializing SOB File importer')
+from UnrealImporters import ImporterSettings
 
-PNG_CACHE_FILE_SUFFIX = ".CACHE.PNG"
+ue.log('Initializing SOB File importer')
 
 class RSEResourceLoader:
     """A base class for RSE data formats which provides common functionality"""
@@ -44,18 +44,18 @@ class RSEResourceLoader:
         image = None
 
         # Attempt to load PNG version which will be quicker
-        PNGFilename = texturePath + PNG_CACHE_FILE_SUFFIX
+        PNGFilename = texturePath + ImporterSettings.PNG_CACHE_FILE_SUFFIX
         imageFile = None
-        bUsePNGCache = True
-        if os.path.isfile(PNGFilename) and bUsePNGCache:
+        if os.path.isfile(PNGFilename) and ImporterSettings.bUsePNGCache:
             image = PIL.Image.open(PNGFilename)
         else:
             imageFile = RSBImageReader.RSBImageFile()
             imageFile.read_file(texturePath)
             colokeyMask = (colorKeyR, colorKeyG, colorKeyB)
             image = imageFile.convert_full_color_image_with_colorkey_mask(colokeyMask)
-            #Save this image as it will be quicker to load in future
-            image.save(PNGFilename, "PNG")
+            if ImporterSettings.bUsePNGCache:
+                #Save this image as it will be quicker to load in future
+                image.save(PNGFilename, "PNG")
 
         imageWidth, imageHeight = image.size
 
@@ -322,13 +322,7 @@ class MAPLevel(RSEResourceLoader):
 
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
-        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"
-        #self.filepath = "D:/R6Data/TestData/ReducedGames/RSDemo/mods/CLASSIC MISSIONS/map/cl02/cl02.map"
-        self.filepath = "D:/R6Data/TestData/ReducedGames/RSDemo/data/map/rm01/rm01.map"
-        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m04/M04.map"
-        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m07/M7.map"
-        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m02/mansion.map"
-        #self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m09/M09.map"
+        self.filepath = ImporterSettings.map_file_path
         MAPFile = MAPLevelReader.MAPLevelFile()
         MAPFile.read_file(self.filepath)
         numGeoObjects = len(MAPFile.geometryObjects)
@@ -369,6 +363,7 @@ class MAPLevel(RSEResourceLoader):
                     renderable = geoObj.geometryData.generate_renderable_array_for_facegroup(facegroup)
                     renderables.append(renderable)
                 #TODO: Refactor the merging here to take into account surfaces properties, so objects with different collision properties can be separated
+                #TODO: Pass through CXP gunpass grenadepass tags to the newly separated geometry
                 self.import_renderables_as_mesh_component(name, renderables, self.shift_origin, self.defaultSceneComponent)
 
                 #setup collision geometry
