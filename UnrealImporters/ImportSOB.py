@@ -210,6 +210,7 @@ class SOBModel(RSEResourceLoader):
     # constructor adding a component
     def __init__(self):
         self.defaultSceneComponent = self.add_actor_root_component(SceneComponent, 'DefaultSceneComponent')
+        self.LoadModel()
         #self.proceduralMeshComponent = self.add_actor_component(CustomProceduralMeshComponent, 'ProceduralMesh')
 
     def LoadModel(self):
@@ -238,7 +239,7 @@ class SOBModel(RSEResourceLoader):
     # properties can only be set starting from begin play
     def ReceiveBeginPlay(self):
         """Called when the actor is beginning play, or the world is beginning play"""
-        self.LoadModel()
+        #self.LoadModel()
 
 class MAPLevel(RSEResourceLoader):
     """Loads an RSE MAP file into unreal assets"""
@@ -322,7 +323,8 @@ class MAPLevel(RSEResourceLoader):
 
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
-        self.filepath = ImporterSettings.map_file_path
+        #self.filepath = ImporterSettings.map_file_path
+        self.filepath = self.uobject.mappath
         MAPFile = MAPLevelReader.MAPLevelFile()
         MAPFile.read_file(self.filepath)
         numGeoObjects = len(MAPFile.geometryObjects)
@@ -509,8 +511,3 @@ class MAPLevel(RSEResourceLoader):
 
         if renderable.materialIndex != R6Constants.UINT_MAX:
             mesh_component.SetMaterial(newMeshSectionIdx, materials[renderable.materialIndex])
-
-    # # properties can only be set starting from begin play
-    # def ReceiveBeginPlay(self):
-    #     """Called when the actor is beginning play, or the world is beginning play"""
-    #     self.LoadMap()
