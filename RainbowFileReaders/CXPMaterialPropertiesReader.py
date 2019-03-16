@@ -1,10 +1,10 @@
 """
 Classes and functions to load and parse CXP material property files
 """
-import shlex
 import os
 
 from RainbowFileReaders import R6Settings
+from FileUtilities.TextFileUtilities import read_tokenized_text_file
 
 class CXPMaterialProperties(object):
     """Material properties associated with a single texture/material"""
@@ -84,26 +84,9 @@ class CXPMaterialProperties(object):
             else:
                 print("Skipping: " + currKeyword)
 
-def _read_cxp_keywords(path):
-    """Reads a text file and tokenizes.
-    Keeps strings within quotes, and discards comments"""
-    inFile = open(path, "r")
-    lines = inFile.readlines()
-    cxp_keywords = []
-    for line in lines:
-        filteredLine = line.replace("ZOMBIE'S", "") #specific fix for Covert Operations, which breaks the parser since it looks for an ending quotation
-        line_values = shlex.split(line)
-        for value in line_values:
-            if value.startswith("//"):
-                #this is a comment, so the rest of this line can be skipped
-                break
-            else:
-                cxp_keywords.append(value)
-    return cxp_keywords
-
 def read_cxp(path):
     """Loads and parses a CXP and returns a list of material properties"""
-    keywords = _read_cxp_keywords(path)
+    keywords = read_tokenized_text_file(path)
     MaterialPropertiesDict = {}
     while keywords:
         try:
