@@ -375,8 +375,7 @@ class MAPLevel(RSEResourceLoader):
                 for i, collMesh in enumerate(collisionData.collisionMeshDefinitions):
                     if collMesh.geometryFlagsEvaluated["GF_INVISIBLE"] is True:
                         #Do not process invalid and unused meshes
-                        pass
-                        #continue
+                        continue
                     subCollisionName = collisionName + "_idx" + str(i)
                     renderable = collisionData.generate_renderable_array_for_collisionmesh(collMesh, geoObj.geometryData)
                     newMeshComponent = self.import_renderables_as_mesh_component(subCollisionName, [renderable], self.shift_origin, collisionComponent)
