@@ -15,7 +15,7 @@ from RainbowFileReaders import R6Constants
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
 from RainbowFileReaders.R6Constants import RSEGameVersions
-from RainbowFileReaders.RenderableArray import AxisAlignedBoundingBox, RenderableArray
+from RainbowFileReaders.RenderableArray import AxisAlignedBoundingBox, RenderableArray, merge_renderables_by_material, shift_origin_of_renderables
 
 from UnrealImporters import ImporterSettings
 
@@ -210,10 +210,10 @@ class SOBModel(RSEResourceLoader):
     # constructor adding a component
     def __init__(self):
         self.defaultSceneComponent = self.add_actor_root_component(SceneComponent, 'DefaultSceneComponent')
-        self.LoadModel()
+        self.load_model()
         #self.proceduralMeshComponent = self.add_actor_component(CustomProceduralMeshComponent, 'ProceduralMesh')
 
-    def LoadModel(self):
+    def load_model(self):
         """Loads the file and creates appropriate assets in unreal"""
         self.filepath = "D:/R6Data/TestData/ReducedGames/R6GOG/data/model/cessna.sob"
         SOBFile = SOBModelReader.SOBModelFile()
@@ -239,7 +239,7 @@ class SOBModel(RSEResourceLoader):
     # properties can only be set starting from begin play
     def ReceiveBeginPlay(self):
         """Called when the actor is beginning play, or the world is beginning play"""
-        #self.LoadModel()
+        #self.load_model()
 
 class MAPLevel(RSEResourceLoader):
     """Loads an RSE MAP file into unreal assets"""
@@ -260,9 +260,10 @@ class MAPLevel(RSEResourceLoader):
         self.uobject.SpawnLightActor()
         light_actor = self.uobject.LightActor
 
+        #Import lightlist
         for lightDef in MAPFile.lightList.lights:
             # Place lamp to a specified location
-            position = self.PositionListToFVector(lightDef.position, True)
+            position = self.arrayvector_to_fvector(lightDef.position, True)
             if self.shift_origin:
                 position = position - self.worldOffsetVec
 
@@ -281,10 +282,11 @@ class MAPLevel(RSEResourceLoader):
 
             light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
 
+        #Import DMP lights
         if MAPFile.dmpLights is not None:
             for lightDef in MAPFile.dmpLights.lights:
                 # Place lamp to a specified location
-                position = self.PositionListToFVector(lightDef.position, True)
+                position = self.arrayvector_to_fvector(lightDef.position, True)
                 if self.shift_origin:
                     position = position - self.worldOffsetVec
 
@@ -304,22 +306,40 @@ class MAPLevel(RSEResourceLoader):
                 light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
 
     def set_geometry_flags(self, mesh_component, collision_only, flags_dict):
-        if flags_dict is None:
-            return
 
         if mesh_component is None:
             return
 
         mesh_component.bCollisionOnly = collision_only
         mesh_component.bHasRSEGeometryFlags = True
-        mesh_component.bGF_Climbable = flags_dict["GF_CLIMBABLE"]
-        mesh_component.bGF_NoCollide2D = flags_dict["GF_NOCOLLIDE2D"]
-        mesh_component.bGF_Invisible = flags_dict["GF_INVISIBLE"]
-        mesh_component.bGF_Unknown2 = flags_dict["GF_UNKNOWN2"]
-        mesh_component.bGF_FloorPolygon = flags_dict["GF_FLOORPOLYGON"]
-        mesh_component.bGF_NoCollide3D = flags_dict["GF_NOCOLLIDE3D"]
-        mesh_component.bGF_Unknown4 = flags_dict["GF_UNKNOWN4"]
-        mesh_component.bGF_NotShownInPlan = flags_dict["GF_NOTSHOWNINPLAN"]
+
+        if flags_dict is not None:
+            mesh_component.bGF_Climbable = flags_dict["GF_CLIMBABLE"]
+            mesh_component.bGF_NoCollide2D = flags_dict["GF_NOCOLLIDE2D"]
+            mesh_component.bGF_Invisible = flags_dict["GF_INVISIBLE"]
+            mesh_component.bGF_Unknown2 = flags_dict["GF_UNKNOWN2"]
+            mesh_component.bGF_FloorPolygon = flags_dict["GF_FLOORPOLYGON"]
+            mesh_component.bGF_NoCollide3D = flags_dict["GF_NOCOLLIDE3D"]
+            mesh_component.bGF_Unknown4 = flags_dict["GF_UNKNOWN4"]
+            mesh_component.bGF_NotShownInPlan = flags_dict["GF_NOTSHOWNINPLAN"]
+
+    def shift_origin_of_new_renderables(self, renderables):
+        """Calculates the combined bounds of the new renderables and shifts the origin
+        Returns an offset vector in Unreal correct space"""
+        if self.shift_origin:
+            geometryBounds = shift_origin_of_renderables(renderables, 1000.0)
+            offsetAmount = geometryBounds.get_center_position()
+            offsetVec = FVector(offsetAmount[0], offsetAmount[1], offsetAmount[2])
+            # Rotate offset to match unreals coordinate system
+            offsetVec = KismetMathLibrary.RotateAngleAxis(offsetVec, 90.0, FVector(1.0, 0.0, 0.0))
+
+            # Adjust the world AABB
+            # Only consider objects very far away for the world AABB, since dynamic objects like doors are very close to the origin, whereas static elements are over 50,000 units away
+            # TODO: Use a similar check to set elements to static or moveable
+            if offsetVec.length() > 1000.0:
+                self.worldAABB = self.worldAABB.merge(geometryBounds)
+
+            return offsetVec
 
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
@@ -336,37 +356,54 @@ class MAPLevel(RSEResourceLoader):
 
         usedNames = []
         self.objectComponents = []
+        objectsToShift = []
 
         self.worldOffsetVec = FVector(0, 0, 0)
 
         for _, geoObj in enumerate(MAPFile.geometryObjects):
             name = geoObj.nameString
             if name in usedNames:
-                ue.log("Duplicate name!")
+                ue.log("Duplicate name!" + name)
             else:
                 usedNames.append(name)
 
-            if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
-                geoObjComponent = self.uobject.add_actor_component(SceneComponent, name, self.defaultSceneComponent)
-                self.objectComponents.append(geoObjComponent)
-                self.uobject.add_instance_component(geoObjComponent)
-                self.uobject.modify()
+            print("Processing geoobj: " + name)
+            geoObjComponent = self.uobject.add_actor_component(SceneComponent, name, self.defaultSceneComponent)
+            self.uobject.add_instance_component(geoObjComponent)
+            self.uobject.modify()
+            self.objectComponents.append(geoObjComponent)
+
+            if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:    
                 for srcMeshIdx, sourceMesh in enumerate(geoObj.meshes):
                     renderableName = name + "_" + sourceMesh.nameString + "_" + str(srcMeshIdx)
                     currRenderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
-                    newMeshComponent = self.import_renderables_as_mesh_component(renderableName, currRenderables, self.shift_origin, geoObjComponent)
+
+                    mergedRenderables = merge_renderables_by_material(currRenderables)
+                    offsetVec = self.shift_origin_of_new_renderables(mergedRenderables)
+
+                    newMeshComponent = self.import_renderables_as_mesh_component(renderableName, mergedRenderables, self.shift_origin, geoObjComponent)
+                    newMeshComponent.set_relative_location(offsetVec)
+                    objectsToShift.append(newMeshComponent)
 
                     self.set_geometry_flags(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
 
             else: # Rogue spear
                 #Setup all visual geometry
-                renderables = []
+                geoObjRenderables = []
                 for _, facegroup in enumerate(geoObj.geometryData.faceGroups):
                     renderable = geoObj.geometryData.generate_renderable_array_for_facegroup(facegroup)
-                    renderables.append(renderable)
-                #TODO: Refactor the merging here to take into account surfaces properties, so objects with different collision properties can be separated
+                    geoObjRenderables.append(renderable)
+
+                mergedRenderables = merge_renderables_by_material(geoObjRenderables)
                 #TODO: Pass through CXP gunpass grenadepass tags to the newly separated geometry
-                self.import_renderables_as_mesh_component(name, renderables, self.shift_origin, self.defaultSceneComponent)
+
+                offsetVec = self.shift_origin_of_new_renderables(mergedRenderables)
+                geoObjComponent.set_relative_location(offsetVec)
+                objectsToShift.append(geoObjComponent)
+
+                for renderable in mergedRenderables:
+                    renderableName = name + "_" + str(renderable.materialIndex)
+                    self.import_renderables_as_mesh_component(renderableName, [renderable], self.shift_origin, geoObjComponent)
 
                 #setup collision geometry
                 collisionName = name + "_collision"
@@ -383,23 +420,24 @@ class MAPLevel(RSEResourceLoader):
                     self.set_geometry_flags(newMeshComponent, True, collMesh.geometryFlagsEvaluated)
 
         if self.shift_origin:
+            print("Recentering objects")
             # Once all meshes have been imported, the WorldAABB will properly encapsulate the entire level,
             # and an appropriate offset can be calculated to bring each object back closer to the origin
             worldOffset = self.worldAABB.get_center_position()
             self.worldOffsetVec = FVector(worldOffset[0], worldOffset[1], worldOffset[2])
             self.worldOffsetVec = KismetMathLibrary.RotateAngleAxis(self.worldOffsetVec, 90.0, FVector(1.0, 0.0, 0.0))
-            for currentMesh in self.proceduralMeshComponents:
+            for geoObjComponent in objectsToShift:
                 # Only shift static elements
-                if currentMesh.get_relative_location().length() > 1000.0:
-                    newLoc = currentMesh.get_relative_location() - self.worldOffsetVec
-                    currentMesh.set_relative_location(newLoc)
+                if geoObjComponent.get_relative_location().length() > 1000.0:
+                    newLoc = geoObjComponent.get_relative_location() - self.worldOffsetVec
+                    geoObjComponent.set_relative_location(newLoc)
 
         self.import_lights(MAPFile)
 
         self.refresh_geometry_flag_settings()
         ue.log("Created procedural mesh")
 
-    def PositionListToFVector(self, position, performRotation=False):
+    def arrayvector_to_fvector(self, position, performRotation=False):
         newVec = FVector(position[0], position[1], position[2])
         if performRotation:
             newVec = KismetMathLibrary.RotateAngleAxis(newVec, 90.0, FVector(1.0, 0.0, 0.0))
@@ -414,7 +452,6 @@ class MAPLevel(RSEResourceLoader):
 
     def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], shift_origin, parent_component):
         """Will import a list of renderables into a single Mesh Component.
-        shift_origin will determine whether or not to recenter the vertices around a local origin and shift the mesh component
         parent_component is the component that the new mesh component will attach to. Currently cannot be None.
         Returns a mesh component"""
 
@@ -424,47 +461,8 @@ class MAPLevel(RSEResourceLoader):
         self.uobject.modify()
         self.proceduralMeshComponents.append(newPMC)
 
-        currentGeoObjAABB = AxisAlignedBoundingBox()
-
-        # Calculate AABBs for each renderable
-        for renderable in renderables:
-            rAABB = renderable.calculate_AABB()
-            currentGeoObjAABB = currentGeoObjAABB.merge(rAABB)
-
-        # Calculate the offset for this GeometryObject
-        currentAABBLoc = currentGeoObjAABB.get_center_position()
-        offsetVec = FVector(currentAABBLoc[0], currentAABBLoc[1], currentAABBLoc[2])
-        # Rotate offset to match unreals coordinate system
-        offsetVec = KismetMathLibrary.RotateAngleAxis(offsetVec, 90.0, FVector(1.0, 0.0, 0.0))
-        if shift_origin:
-            newPMC.set_relative_location(offsetVec)
-
-        # Adjust the world AABB
-        # Only consider objects very far away for the world AABB, since dynamic objects like doors are very close to the origin, whereas static elements are over 50,000 units away
-        # TODO: Use a similar check to set elements to static or moveable
-        if offsetVec.length() > 1000.0:
-            self.worldAABB = self.worldAABB.merge(currentGeoObjAABB)
-
-        # Merge renderables with the same material index
-        # Rogue spear maps in particular seem to have meshes broken up to each polygon. Collapsing these into a single mesh significantly reduces draw calls.
-        mergedRenderables = {}
-        for renderable in renderables:
-            if renderable.materialIndex in mergedRenderables:
-                # There is already a renderable using this material index
-                masterRenderable = mergedRenderables[renderable.materialIndex]
-                masterRenderable.merge(renderable)
-            else:
-                mergedRenderables[renderable.materialIndex] = renderable
-
         # Import each renderable as a mesh now
-        for key, renderable in mergedRenderables.items():
-            if shift_origin:
-                # If shifting the origin, calculate the offset by the AABB and invert it
-                inverseLocation = []
-                for el in currentAABBLoc:
-                    inverseLocation.append(el * -1)
-                # Translate the vertices by the inverted offset so they are centred around the origin
-                renderable.translate(inverseLocation)
+        for renderable in renderables:
             self.import_renderable(newPMC, renderable, self.generatedMaterials)
 
         return newPMC

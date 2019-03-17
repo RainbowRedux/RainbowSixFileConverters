@@ -41,3 +41,11 @@ def is_vector_normal(normal):
     if normalSumSqrt > 0.9999 and normalSumSqrt < 1.0001:
         return True
     return False
+
+def calc_vector_length(vector):
+    lengthSquared = 0
+    for el in vector:
+        lengthSquared += el * el
+
+    length = math.sqrt(lengthSquared)
+    return length

@@ -1,5 +1,7 @@
 """Contains data structures and related functions for renderable geometry"""
 
+from RainbowFileReaders.MathHelpers import calc_vector_length
+
 class AxisAlignedBoundingBox(object):
     """Contains data for an Axis Aligned Bounding Box"""
     def __init__(self):
@@ -151,3 +153,45 @@ class RenderableArray(object):
                 newIdx = triIdx + indexOffset
                 newTri.append(newIdx)
             self.triangleIndices.append(newTri)
+
+
+def merge_renderables_by_material(renderables):
+    """Merge renderables with the same material index"""
+    # Rogue spear maps in particular seem to have meshes broken up to each polygon. Collapsing these into a single mesh significantly reduces draw calls.
+    mergedRenderables = {}
+    for renderable in renderables:
+        if renderable.materialIndex in mergedRenderables:
+            # There is already a renderable using this material index
+            masterRenderable = mergedRenderables[renderable.materialIndex]
+            masterRenderable.merge(renderable)
+        else:
+            mergedRenderables[renderable.materialIndex] = renderable
+    return mergedRenderables.values()
+
+def shift_origin_of_renderables(renderables, distance_threshold = 0):
+    """Calculates the bounds of all renderables in the list, and then translates the vertices by the center position of the AABB
+    Does not shift objects that have a center position less than distance_threshold away from the origin"""
+
+    geometryBounds = AxisAlignedBoundingBox()
+    # Calculate AABBs for each renderable and merge into a single AABB for this geometry object
+    for renderable in renderables:
+        rAABB = renderable.calculate_AABB()
+        geometryBounds = geometryBounds.merge(rAABB)
+
+    # Calculate the offset for this GeometryObject
+    currentAABBLoc = geometryBounds.get_center_position()
+    if calc_vector_length(currentAABBLoc) < distance_threshold:
+        return geometryBounds
+
+    # Calculate the offset by inverting the AABBs center
+    inverseLocation = []
+    for el in currentAABBLoc:
+        inverseLocation.append(el * -1)
+
+    for renderable in renderables:
+        # Translate the vertices by the inverted offset so they are centred around the origin
+        renderable.translate(inverseLocation)
+
+    return geometryBounds
+
+    
