@@ -354,6 +354,67 @@ class MAPLevel(RSEResourceLoader):
 
             return offsetVec
 
+    def apply_cxp_flags(self, rsemeshcomponent, materialIndex):
+        #Add gunpass and grenadepass flags from CXP material info
+        material = self.materialDefinitions[materialIndex]
+        if material is not None:
+            if material.CXPMaterialProperties is not None:
+                if material.CXPMaterialProperties.gunpass:
+                    rsemeshcomponent.bGunPass = True
+                if material.CXPMaterialProperties.grenadepass:
+                    rsemeshcomponent.bGrenadePass = True
+
+    def import_rogue_spear_geometry_object(self, geoObjectDefinition, geoObjComponent):
+        name = geoObjectDefinition.nameString
+
+        #Setup all visual geometry
+        geoObjRenderables = []
+        for _, facegroup in enumerate(geoObjectDefinition.geometryData.faceGroups):
+            renderable = geoObjectDefinition.geometryData.generate_renderable_array_for_facegroup(facegroup)
+            geoObjRenderables.append(renderable)
+
+        mergedRenderables = merge_renderables_by_material(geoObjRenderables)
+
+        offsetVec = self.shift_origin_of_new_renderables(mergedRenderables)
+        geoObjComponent.set_relative_location(offsetVec)
+        self.objectsToShift.append(geoObjComponent)
+
+        for renderable in mergedRenderables:
+            renderableName = name + "_" + str(renderable.materialIndex)
+            newMeshComponent = self.import_renderables_as_mesh_component(renderableName, [renderable], geoObjComponent)
+            #adds flags like gunpass and grenadepass
+            self.apply_cxp_flags(newMeshComponent, renderable.materialIndex)
+
+        #setup collision geometry
+        collisionName = name + "_collision"
+        collisionComponent = self.uobject.add_actor_component(SceneComponent, collisionName, self.defaultSceneComponent)
+        collisionData = geoObjectDefinition.geometryData.collisionInformation
+        for i, collMesh in enumerate(collisionData.collisionMeshDefinitions):
+            if collMesh.geometryFlagsEvaluated["GF_INVISIBLE"] is True:
+                #Do not process invalid and unused meshes
+                continue
+            subCollisionName = collisionName + "_idx" + str(i)
+            renderable = collisionData.generate_renderable_array_for_collisionmesh(collMesh, geoObjectDefinition.geometryData)
+            newMeshComponent = self.import_renderables_as_mesh_component(subCollisionName, [renderable], collisionComponent)
+
+            self.set_geometry_flags(newMeshComponent, True, collMesh.geometryFlagsEvaluated)
+
+    def import_rainbow_six_geometry_object(self, geoObjectDefinition, geoObjComponent):
+        name = geoObjectDefinition.nameString
+
+        for srcMeshIdx, sourceMesh in enumerate(geoObjectDefinition.meshes):
+            renderableName = name + "_" + sourceMesh.nameString + "_" + str(srcMeshIdx)
+            currRenderables = geoObjectDefinition.generate_renderable_arrays_for_mesh(sourceMesh)
+
+            mergedRenderables = merge_renderables_by_material(currRenderables)
+            offsetVec = self.shift_origin_of_new_renderables(mergedRenderables)
+
+            newMeshComponent = self.import_renderables_as_mesh_component(renderableName, mergedRenderables, geoObjComponent)
+            newMeshComponent.set_relative_location(offsetVec)
+            self.objectsToShift.append(newMeshComponent)
+
+            self.set_geometry_flags(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
+
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
         #self.filepath = ImporterSettings.map_file_path
@@ -369,12 +430,12 @@ class MAPLevel(RSEResourceLoader):
 
         usedNames = []
         self.objectComponents = []
-        objectsToShift = []
+        self.objectsToShift = []
 
         self.worldOffsetVec = FVector(0, 0, 0)
 
-        for _, geoObj in enumerate(MAPFile.geometryObjects):
-            name = geoObj.nameString
+        for _, geoObjectDefinition in enumerate(MAPFile.geometryObjects):
+            name = geoObjectDefinition.nameString
             if name in usedNames:
                 ue.log("Duplicate name!" + name)
             else:
@@ -387,59 +448,9 @@ class MAPLevel(RSEResourceLoader):
             self.objectComponents.append(geoObjComponent)
 
             if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
-                for srcMeshIdx, sourceMesh in enumerate(geoObj.meshes):
-                    renderableName = name + "_" + sourceMesh.nameString + "_" + str(srcMeshIdx)
-                    currRenderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
-
-                    mergedRenderables = merge_renderables_by_material(currRenderables)
-                    offsetVec = self.shift_origin_of_new_renderables(mergedRenderables)
-
-                    newMeshComponent = self.import_renderables_as_mesh_component(renderableName, mergedRenderables, geoObjComponent)
-                    newMeshComponent.set_relative_location(offsetVec)
-                    objectsToShift.append(newMeshComponent)
-
-                    self.set_geometry_flags(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
-
+                self.import_rainbow_six_geometry_object(geoObjectDefinition, geoObjComponent)
             else: # Rogue spear
-                #Setup all visual geometry
-                geoObjRenderables = []
-                for _, facegroup in enumerate(geoObj.geometryData.faceGroups):
-                    renderable = geoObj.geometryData.generate_renderable_array_for_facegroup(facegroup)
-                    geoObjRenderables.append(renderable)
-
-                mergedRenderables = merge_renderables_by_material(geoObjRenderables)
-
-                offsetVec = self.shift_origin_of_new_renderables(mergedRenderables)
-                geoObjComponent.set_relative_location(offsetVec)
-                objectsToShift.append(geoObjComponent)
-
-                for renderable in mergedRenderables:
-                    renderableName = name + "_" + str(renderable.materialIndex)
-                    newMeshComponent = self.import_renderables_as_mesh_component(renderableName, [renderable], geoObjComponent)
-
-                    #Add gunpass and grenadepass flags from CXP material info
-                    material = self.materialDefinitions[renderable.materialIndex]
-                    if material is not None:
-                        if material.CXPMaterialProperties is not None:
-                            if material.CXPMaterialProperties.gunpass:
-                                newMeshComponent.bGunPass = True
-                            if material.CXPMaterialProperties.grenadepass:
-                                newMeshComponent.bGrenadePass = True
-
-
-                #setup collision geometry
-                collisionName = name + "_collision"
-                collisionComponent = self.uobject.add_actor_component(SceneComponent, collisionName, self.defaultSceneComponent)
-                collisionData = geoObj.geometryData.collisionInformation
-                for i, collMesh in enumerate(collisionData.collisionMeshDefinitions):
-                    if collMesh.geometryFlagsEvaluated["GF_INVISIBLE"] is True:
-                        #Do not process invalid and unused meshes
-                        continue
-                    subCollisionName = collisionName + "_idx" + str(i)
-                    renderable = collisionData.generate_renderable_array_for_collisionmesh(collMesh, geoObj.geometryData)
-                    newMeshComponent = self.import_renderables_as_mesh_component(subCollisionName, [renderable], collisionComponent)
-
-                    self.set_geometry_flags(newMeshComponent, True, collMesh.geometryFlagsEvaluated)
+                self.import_rogue_spear_geometry_object(geoObjectDefinition, geoObjComponent)
 
         if self.shift_origin:
             print("Recentering objects")
@@ -448,7 +459,7 @@ class MAPLevel(RSEResourceLoader):
             worldOffset = self.worldAABB.get_center_position()
             self.worldOffsetVec = FVector(worldOffset[0], worldOffset[1], worldOffset[2])
             self.worldOffsetVec = KismetMathLibrary.RotateAngleAxis(self.worldOffsetVec, 90.0, FVector(1.0, 0.0, 0.0))
-            for geoObjComponent in objectsToShift:
+            for geoObjComponent in self.objectsToShift:
                 # Only shift static elements
                 if geoObjComponent.get_relative_location().length() > 1000.0:
                     newLoc = geoObjComponent.get_relative_location() - self.worldOffsetVec
