@@ -1,11 +1,12 @@
 """This moduled defines classes and functions related to importing RSE assets into Unreal"""
 import os
 import PIL
-from PIL import Image
+# Pylint disabled error W0611 as this is actually due to python not loading submodules by default
+from PIL import Image # pylint: disable=W0611
 
 import unreal_engine as ue
-from unreal_engine.classes import Actor, SceneComponent, CustomProceduralMeshComponent, KismetMathLibrary, MaterialInterface, Texture2D, TestActor
-from unreal_engine import FVector, FVector2D, FColor, FRotator, FLinearColor
+from unreal_engine.classes import SceneComponent, CustomProceduralMeshComponent, KismetMathLibrary, MaterialInterface, Texture2D
+from unreal_engine import FVector, FVector2D, FColor, FLinearColor
 from unreal_engine.enums import EPixelFormat, TextureAddress
 
 from RainbowFileReaders import SOBModelReader
@@ -64,25 +65,26 @@ class RSEResourceLoader:
         newTexture.texture_set_data(image.tobytes())
 
         # #These don't appear used in Rainbow Six, but probably will be in Rogue Spear
-        # if textureAddressMode == 1: #WRAP
-        #     newTexture.AddressX = TextureAddress.TA_Wrap
-        #     newTexture.AddressY = TextureAddress.TA_Wrap
-        #     newTexture.AddressX = TextureAddress.TA_Clamp
-        #     newTexture.AddressY = TextureAddress.TA_Clamp
-        # elif textureAddressMode == 3: #CLAMP
-        #     newTexture.AddressX = TextureAddress.TA_Clamp
-        #     newTexture.AddressY = TextureAddress.TA_Clamp
-        #     newTexture.AddressX = TextureAddress.TA_Wrap
-        #     newTexture.AddressY = TextureAddress.TA_Wrap
-        # else:
-        #     ue.log("WARNING: Unknown texture tiling method")
+        if textureAddressMode == 1: #WRAP
+            _ = TextureAddress.TA_Wrap
+            # newTexture.AddressX = TextureAddress.TA_Wrap
+            # newTexture.AddressY = TextureAddress.TA_Wrap
+            # newTexture.AddressX = TextureAddress.TA_Clamp
+            # newTexture.AddressY = TextureAddress.TA_Clamp
+        elif textureAddressMode == 3: #CLAMP
+            _ = TextureAddress.TA_Clamp
+            # newTexture.AddressX = TextureAddress.TA_Clamp
+            # newTexture.AddressY = TextureAddress.TA_Clamp
+            # newTexture.AddressX = TextureAddress.TA_Wrap
+            # newTexture.AddressY = TextureAddress.TA_Wrap
+        else:
+            ue.log("WARNING: Unknown texture tiling method")
 
         self.loadedTextures[texturePath] = newTexture
         return newTexture
 
     def determine_parent_material_required(self, materialDefinition: RSEMaterialDefinition) -> (str):
         """Assesses the material definition and determines the correct parent material to use"""
-        #TODO: Determine the correct material variant to load: opaque, masked, translucent and the two sided variants of all
         bTwoSided = False
         if materialDefinition.twoSided:
             bTwoSided = True
@@ -210,6 +212,7 @@ class SOBModel(RSEResourceLoader):
     # constructor adding a component
     def __init__(self):
         self.defaultSceneComponent = self.add_actor_root_component(SceneComponent, 'DefaultSceneComponent')
+        self.shift_origin = False
         self.load_model()
         #self.proceduralMeshComponent = self.add_actor_component(CustomProceduralMeshComponent, 'ProceduralMesh')
 
@@ -225,16 +228,24 @@ class SOBModel(RSEResourceLoader):
         self.materialDefinitions = SOBFile.materials
         self.LoadMaterials()
 
-        renderables = []
+        for _, geoObj in enumerate(SOBFile.geometryObjects):
+            name = geoObj.nameString
 
-        # for geoObj in SOBFile.geometryObjects:
-        #     for sourceMesh in geoObj.meshes:
-        #         renderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
+            print("Processing geoobj: " + name)
+            geoObjComponent = self.uobject.add_actor_component(SceneComponent, name, self.defaultSceneComponent)
+            self.uobject.add_instance_component(geoObjComponent)
+            self.uobject.modify()
+            self.objectComponents.append(geoObjComponent)
 
-        #         for _, currentRenderable in enumerate(renderables):
-        #             self.proceduralMeshComponent.import_renderable(currentRenderable, self.generatedMaterials)
+            for srcMeshIdx, sourceMesh in enumerate(geoObj.meshes):
+                renderableName = name + "_" + sourceMesh.nameString + "_" + str(srcMeshIdx)
+                currRenderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
 
-        ue.log("Created procedural mesh")
+                mergedRenderables = merge_renderables_by_material(currRenderables)
+
+                newMeshComponent = self.import_renderables_as_mesh_component(renderableName, mergedRenderables, self.shift_origin, geoObjComponent)
+
+                self.set_geometry_flags(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
 
     # properties can only be set starting from begin play
     def ReceiveBeginPlay(self):
@@ -254,9 +265,11 @@ class MAPLevel(RSEResourceLoader):
         self.LoadMap()
 
     def tick(self, delta_time):
+        """Called every frame"""
         pass
 
     def import_lights(self, MAPFile):
+        """Import every light in the map file, both RS and R6 types"""
         self.uobject.SpawnLightActor()
         light_actor = self.uobject.LightActor
 
@@ -306,7 +319,7 @@ class MAPLevel(RSEResourceLoader):
                 light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
 
     def set_geometry_flags(self, mesh_component, collision_only, flags_dict):
-
+        """Set flags from a dictionary that contains geometry flags for an object"""
         if mesh_component is None:
             return
 
@@ -373,7 +386,7 @@ class MAPLevel(RSEResourceLoader):
             self.uobject.modify()
             self.objectComponents.append(geoObjComponent)
 
-            if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:    
+            if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
                 for srcMeshIdx, sourceMesh in enumerate(geoObj.meshes):
                     renderableName = name + "_" + sourceMesh.nameString + "_" + str(srcMeshIdx)
                     currRenderables = geoObj.generate_renderable_arrays_for_mesh(sourceMesh)
@@ -381,7 +394,7 @@ class MAPLevel(RSEResourceLoader):
                     mergedRenderables = merge_renderables_by_material(currRenderables)
                     offsetVec = self.shift_origin_of_new_renderables(mergedRenderables)
 
-                    newMeshComponent = self.import_renderables_as_mesh_component(renderableName, mergedRenderables, self.shift_origin, geoObjComponent)
+                    newMeshComponent = self.import_renderables_as_mesh_component(renderableName, mergedRenderables, geoObjComponent)
                     newMeshComponent.set_relative_location(offsetVec)
                     objectsToShift.append(newMeshComponent)
 
@@ -395,7 +408,6 @@ class MAPLevel(RSEResourceLoader):
                     geoObjRenderables.append(renderable)
 
                 mergedRenderables = merge_renderables_by_material(geoObjRenderables)
-                #TODO: Pass through CXP gunpass grenadepass tags to the newly separated geometry
 
                 offsetVec = self.shift_origin_of_new_renderables(mergedRenderables)
                 geoObjComponent.set_relative_location(offsetVec)
@@ -403,7 +415,7 @@ class MAPLevel(RSEResourceLoader):
 
                 for renderable in mergedRenderables:
                     renderableName = name + "_" + str(renderable.materialIndex)
-                    newMeshComponent = self.import_renderables_as_mesh_component(renderableName, [renderable], self.shift_origin, geoObjComponent)
+                    newMeshComponent = self.import_renderables_as_mesh_component(renderableName, [renderable], geoObjComponent)
 
                     #Add gunpass and grenadepass flags from CXP material info
                     material = self.materialDefinitions[renderable.materialIndex]
@@ -425,7 +437,7 @@ class MAPLevel(RSEResourceLoader):
                         continue
                     subCollisionName = collisionName + "_idx" + str(i)
                     renderable = collisionData.generate_renderable_array_for_collisionmesh(collMesh, geoObj.geometryData)
-                    newMeshComponent = self.import_renderables_as_mesh_component(subCollisionName, [renderable], self.shift_origin, collisionComponent)
+                    newMeshComponent = self.import_renderables_as_mesh_component(subCollisionName, [renderable], collisionComponent)
 
                     self.set_geometry_flags(newMeshComponent, True, collMesh.geometryFlagsEvaluated)
 
@@ -448,19 +460,18 @@ class MAPLevel(RSEResourceLoader):
         ue.log("Created procedural mesh")
 
     def arrayvector_to_fvector(self, position, performRotation=False):
+        """Converts a list of 3 floats into an unreal FVector class"""
         newVec = FVector(position[0], position[1], position[2])
         if performRotation:
             newVec = KismetMathLibrary.RotateAngleAxis(newVec, 90.0, FVector(1.0, 0.0, 0.0))
         return newVec
 
     def refresh_geometry_flag_settings(self):
-        # Force the meshes to update their visibility based on their flags and materials
+        """Force the meshes to update their visibility based on their flags and materials"""
         for currentMesh in self.proceduralMeshComponents:
-            #print(currentMesh.GetDisplayName())
             currentMesh.UpdateFlagSettings()
-            pass
 
-    def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], shift_origin, parent_component):
+    def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], parent_component):
         """Will import a list of renderables into a single Mesh Component.
         parent_component is the component that the new mesh component will attach to. Currently cannot be None.
         Returns a mesh component"""
