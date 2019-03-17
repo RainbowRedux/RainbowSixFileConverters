@@ -22,6 +22,98 @@ from UnrealImporters import ImporterSettings
 
 ue.log('Initializing SOB File importer')
 
+def determine_parent_material_required(materialDefinition: RSEMaterialDefinition) -> (str):
+    """Assesses the material definition and determines the correct parent material to use"""
+    bTwoSided = False
+    if materialDefinition.twoSided:
+        bTwoSided = True
+
+    blendMode = "opaque"
+    cxpProps = materialDefinition.CXPMaterialProperties
+    if cxpProps is not None:
+        if cxpProps.blendMode == "alphablend":
+            blendMode = "alpha"
+        if cxpProps.blendMode == "colorkey":
+            if materialDefinition.opacity < 0.99:
+                blendMode = "alpha"
+            else:
+                blendMode = "masked"
+        if tuple(cxpProps.textureformat) == (0, 4, 4, 4, 4):
+            blendMode = "alpha"
+
+    materialRequired = "ShermanRommel_" + blendMode
+    if bTwoSided:
+        materialRequired += "_twosided"
+
+    return materialRequired
+
+def import_renderable(mesh_component, renderable, materials):
+    """Adds the specified renderable as a mesh section to the supplied procedural mesh component"""
+    vertexArray = []
+    #Repack vertices into array of FVectors, and invert X coordinate
+    for vertex in renderable.vertices:
+        tempVertex = FVector(vertex[0], vertex[1], vertex[2])
+        #tempVertex = tempVertex - FVector(32611.490234, 31651.273438, 32911.394531)
+        tempVertex = KismetMathLibrary.RotateAngleAxis(tempVertex, 90.0, FVector(1.0, 0.0, 0.0))
+        vertexArray.append(tempVertex)
+
+    normalArray = []
+    for normal in renderable.normals:
+        tempVertex = FVector(normal[0], normal[1], normal[2])
+        tempVertex = KismetMathLibrary.RotateAngleAxis(tempVertex, 90.0, FVector(1.0, 0.0, 0.0))
+        normalArray.append(tempVertex)
+
+    uvArray = []
+    if renderable.UVs is not None:
+        for UV in renderable.UVs:
+            uvArray.append(FVector2D(UV[0], UV[1]))
+
+    colorArray = []
+    if renderable.vertexColors is not None:
+        for color in renderable.vertexColors:
+            newColor = []
+            for element in color:
+                newColor.append(int(element * 255))
+            colorArray.append(FColor(newColor[0], newColor[1], newColor[2]))
+
+    indexArray = []
+    #Repack face vertex indices into flat array
+    for face in renderable.triangleIndices:
+        indexArray.append(face[2])
+        indexArray.append(face[1])
+        indexArray.append(face[0])
+
+    newMeshSectionIdx = mesh_component.AutoCreateMeshSection(vertexArray, indexArray, normalArray, UV0=uvArray, VertexColors=colorArray, bCreateCollision=True)
+    newMeshSectionIdx = mesh_component.GetLastCreatedMeshIndex()
+
+    if renderable.materialIndex != R6Constants.UINT_MAX:
+        mesh_component.SetMaterial(newMeshSectionIdx, materials[renderable.materialIndex])
+
+def set_rse_geometry_flags_on_mesh_component(mesh_component, collision_only, flags_dict):
+    """Set flags from a dictionary that contains geometry flags for an object"""
+    if mesh_component is None:
+        return
+
+    mesh_component.bCollisionOnly = collision_only
+    mesh_component.bHasRSEGeometryFlags = True
+
+    if flags_dict is not None:
+        mesh_component.bGF_Climbable = flags_dict["GF_CLIMBABLE"]
+        mesh_component.bGF_NoCollide2D = flags_dict["GF_NOCOLLIDE2D"]
+        mesh_component.bGF_Invisible = flags_dict["GF_INVISIBLE"]
+        mesh_component.bGF_Unknown2 = flags_dict["GF_UNKNOWN2"]
+        mesh_component.bGF_FloorPolygon = flags_dict["GF_FLOORPOLYGON"]
+        mesh_component.bGF_NoCollide3D = flags_dict["GF_NOCOLLIDE3D"]
+        mesh_component.bGF_Unknown4 = flags_dict["GF_UNKNOWN4"]
+        mesh_component.bGF_NotShownInPlan = flags_dict["GF_NOTSHOWNINPLAN"]
+
+def arrayvector_to_fvector(position, performRotation=False):
+    """Converts a list of 3 floats into an unreal FVector class"""
+    newVec = FVector(position[0], position[1], position[2])
+    if performRotation:
+        newVec = KismetMathLibrary.RotateAngleAxis(newVec, 90.0, FVector(1.0, 0.0, 0.0))
+    return newVec
+
 class RSEResourceLoader:
     """A base class for RSE data formats which provides common functionality"""
     def __init__(self):
@@ -83,31 +175,6 @@ class RSEResourceLoader:
         self.loadedTextures[texturePath] = newTexture
         return newTexture
 
-    def determine_parent_material_required(self, materialDefinition: RSEMaterialDefinition) -> (str):
-        """Assesses the material definition and determines the correct parent material to use"""
-        bTwoSided = False
-        if materialDefinition.twoSided:
-            bTwoSided = True
-
-        blendMode = "opaque"
-        cxpProps = materialDefinition.CXPMaterialProperties
-        if cxpProps is not None:
-            if cxpProps.blendMode == "alphablend":
-                blendMode = "alpha"
-            if cxpProps.blendMode == "colorkey":
-                if materialDefinition.opacity < 0.99:
-                    blendMode = "alpha"
-                else:
-                    blendMode = "masked"
-            if tuple(cxpProps.textureformat) == (0, 4, 4, 4, 4):
-                blendMode = "alpha"
-
-        materialRequired = "ShermanRommel_" + blendMode
-        if bTwoSided:
-            materialRequired += "_twosided"
-
-        return materialRequired
-
     def get_unreal_master_material(self, material_name: str) -> (MaterialInterface):
         """Gets an unreal material for use. If it's not already loaded, it will load it automatically and cache it for next time"""
         if material_name in self.loadedParentMaterials:
@@ -133,7 +200,7 @@ class RSEResourceLoader:
             verbose = False
             if matDef.textureName.startswith("cl02_spray1"):
                 verbose = True
-            parentMaterialName = self.determine_parent_material_required(matDef)
+            parentMaterialName = determine_parent_material_required(matDef)
             parentMaterial = self.get_unreal_master_material(parentMaterialName)
             if verbose:
                 ue.log("=====================")
@@ -245,7 +312,7 @@ class SOBModel(RSEResourceLoader):
 
                 newMeshComponent = self.import_renderables_as_mesh_component(renderableName, mergedRenderables, self.shift_origin, geoObjComponent)
 
-                self.set_geometry_flags(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
+                set_rse_geometry_flags_on_mesh_component(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
 
     # properties can only be set starting from begin play
     def ReceiveBeginPlay(self):
@@ -276,7 +343,7 @@ class MAPLevel(RSEResourceLoader):
         #Import lightlist
         for lightDef in MAPFile.lightList.lights:
             # Place lamp to a specified location
-            position = self.arrayvector_to_fvector(lightDef.position, True)
+            position = arrayvector_to_fvector(lightDef.position, True)
             if self.shift_origin:
                 position = position - self.worldOffsetVec
 
@@ -299,7 +366,7 @@ class MAPLevel(RSEResourceLoader):
         if MAPFile.dmpLights is not None:
             for lightDef in MAPFile.dmpLights.lights:
                 # Place lamp to a specified location
-                position = self.arrayvector_to_fvector(lightDef.position, True)
+                position = arrayvector_to_fvector(lightDef.position, True)
                 if self.shift_origin:
                     position = position - self.worldOffsetVec
 
@@ -317,24 +384,6 @@ class MAPLevel(RSEResourceLoader):
                 lightName = lightDef.nameString
 
                 light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
-
-    def set_geometry_flags(self, mesh_component, collision_only, flags_dict):
-        """Set flags from a dictionary that contains geometry flags for an object"""
-        if mesh_component is None:
-            return
-
-        mesh_component.bCollisionOnly = collision_only
-        mesh_component.bHasRSEGeometryFlags = True
-
-        if flags_dict is not None:
-            mesh_component.bGF_Climbable = flags_dict["GF_CLIMBABLE"]
-            mesh_component.bGF_NoCollide2D = flags_dict["GF_NOCOLLIDE2D"]
-            mesh_component.bGF_Invisible = flags_dict["GF_INVISIBLE"]
-            mesh_component.bGF_Unknown2 = flags_dict["GF_UNKNOWN2"]
-            mesh_component.bGF_FloorPolygon = flags_dict["GF_FLOORPOLYGON"]
-            mesh_component.bGF_NoCollide3D = flags_dict["GF_NOCOLLIDE3D"]
-            mesh_component.bGF_Unknown4 = flags_dict["GF_UNKNOWN4"]
-            mesh_component.bGF_NotShownInPlan = flags_dict["GF_NOTSHOWNINPLAN"]
 
     def shift_origin_of_new_renderables(self, renderables):
         """Calculates the combined bounds of the new renderables and shifts the origin
@@ -355,7 +404,7 @@ class MAPLevel(RSEResourceLoader):
             return offsetVec
 
     def apply_cxp_flags(self, rsemeshcomponent, materialIndex):
-        #Add gunpass and grenadepass flags from CXP material info
+        """Add gunpass and grenadepass flags from CXP material info"""
         material = self.materialDefinitions[materialIndex]
         if material is not None:
             if material.CXPMaterialProperties is not None:
@@ -365,6 +414,7 @@ class MAPLevel(RSEResourceLoader):
                     rsemeshcomponent.bGrenadePass = True
 
     def import_rogue_spear_geometry_object(self, geoObjectDefinition, geoObjComponent):
+        """Imports geometry from a rogue spear map geometryObject definition"""
         name = geoObjectDefinition.nameString
 
         #Setup all visual geometry
@@ -397,9 +447,10 @@ class MAPLevel(RSEResourceLoader):
             renderable = collisionData.generate_renderable_array_for_collisionmesh(collMesh, geoObjectDefinition.geometryData)
             newMeshComponent = self.import_renderables_as_mesh_component(subCollisionName, [renderable], collisionComponent)
 
-            self.set_geometry_flags(newMeshComponent, True, collMesh.geometryFlagsEvaluated)
+            set_rse_geometry_flags_on_mesh_component(newMeshComponent, True, collMesh.geometryFlagsEvaluated)
 
     def import_rainbow_six_geometry_object(self, geoObjectDefinition, geoObjComponent):
+        """Imports geometry from a rainbow six map geometryObject definition"""
         name = geoObjectDefinition.nameString
 
         for srcMeshIdx, sourceMesh in enumerate(geoObjectDefinition.meshes):
@@ -413,7 +464,7 @@ class MAPLevel(RSEResourceLoader):
             newMeshComponent.set_relative_location(offsetVec)
             self.objectsToShift.append(newMeshComponent)
 
-            self.set_geometry_flags(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
+            set_rse_geometry_flags_on_mesh_component(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
 
     def LoadMap(self):
         """Loads the file and creates appropriate assets in unreal"""
@@ -470,13 +521,6 @@ class MAPLevel(RSEResourceLoader):
         self.refresh_geometry_flag_settings()
         ue.log("Created procedural mesh")
 
-    def arrayvector_to_fvector(self, position, performRotation=False):
-        """Converts a list of 3 floats into an unreal FVector class"""
-        newVec = FVector(position[0], position[1], position[2])
-        if performRotation:
-            newVec = KismetMathLibrary.RotateAngleAxis(newVec, 90.0, FVector(1.0, 0.0, 0.0))
-        return newVec
-
     def refresh_geometry_flag_settings(self):
         """Force the meshes to update their visibility based on their flags and materials"""
         for currentMesh in self.proceduralMeshComponents:
@@ -495,48 +539,6 @@ class MAPLevel(RSEResourceLoader):
 
         # Import each renderable as a mesh now
         for renderable in renderables:
-            self.import_renderable(newPMC, renderable, self.generatedMaterials)
+            import_renderable(newPMC, renderable, self.generatedMaterials)
 
         return newPMC
-
-    def import_renderable(self, mesh_component, renderable, materials):
-        """Adds the specified renderable as a mesh section to this procedural mesh component"""
-        vertexArray = []
-        #Repack vertices into array of FVectors, and invert X coordinate
-        for vertex in renderable.vertices:
-            tempVertex = FVector(vertex[0], vertex[1], vertex[2])
-            #tempVertex = tempVertex - FVector(32611.490234, 31651.273438, 32911.394531)
-            tempVertex = KismetMathLibrary.RotateAngleAxis(tempVertex, 90.0, FVector(1.0, 0.0, 0.0))
-            vertexArray.append(tempVertex)
-
-        normalArray = []
-        for normal in renderable.normals:
-            tempVertex = FVector(normal[0], normal[1], normal[2])
-            tempVertex = KismetMathLibrary.RotateAngleAxis(tempVertex, 90.0, FVector(1.0, 0.0, 0.0))
-            normalArray.append(tempVertex)
-
-        uvArray = []
-        if renderable.UVs is not None:
-            for UV in renderable.UVs:
-                uvArray.append(FVector2D(UV[0], UV[1]))
-
-        colorArray = []
-        if renderable.vertexColors is not None:
-            for color in renderable.vertexColors:
-                newColor = []
-                for element in color:
-                    newColor.append(int(element * 255))
-                colorArray.append(FColor(newColor[0], newColor[1], newColor[2]))
-
-        indexArray = []
-        #Repack face vertex indices into flat array
-        for face in renderable.triangleIndices:
-            indexArray.append(face[2])
-            indexArray.append(face[1])
-            indexArray.append(face[0])
-
-        newMeshSectionIdx = mesh_component.AutoCreateMeshSection(vertexArray, indexArray, normalArray, UV0=uvArray, VertexColors=colorArray, bCreateCollision=True)
-        newMeshSectionIdx = mesh_component.GetLastCreatedMeshIndex()
-
-        if renderable.materialIndex != R6Constants.UINT_MAX:
-            mesh_component.SetMaterial(newMeshSectionIdx, materials[renderable.materialIndex])
