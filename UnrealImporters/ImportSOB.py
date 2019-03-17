@@ -180,7 +180,7 @@ class RSEResourceLoader:
         if material_name in self.loadedParentMaterials:
             return self.loadedParentMaterials[material_name]
 
-        materialFullPath = "/Game/Rainbow/MasterMaterials/{}.{}".format(material_name, material_name)
+        materialFullPath = "/Game/Rainbow/MasterMaterials/{matname}.{matname}".format(matname=material_name)
         loadedMaterial = None
         try:
             loadedMaterial = ue.load_object(MaterialInterface, materialFullPath)
@@ -402,6 +402,7 @@ class MAPLevel(RSEResourceLoader):
                 self.worldAABB = self.worldAABB.merge(geometryBounds)
 
             return offsetVec
+        return FVector(0.0, 0.0, 0.0)
 
     def apply_cxp_flags(self, rsemeshcomponent, materialIndex):
         """Add gunpass and grenadepass flags from CXP material info"""
