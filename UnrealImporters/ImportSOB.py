@@ -403,7 +403,17 @@ class MAPLevel(RSEResourceLoader):
 
                 for renderable in mergedRenderables:
                     renderableName = name + "_" + str(renderable.materialIndex)
-                    self.import_renderables_as_mesh_component(renderableName, [renderable], self.shift_origin, geoObjComponent)
+                    newMeshComponent = self.import_renderables_as_mesh_component(renderableName, [renderable], self.shift_origin, geoObjComponent)
+
+                    #Add gunpass and grenadepass flags from CXP material info
+                    material = self.materialDefinitions[renderable.materialIndex]
+                    if material is not None:
+                        if material.CXPMaterialProperties is not None:
+                            if material.CXPMaterialProperties.gunpass:
+                                newMeshComponent.bGunPass = True
+                            if material.CXPMaterialProperties.grenadepass:
+                                newMeshComponent.bGrenadePass = True
+
 
                 #setup collision geometry
                 collisionName = name + "_collision"
