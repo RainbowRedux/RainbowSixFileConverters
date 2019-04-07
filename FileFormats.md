@@ -4,6 +4,7 @@
 
 - Sherman - Rainbow Six Engine
 - Rommel - Rogue Spear Engine
+- Ike - Ghost Recon
 
 ## General/Shared files
 
@@ -28,6 +29,8 @@ Complete means that files are fully read, all variables are understood.
 | [x]     | 80%      | MAP       | Binary | R6/RS Map file, geo, materials, portals |
 | [x]     | 80%      | DMP       | Binary | Light data that is no longer stored in MAP files in Rogue Spear/Rommel |
 | [ ]     |          | RLV       | Binary | ??? - stored alongside roguespear maps |
+| [ ]     |          | MIS       | Text   | Mission file, stores data about a mission such as ambient lighting, mission name, available operators etc |
+| [ ]     |          | MDF       | Text   | Mission difficulty file, stores data about terrorists, hostages and other settings for a particular difficulty setting |
 
 ## Character related files
 
