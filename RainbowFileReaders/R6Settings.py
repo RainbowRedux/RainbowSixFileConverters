@@ -100,6 +100,11 @@ def get_relevant_global_texture_paths(filename):
     for path in dataPaths:
         if path is not None:
             texturePaths.append(os.path.join(path, paths["TexturePath"]))
+    #As a last resort, add the map folders to search, resolves a few missing textures
+    if filename.lower().endswith(".map"):
+        for path in dataPaths:
+            if path is not None:
+                texturePaths.append(os.path.join(path, paths["MapPath"]))
 
     return texturePaths
 
