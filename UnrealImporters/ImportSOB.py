@@ -380,7 +380,7 @@ class MAPLevel(RSEResourceLoader):
                 quadAtten = lightDef.quadraticAttenuation
                 energy = lightDef.energy
                 falloff = lightDef.falloff
-                lightType = lightDef.type
+                lightType = lightDef.lightType
                 lightName = lightDef.nameString
 
                 light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
