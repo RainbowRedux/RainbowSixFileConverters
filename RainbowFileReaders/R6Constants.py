@@ -10,10 +10,10 @@ class RSEGameVersions(object):
     UNKNOWN = "??"
 
 class RSEEngineVersions(object):
-    UNKNOWN = -1
-    SHERMAN = 0 # Rainbow Six, Eagle Watch
-    ROMMEL = 1 # Rogue Spear, Urban Ops, Covert Ops, Black Ops
-    IKE = 2 # Ghost Recon
+    UNKNOWN = "Unknown"
+    SHERMAN = "Sherman" # Rainbow Six, Eagle Watch
+    ROMMEL = "Rommel" # Rogue Spear, Urban Ops, Covert Ops, Black Ops
+    IKE = "Ike" # Ghost Recon
 
 class RSEMaterialFormatConstants(object):
     """Used to group some related constants, somewhat like an enum

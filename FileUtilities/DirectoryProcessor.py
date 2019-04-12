@@ -16,10 +16,11 @@ def gather_files_in_path(extension, folder):
     filesToProcess = []
     for root, dirs, files in os.walk(folder, topdown=True):
         for name in files:
-            if name.upper().endswith(extension):
+            if name.upper().endswith(extension.upper()):
                 filesToProcess.append(join(root, name))
         for name in dirs:
-            print("Walking directory: " + os.path.join(root, name))
+            pass
+            #print("Walking directory: " + os.path.join(root, name))
     return filesToProcess
 
 class DirectoryProcessor(object):
