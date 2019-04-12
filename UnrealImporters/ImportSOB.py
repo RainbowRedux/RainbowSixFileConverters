@@ -329,7 +329,6 @@ class MAPLevel(RSEResourceLoader):
         # This will allow an offset to be calculated to shift the map closer to the world origin, buying back precision
         self.worldAABB = AxisAlignedBoundingBox()
         self.shift_origin = True
-        self.LoadMap()
 
     def tick(self, delta_time):
         """Called every frame"""
@@ -467,7 +466,7 @@ class MAPLevel(RSEResourceLoader):
 
             set_rse_geometry_flags_on_mesh_component(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
 
-    def LoadMap(self):
+    def load_map(self):
         """Loads the file and creates appropriate assets in unreal"""
         #self.filepath = ImporterSettings.map_file_path
         self.filepath = self.uobject.mappath

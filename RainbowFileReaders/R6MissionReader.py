@@ -37,12 +37,18 @@ class R6MissionFile(object):
         self.render_software_far_clip = float(keywords.pop(0).replace("f",""))
 
         self.render_fog_enabled = keywords.pop(0)
-        self.render_fog_color = read_keyword_list(keywords, 3)
+        self.render_fog_color = []
+        for _ in range(3):
+            self.render_fog_color.append(int(keywords.pop(0)))
         self.render_fog_start_distance = float(keywords.pop(0).replace("f",""))
         self.render_fog_end_distance = float(keywords.pop(0).replace("f",""))
 
-        self.render_ambient_light_color = read_keyword_list(keywords, 3)
-        self.render_background_color = read_keyword_list(keywords, 3)
+        self.render_ambient_light_color = []
+        for _ in range(3):
+            self.render_ambient_light_color.append(int(keywords.pop(0)))
+        self.render_background_color = []
+        for _ in range(3):
+            self.render_background_color.append(int(keywords.pop(0)))
 
         self.clouds_enabled = keywords.pop(0)
         self.clouds_texture_filename = keywords.pop(0)
