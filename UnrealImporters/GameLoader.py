@@ -26,7 +26,13 @@ class GameLoader(object):
             mappath = os.path.join(self.game_loader.game_path, "data", "map", missionFile.map_directory, missionFile.map_file_name)
             mappath = os.path.normpath(mappath)
             self.uobject.LoadMap(mappath)
-            self.uobject.LoadedMap.SetFogColor(missionFile.render_fog_color[0], missionFile.render_fog_color[1], missionFile.render_fog_color[2])
+            self.uobject.LoadedMap.SetFogParameters(missionFile.render_fog_color[0], missionFile.render_fog_color[1], missionFile.render_fog_color[2], missionFile.render_fog_start_distance, missionFile.render_fog_end_distance)
+            if missionFile.render_fog_enabled != 0:
+                self.uobject.LoadedMap.SetFogEnabled(True)
+            else:
+                self.uobject.LoadedMap.SetFogEnabled(False)
+            self.uobject.LoadedMap.SetAmbientLightColor(missionFile.render_ambient_light_color[0], missionFile.render_ambient_light_color[1], missionFile.render_ambient_light_color[2])
+
 
     def tick(self, delta_time):
         """Called every frame"""

@@ -488,7 +488,7 @@ class MAPLevel(RSEResourceLoader):
         for _, geoObjectDefinition in enumerate(MAPFile.geometryObjects):
             name = geoObjectDefinition.nameString
             if name in usedNames:
-                ue.log("Duplicate name!" + name)
+                ue.log("Duplicate name! " + name)
             else:
                 usedNames.append(name)
 
@@ -519,7 +519,7 @@ class MAPLevel(RSEResourceLoader):
         self.import_lights(MAPFile)
 
         self.refresh_geometry_flag_settings()
-        ue.log("Created procedural mesh")
+        ue.log("Finished loading map")
 
     def refresh_geometry_flag_settings(self):
         """Force the meshes to update their visibility based on their flags and materials"""

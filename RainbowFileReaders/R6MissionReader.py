@@ -36,7 +36,7 @@ class R6MissionFile(object):
         self.render_software_near_clip = float(keywords.pop(0).replace("f",""))
         self.render_software_far_clip = float(keywords.pop(0).replace("f",""))
 
-        self.render_fog_enabled = keywords.pop(0)
+        self.render_fog_enabled = int(keywords.pop(0)
         self.render_fog_color = []
         for _ in range(3):
             self.render_fog_color.append(int(keywords.pop(0)))

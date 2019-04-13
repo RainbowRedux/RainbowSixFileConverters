@@ -8,4 +8,4 @@ map_file_path = """D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m01/M01.map"""
 #map_file_path = """D:/R6Data/TestData/ReducedGames/R6GOG/data/map/m09/M09.map"""
 
 PNG_CACHE_FILE_SUFFIX = ".CACHE.PNG"
-bUsePNGCache = False
+bUsePNGCache = True
