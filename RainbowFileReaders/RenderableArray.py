@@ -193,5 +193,3 @@ def shift_origin_of_renderables(renderables, distance_threshold = 0):
         renderable.translate(inverseLocation)
 
     return geometryBounds
-
-    
