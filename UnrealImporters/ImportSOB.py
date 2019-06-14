@@ -334,6 +334,12 @@ class MAPLevel(RSEResourceLoader):
         """Called every frame"""
         pass
 
+    def import_level_heights(self, MAPFile):
+        for level in MAPFile.planningLevelList.planningLevels:
+            adjustedHeight = level.floorHeight - self.worldOffsetVec[2]
+            #self.worldOffsetVec[2]
+            self.uobject.AddLevelHeight(adjustedHeight)
+
     def import_lights(self, MAPFile):
         """Import every light in the map file, both RS and R6 types"""
         self.uobject.SpawnLightActor()
@@ -519,6 +525,9 @@ class MAPLevel(RSEResourceLoader):
         self.import_lights(MAPFile)
 
         self.refresh_geometry_flag_settings()
+
+        self.import_level_heights(MAPFile)
+
         ue.log("Finished loading map")
 
     def refresh_geometry_flag_settings(self):
