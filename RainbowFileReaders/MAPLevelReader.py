@@ -767,7 +767,7 @@ class R6MAPShermanLevelDefinition(BinaryFileDataStructure):
         super().read(filereader)
 
         self.read_name_string(filereader)
-        self.unknown1 = filereader.read_vec_f(6)
+        self.AABB = filereader.read_vec_f(6)
 
         self.unknown2Count = filereader.read_uint()
         self.unknown2 = filereader.read_vec_f(self.unknown2Count)
