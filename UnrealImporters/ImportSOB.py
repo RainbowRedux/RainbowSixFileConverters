@@ -512,7 +512,7 @@ class MAPLevel(RSEResourceLoader):
             else:
                 usedNames.append(name)
 
-            print("Processing geoobj: " + name)
+            #print("Processing geoobj: " + name)
             geoObjComponent = self.uobject.add_actor_component(SceneComponent, name, self.defaultSceneComponent)
             self.uobject.add_instance_component(geoObjComponent)
             self.uobject.modify()
