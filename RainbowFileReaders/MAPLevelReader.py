@@ -10,7 +10,7 @@ from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, 
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 from RainbowFileReaders.RSDMPLightReader import RSDMPLightFile
-from RainbowFileReaders.MathHelpers import normalize_color, pad_color
+from RainbowFileReaders.MathHelpers import normalize_color, pad_color, Vector
 from RainbowFileReaders.RenderableArray import RenderableArray
 
 class MAPLevelFile(FileFormatReader):
@@ -471,6 +471,35 @@ class RSEMAPPortal(BinaryFileDataStructure):
     """Defines a portal used for visibility determination/occlusion culling"""
     def __init__(self):
         super(RSEMAPPortal, self).__init__()
+
+    def generate_renderable_array_object(self):
+        """Generates RenderableArray object for a portal"""
+        # Hard coded triangle indices as file format only specifies 4 indices
+        triangleIndices = [ [0,1,2],
+                            [0,2,3] ]
+
+        currentRenderable = RenderableArray()
+        currentRenderable.materialIndex = R6Constants.UINT_MAX
+
+        for vertex in self.vertices:
+            currentRenderable.vertices.append(vertex.copy())
+
+        #calculate the normal of the first triangle
+        line1 = Vector.subtract_vector(self.vertices[0], self.vertices[1])
+        line2 = Vector.subtract_vector(self.vertices[1], self.vertices[2])
+        crossProductNormal = Vector.cross(line1,line2)
+
+        #use the same normal for all vertices
+        currentRenderable.normals = []
+        for vertex in currentRenderable.vertices:
+            currentRenderable.normals.append(crossProductNormal.copy())
+
+        #Explicitly state that there are no values for these attributes
+        currentRenderable.UVs = None
+        currentRenderable.vertexColors = None
+        currentRenderable.triangleIndices = triangleIndices
+
+        return currentRenderable
 
     def read(self, filereader):
         super().read(filereader)

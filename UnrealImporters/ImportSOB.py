@@ -472,6 +472,20 @@ class MAPLevel(RSEResourceLoader):
 
             set_rse_geometry_flags_on_mesh_component(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
 
+    def import_portals(self, portallist):
+        portalParentComponent = self.uobject.add_actor_component(SceneComponent, "portals", self.defaultSceneComponent)
+        portalComponents = []
+        for portal in portallist.portals:
+            portalRA = portal.generate_renderable_array_object()
+            offsetVec = self.shift_origin_of_new_renderables([portalRA])
+            newMeshComponent = self.import_renderables_as_mesh_component(portal.nameString, [portalRA], portalParentComponent)
+            newMeshComponent.set_relative_location(offsetVec)
+            portalComponents.append(newMeshComponent)
+
+        self.uobject.RefreshPortals(portalComponents)
+
+        return portalComponents
+
     def load_map(self):
         """Loads the file and creates appropriate assets in unreal"""
         #self.filepath = ImporterSettings.map_file_path
@@ -508,6 +522,8 @@ class MAPLevel(RSEResourceLoader):
                 self.import_rainbow_six_geometry_object(geoObjectDefinition, geoObjComponent)
             else: # Rogue spear
                 self.import_rogue_spear_geometry_object(geoObjectDefinition, geoObjComponent)
+
+        self.objectsToShift.extend(self.import_portals(MAPFile.portalList))
 
         if self.shift_origin:
             print("Recentering objects")
