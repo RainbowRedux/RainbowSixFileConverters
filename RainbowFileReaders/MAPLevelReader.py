@@ -956,14 +956,14 @@ class R6MAPPlanningLevelDefinition(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.unknown1 = filereader.read_float() #A
-        self.unknown2 = filereader.read_float() #B
-        self.nameCount = filereader.read_uint()
-        self.names = []
-        for _ in range(self.nameCount):
+        self.levelNumber = filereader.read_float() #A
+        self.floorHeight = filereader.read_float() #B
+        self.roomCount = filereader.read_uint()
+        self.roomNames = []
+        for _ in range(self.roomCount):
             string = SerializedCString()
             string.read(filereader)
-            self.names.append(string)
+            self.roomNames.append(string)
 
 class SerializedCString(BinaryFileDataStructure):
     """A CString as stored in binary files."""
