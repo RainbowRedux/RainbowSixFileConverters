@@ -66,7 +66,7 @@ def import_renderable(mesh_component, renderable, materials):
     uvArray = []
     if renderable.UVs is not None:
         for UV in renderable.UVs:
-            uvArray.append(FVector2D(UV[0], UV[1]))
+            uvArray.append(FVector2D(UV[0], UV[1] + 1.0))
 
     colorArray = []
     if renderable.vertexColors is not None:
@@ -158,17 +158,11 @@ class RSEResourceLoader:
 
         # #These don't appear used in Rainbow Six, but probably will be in Rogue Spear
         if textureAddressMode == 1: #WRAP
-            _ = TextureAddress.TA_Wrap
-            # newTexture.AddressX = TextureAddress.TA_Wrap
-            # newTexture.AddressY = TextureAddress.TA_Wrap
-            # newTexture.AddressX = TextureAddress.TA_Clamp
-            # newTexture.AddressY = TextureAddress.TA_Clamp
+            newTexture.AddressX = TextureAddress.TA_Wrap
+            newTexture.AddressY = TextureAddress.TA_Wrap
         elif textureAddressMode == 3: #CLAMP
-            _ = TextureAddress.TA_Clamp
-            # newTexture.AddressX = TextureAddress.TA_Clamp
-            # newTexture.AddressY = TextureAddress.TA_Clamp
-            # newTexture.AddressX = TextureAddress.TA_Wrap
-            # newTexture.AddressY = TextureAddress.TA_Wrap
+            newTexture.AddressX = TextureAddress.TA_Clamp
+            newTexture.AddressY = TextureAddress.TA_Clamp
         else:
             ue.log("WARNING: Unknown texture tiling method")
 
@@ -486,10 +480,22 @@ class MAPLevel(RSEResourceLoader):
 
         return portalComponents
 
+    def import_rooms(self, MAPFile):
+        linelist = []
+        for room in MAPFile.roomList.rooms:
+            pass
+            #verts = MAPFile.
+
     def load_map(self):
+        #import cProfile
+        #cProfile.runctx('self.load_map_actual()', globals(), locals())
+        self.load_map_actual()
+
+    def load_map_actual(self):
         """Loads the file and creates appropriate assets in unreal"""
         #self.filepath = ImporterSettings.map_file_path
         self.filepath = self.uobject.mappath
+        #self.filepath = "D:/R6Data/TestData/ReducedGames/RSDemo/data/map/rm01/rm01.map"
         MAPFile = MAPLevelReader.MAPLevelFile()
         MAPFile.read_file(self.filepath)
         numGeoObjects = len(MAPFile.geometryObjects)
@@ -543,6 +549,8 @@ class MAPLevel(RSEResourceLoader):
         self.refresh_geometry_flag_settings()
 
         self.import_level_heights(MAPFile)
+
+        self.import_rooms(MAPFile)
 
         ue.log("Finished loading map")
 
