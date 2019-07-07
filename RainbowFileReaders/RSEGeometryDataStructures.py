@@ -161,6 +161,7 @@ class R6VertexParameterCollection(BinaryFileDataStructure):
         super(R6VertexParameterCollection, self).__init__()
         self.normal = None
         self.UV = None
+        self.unknown10 = None
         self.color = None
 
     def read(self, filereader):

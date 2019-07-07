@@ -6,7 +6,7 @@ from datetime import datetime
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
 from RainbowFileReaders import R6Settings, R6Constants
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEGeometryFlags
-from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject
+from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject, R6VertexParameterCollection, R6FaceDefinition
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 from RainbowFileReaders.RSDMPLightReader import RSDMPLightFile
@@ -842,12 +842,16 @@ class R6MAPShermanLevelPlanAreaDefinition(BinaryFileDataStructure):
         self.vertexParamCount = filereader.read_uint()
         self.vertexParams = [] #coordinate2
         for _ in range(self.vertexParamCount):
-            self.vertexParams.append(filereader.read_vec_f(9))
+            newParams = R6VertexParameterCollection()
+            newParams.read(filereader)
+            self.vertexParams.append(newParams)
 
-        self.unknown4Count = filereader.read_uint()
-        self.unknown4DataStructs = [] #coordinate3
-        for _ in range(self.unknown4Count):
-            self.unknown4DataStructs.append(filereader.read_vec_uint(11))
+        self.faceCount = filereader.read_uint()
+        self.faces = [] #coordinate3
+        for _ in range(self.faceCount):
+            newFace = R6FaceDefinition()
+            newFace.read(filereader)
+            self.faces.append(newFace)
         self.unknown5 = filereader.read_uint()
         self.unknown6 = filereader.read_uint()
 
