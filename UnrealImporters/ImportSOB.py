@@ -155,8 +155,7 @@ class RSEResourceLoader:
         #TODO: generate mip maps
         newTexture = ue.create_transient_texture(imageWidth, imageHeight, EPixelFormat.PF_R8G8B8A8)
         newTexture.texture_set_data(image.tobytes())
-
-        # #These don't appear used in Rainbow Six, but probably will be in Rogue Spear
+        
         if textureAddressMode == 1: #WRAP
             newTexture.AddressX = TextureAddress.TA_Wrap
             newTexture.AddressY = TextureAddress.TA_Wrap
