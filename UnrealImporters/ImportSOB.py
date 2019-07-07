@@ -164,7 +164,7 @@ class RSEResourceLoader:
             newTexture.AddressX = TextureAddress.TA_Clamp
             newTexture.AddressY = TextureAddress.TA_Clamp
         else:
-            ue.log("WARNING: Unknown texture tiling method")
+            ue.warn("WARNING: Unknown texture tiling method")
 
         self.loadedTextures[texturePath] = newTexture
         return newTexture
