@@ -155,15 +155,20 @@ class RSEResourceLoader:
         #TODO: generate mip maps
         newTexture = ue.create_transient_texture(imageWidth, imageHeight, EPixelFormat.PF_R8G8B8A8)
         newTexture.texture_set_data(image.tobytes())
-        
+
+        textureAddressModeConstant = TextureAddress.TA_Wrap
         if textureAddressMode == 1: #WRAP
-            newTexture.AddressX = TextureAddress.TA_Wrap
-            newTexture.AddressY = TextureAddress.TA_Wrap
+            textureAddressModeConstant = TextureAddress.TA_Wrap
+        elif textureAddressMode == 2: #MIRROR
+            textureAddressModeConstant = TextureAddress.TA_Mirror
         elif textureAddressMode == 3: #CLAMP
-            newTexture.AddressX = TextureAddress.TA_Clamp
-            newTexture.AddressY = TextureAddress.TA_Clamp
+            #this should be CLAMP but many textures break when this is enabled.
+            textureAddressModeConstant = TextureAddress.TA_Wrap
         else:
             ue.warn("WARNING: Unknown texture tiling method")
+
+        newTexture.AddressX = textureAddressModeConstant
+        newTexture.AddressY = textureAddressModeConstant
 
         self.loadedTextures[texturePath] = newTexture
         return newTexture
