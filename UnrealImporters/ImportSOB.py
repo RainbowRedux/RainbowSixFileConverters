@@ -16,7 +16,8 @@ from RainbowFileReaders import R6Constants
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
 from RainbowFileReaders.R6Constants import RSEGameVersions
-from RainbowFileReaders.RenderableArray import AxisAlignedBoundingBox, RenderableArray, merge_renderables_by_material, shift_origin_of_renderables
+from RainbowFileReaders.RenderableArray import RenderableArray, merge_renderables_by_material, shift_origin_of_renderables
+from RainbowFileReaders.MathHelpers import AxisAlignedBoundingBox
 
 from UnrealImporters import ImporterSettings
 
