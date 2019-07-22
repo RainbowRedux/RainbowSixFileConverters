@@ -10,7 +10,7 @@ from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, 
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 from RainbowFileReaders.RSDMPLightReader import RSDMPLightFile
-from RainbowFileReaders.MathHelpers import normalize_color, pad_color, Vector
+from RainbowFileReaders.MathHelpers import normalize_color, pad_color, Vector, AxisAlignedBoundingBox
 from RainbowFileReaders.RenderableArray import RenderableArray
 
 class MAPLevelFile(FileFormatReader):
@@ -710,8 +710,8 @@ class R6MAPRoomDefinition(BinaryFileDataStructure):
             tempTransition.read(filereader)
             self.transitions.append(tempTransition)
 
-        self.unknown4Count = filereader.read_uint()
-        self.unknown4 = filereader.read_vec_f(self.unknown4Count * 2)
+        self.levelHeightsCount = filereader.read_uint()
+        self.levelHeights = filereader.read_vec_f(self.levelHeightsCount * 2)
 
         self.unknown5Count = filereader.read_uint()
         self.unknown5 = filereader.read_vec_f(self.unknown5Count)
@@ -772,10 +772,18 @@ class R6MAPShermanLevelDefinition(BinaryFileDataStructure):
         self.unknown2Count = filereader.read_uint()
         self.unknown2 = filereader.read_vec_f(self.unknown2Count)
 
-        self.unknown3 = filereader.read_bytes(1)[0]
-        if self.unknown3 == 1:
-            self.unknown3Struct = R6MAPShermanLevelPlanAreaDefinition()
-            self.unknown3Struct.read(filereader)
+        self.hasShermanLevelPlanArea = filereader.read_bytes(1)[0]
+        if self.hasShermanLevelPlanArea == 1:
+            print("ShermanLevelPlanArea")
+            self.shermanLevelPlanArea = R6MAPShermanLevelPlanAreaDefinition()
+            self.shermanLevelPlanArea.read(filereader)
+    
+    def get_aabb(self):
+        newBounds = AxisAlignedBoundingBox()
+        newBounds.add_point(self.AABB[:3])
+        newBounds.add_point(self.AABB[3:])
+        return newBounds
+
 
 class RSMAPShermanLevelDefinition(BinaryFileDataStructure):
     """Contains a level definition as used in Rogue Spear"""
@@ -858,8 +866,8 @@ class R6MAPShermanLevelPlanAreaDefinition(BinaryFileDataStructure):
         self.read_named_string(filereader, "Unknown7String")
 
         self.unknown8 = filereader.read_uint()
-        self.unknown9Count = filereader.read_uint()
-        self.unknown9 = filereader.read_vec_uint(self.unknown9Count)
+        self.faceIndicesCount = filereader.read_uint()
+        self.faceIndices = filereader.read_vec_uint(self.faceIndicesCount)
 
         self.unknown10 = filereader.read_uint()
         self.read_named_string(filereader, "Unknown11String")

@@ -99,6 +99,13 @@ class AxisAlignedBoundingBox(object):
 
         return newAABB
 
+    def get_size(self):
+        newSize = []
+        newSize.append(abs(self.maxX - self.minX))
+        newSize.append(abs(self.maxY - self.minY))
+        newSize.append(abs(self.maxZ - self.minZ))
+        return newSize
+
 def normalize_color(color):
     """ take an iterable object with values 0-255, and convert to 0.0-1.0 range
     returns tuple"""

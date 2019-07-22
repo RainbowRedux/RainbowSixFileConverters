@@ -486,10 +486,20 @@ class MAPLevel(RSEResourceLoader):
         return portalComponents
 
     def import_rooms(self, MAPFile):
-        linelist = []
+        print("Importing rooms")
         for room in MAPFile.roomList.rooms:
-            pass
-            #verts = MAPFile.
+            print("Iterating room: " + room.nameString)
+            for levelDef in room.shermanLevels:
+                print("Iterating room level: " + levelDef.nameString)
+                aabb = levelDef.get_aabb()
+                vertex = aabb.get_center_position()
+                center = FVector(vertex[0], vertex[1], vertex[2])
+                center = KismetMathLibrary.RotateAngleAxis(center, 90.0, FVector(1.0, 0.0, 0.0))
+                center = center - self.worldOffsetVec
+                vertex = aabb.get_size()
+                scale = FVector(vertex[0], vertex[1], vertex[2])
+                scale = KismetMathLibrary.RotateAngleAxis(scale, 90.0, FVector(1.0, 0.0, 0.0))
+                self.uobject.AddRoom(levelDef.nameString, center, scale)
 
     def load_map(self):
         #import cProfile
