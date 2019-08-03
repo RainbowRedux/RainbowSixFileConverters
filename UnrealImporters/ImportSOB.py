@@ -341,8 +341,6 @@ class MAPLevel(RSEResourceLoader):
 
     def import_lights(self, MAPFile):
         """Import every light in the map file, both RS and R6 types"""
-        self.uobject.SpawnLightActor()
-        light_actor = self.uobject.LightActor
 
         #Import lightlist
         for lightDef in MAPFile.lightList.lights:
@@ -364,7 +362,7 @@ class MAPLevel(RSEResourceLoader):
             lightType = lightDef.type
             lightName = lightDef.nameString
 
-            light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
+            self.uobject.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
 
         #Import DMP lights
         if MAPFile.dmpLights is not None:
