@@ -78,4 +78,4 @@ class DirectoryProcessor(object):
         """Ease of use function to quickly profile how quickly the designated function runs on the given path"""
         import cProfile
         #TODO: check this is valid
-        cProfile.run('self.profileRun')
+        cProfile.runctx('self.profileRun()', globals(), locals())

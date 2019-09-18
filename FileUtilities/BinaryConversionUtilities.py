@@ -213,14 +213,11 @@ def isPowerOf2(number):
     num1 = ((number & (number - 1)) == 0)
     return num1
 
-previousMasks = {}
+import functools
 
+@functools.lru_cache(maxsize=10)
 def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):
     """Calculates the appropriate bitmasks for a color stored in ARGB format."""
-    key = str(bdA) + str(bdR) + str(bdG) + str(bdB)
-    if key in previousMasks:
-        masks = previousMasks[key]
-        return masks
 
     redMask = 0
     greenMask = 0
@@ -246,12 +243,11 @@ def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):
         blueMask = (blueMask << 1) + 1
 
     masks = [redMask, greenMask, blueMask, alphaMask]
-    previousMasks[key] = masks
     return masks
 
-def read_bitmask_ARGB_color(byteStream, bdR, bdG, bdB, bdA):
+@functools.lru_cache(maxsize=None)
+def read_bitmask_ARGB_color(colorVal, bdR, bdG, bdB, bdA):
     """Reads an ARGB color with custom bit depths for each channel, returns in RGBA format"""
-    colorVal = bytes_to_shortint(byteStream)[0]
     masks = calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA)
     redMask = masks[0]
     greenMask = masks[1]

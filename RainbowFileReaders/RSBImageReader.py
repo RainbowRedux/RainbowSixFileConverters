@@ -1,7 +1,7 @@
 """Provides classes that will read and parse RSB Image files."""
 import PIL
 from PIL import Image
-from FileUtilities.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader
+from FileUtilities.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader, bytes_to_shortint
 
 class RSBImageFile(FileFormatReader):
     """Class to read full RSB files"""
@@ -65,7 +65,8 @@ class RSBImageFile(FileFormatReader):
             for y in range(newImage.size[1]):    # For every row
                 pixel_index = self.header.width * y + x
                 pixel_data = self.imageFullColor.get_pixel(pixel_index)
-                pixel_color = read_bitmask_ARGB_color(pixel_data, self.header.bitDepthRed, self.header.bitDepthGreen, self.header.bitDepthBlue, self.header.bitDepthAlpha)
+                pixel_color_16 = bytes_to_shortint(pixel_data)[0]
+                pixel_color = read_bitmask_ARGB_color(pixel_color_16, self.header.bitDepthRed, self.header.bitDepthGreen, self.header.bitDepthBlue, self.header.bitDepthAlpha)
                 pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], pixel_color[3]) # set the colour accordingly
         return newImage
 
