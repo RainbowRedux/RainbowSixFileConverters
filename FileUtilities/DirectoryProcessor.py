@@ -4,24 +4,12 @@ and then run a designated function on them
 """
 import random
 import multiprocessing
-import os
-from os.path import join
+
+from FileUtilities.DirectoryUtils import gather_files_in_path
 
 def processorNotImplementedDefault(path):
     """Default processor function. Should never be called"""
     print("No processor has been assigned, so no processing will be performed on: " + str(path))
-
-def gather_files_in_path(extension, folder):
-    """Walks a folder and it's sub directories and finds all files with matching extension"""
-    filesToProcess = []
-    for root, dirs, files in os.walk(folder, topdown=True):
-        for name in files:
-            if name.upper().endswith(extension.upper()):
-                filesToProcess.append(join(root, name))
-        for name in dirs:
-            pass
-            #print("Walking directory: " + os.path.join(root, name))
-    return filesToProcess
 
 class DirectoryProcessor(object):
     """
