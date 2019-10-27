@@ -1,6 +1,7 @@
 """Provides classes that will read and parse Material definitions and related information in RSE game formats."""
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEMaterialFormatConstants
 from RainbowFileReaders.MathHelpers import normalize_color, unnormalize_color
+from RainbowFileReaders.CXPMaterialPropertiesReader import get_cxp_definition
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure
 
 class RSEMaterialListHeader(BinaryFileDataStructure):
@@ -82,11 +83,8 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
 
     def add_CXP_information(self, CXPDefinitions):
         """Takes a list of CXPMaterialProperties, and adds matching information"""
-        for cxp in CXPDefinitions:
-            #Match on lowercase since it's a windows game and windows has no concept of case sensitive filenames
-            if cxp.materialName.lower() == self.textureName.lower():
-                #print("Matched CXP: " + cxp.materialName)
-                self.CXPMaterialProperties = cxp
+        cxp = get_cxp_definition(CXPDefinitions, self.textureName)
+        self.CXPMaterialProperties = cxp
 
     def read(self, filereader):
         super().read(filereader)

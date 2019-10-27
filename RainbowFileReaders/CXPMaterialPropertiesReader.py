@@ -157,3 +157,17 @@ def load_relevant_cxps(datapath, modpath = None):
         CXPDefinitions.extend(tempCXPDefs)
 
     return CXPDefinitions
+
+def get_cxp_definition(CXPDefinitions, texture_name):
+    """
+    Iterates through a list of CXPs to find a definition that matches the texture
+    texture_name should be the source texture name, not the RSB texture name.
+    Comparison is case insensitive.
+    """
+    for cxp in CXPDefinitions:
+        #Match on lowercase since it's a windows game and windows has no concept of case sensitive filenames
+        if cxp.materialName.lower() == texture_name.lower():
+            #print("Matched CXP: " + cxp.materialName)
+            return cxp
+
+    return None
