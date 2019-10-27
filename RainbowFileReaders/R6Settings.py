@@ -108,13 +108,29 @@ def get_relevant_global_texture_paths(filename):
 
     return texturePaths
 
-def fixup_texture_name(filename):
+def restore_original_texture_name(filename):
+    """Create original texture name from RSB filename"""
+    ext = filename.lower()[-4:]
+    newfilename = filename
+    if filename.startswith("TGA"):
+        #Strip TGA from front of filename
+        newfilename = filename[3:]
+        newfilename = newfilename[:-4] + ".tga"
+    else:
+        newfilename = newfilename[:-4] + ".bmp"
+    return newfilename
+
+def get_rsb_texture_name(filename):
     """Match source texture names to RSB texture names that were shipped"""
     ext = filename.lower()[-4:]
     newfilename = filename
     if ext in (".bmp", ".tga"):
+        #Replace extension with .RSB
         newfilename = newfilename[:-4]
         newfilename += ".RSB"
+        if ext == ".tga":
+            #Append TGA to front of filename
+            newfilename = "TGA" + newfilename
     return newfilename
 
 def find_texture(filename, dataPath):
@@ -122,16 +138,13 @@ def find_texture(filename, dataPath):
     Will perform texture name fixups to match new names"""
     if filename.lower() == "null":
         return None
-    newfilename = fixup_texture_name(filename)
+    newfilename = get_rsb_texture_name(filename)
     result = None
     for root, dirs, files in os.walk(dataPath):
         for name in files:
             # Compare lowercase versions since windows is case-insensitive
             if name.lower() == newfilename.lower():
                 result = os.path.join(root, name)
-            if result is None and name.startswith("TGA"):
-                if name.lower()[3:] == newfilename.lower():
-                    result = os.path.join(root, name)
 
         for name in dirs:
             pass
