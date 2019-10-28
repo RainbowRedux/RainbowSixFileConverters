@@ -45,6 +45,7 @@ class RSBImageFile(FileFormatReader):
 
     def convert_palette_image(self):
         """Converts the stored palettized version of the image into a full color RGBA image"""
+        #TODO: explore putting the palette information directory into PIL Image, rather than converting to full color
         newImage = Image.new('RGBA', (self.header.width, self.header.height))
         pixels = newImage.load()
         for x in range(newImage.size[0]):    # for every col:
@@ -57,9 +58,12 @@ class RSBImageFile(FileFormatReader):
         return newImage
 
 
-    def convert_full_color_image(self):
+    def convert_full_color_image(self, force_alpha_channel = False):
         """Converts the stored "full color" version of the image into a full color RGBA image with 8bpp"""
-        newImage = Image.new('RGBA', (self.header.width, self.header.height))
+        pixelformat = 'RGB'
+        if self.header.bitDepthAlpha != 0 or force_alpha_channel:
+            pixelformat = 'RGBA'
+        newImage = Image.new(pixelformat, (self.header.width, self.header.height))
         pixels = newImage.load()
         for x in range(newImage.size[0]):    # for every col:
             for y in range(newImage.size[1]):    # For every row
@@ -67,7 +71,11 @@ class RSBImageFile(FileFormatReader):
                 pixel_data = self.imageFullColor.get_pixel(pixel_index)
                 pixel_color_16 = bytes_to_shortint(pixel_data)[0]
                 pixel_color = read_bitmask_ARGB_color(pixel_color_16, self.header.bitDepthRed, self.header.bitDepthGreen, self.header.bitDepthBlue, self.header.bitDepthAlpha)
-                pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], pixel_color[3]) # set the colour accordingly
+                if self.header.bitDepthAlpha == 0:
+                    #strip alpha channel if not required
+                    pixel_color = pixel_color[:3]
+                pixels[x,y] = tuple(pixel_color) # set the colour accordingly
+
         return newImage
 
     def check_color_key(self, imageColor, colorKey, bitmask, verbose=False):
@@ -105,7 +113,10 @@ class RSBImageFile(FileFormatReader):
     def convert_full_color_image_with_colorkey_mask(self, colorkeyRGB, verbose=False):
         """Converts the stored "full color" version of the image into a full color RGBA image with 8bpp
         colorkeyRGB can be a list or tuple"""
-        newImage = self.convert_full_color_image()
+        if colorkeyRGB is None:
+            return self.convert_full_color_image()
+
+        newImage = self.convert_full_color_image(force_alpha_channel=True)
         imageWidth, imageHeight = newImage.size
         pixdata = newImage.load()
 

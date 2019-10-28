@@ -43,12 +43,13 @@ def convert_game_images(game_path):
                 colorKeyRGB = cxpDef.colorkey
                 print(colorKeyRGB)
 
-        if colorKeyRGB is None:
-            # set this to out of range values, so no special case handling is needed elsewhere as the comparison will always fail, and work will be skipped
-            colorKeyRGB = [300, 300, 300]
+        image = None
 
-        colokeyMask = tuple(colorKeyRGB)
-        image = imageFile.convert_full_color_image_with_colorkey_mask(colokeyMask)
+        if colorKeyRGB is not None:
+            colokeyMask = tuple(colorKeyRGB)
+            image = imageFile.convert_full_color_image_with_colorkey_mask(colokeyMask)
+        else:
+            image = imageFile.convert_full_color_image()
         PNGFilename = filepath[:-4] + ".CACHE.PNG"
         image.save(PNGFilename, "PNG")
 
