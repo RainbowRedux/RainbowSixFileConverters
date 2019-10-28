@@ -44,7 +44,6 @@ def convert_game_images(game_path):
             print("Matched CXP definition: " + original_texture_name)
             if cxpDef.blendMode == "colorkey":
                 colorKeyRGB = cxpDef.colorkey
-                print(colorKeyRGB)
 
         image = None
 
