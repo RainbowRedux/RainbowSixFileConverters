@@ -17,12 +17,19 @@ class RSEGameLoader(object):
         self.mods = {}
 
     def load_game(self, path):
-        """Loads a game from the given path. Will determine engine version and determine mods available (if available)"""
+        """
+        Loads a game from the given path. Will determine engine version and determine mods available (if available)
+        Returns True if it was able to identify the game version
+        """
         if os.path.isdir(path) is False:
             return False
 
         self.game_path = path
-        gameVer = self._determine_game_from_exes()
+        self._determine_game_from_exes()
+
+        if self.game_version is RSEGameVersions.UNKNOWN:
+            return False
+        return True
 
     def _determine_game_from_exes(self):
         if not self.game_path:

@@ -18,7 +18,10 @@ from FileUtilities.DirectoryUtils import gather_files_in_path
 def convert_game_images(game_path):
     """Converts all images for a given game path, including mods"""
     gameloader = RSEGameLoader()
-    gameloader.load_game(game_path)
+    gameloaded = gameloader.load_game(game_path)
+    if gameloaded is False:
+        print("Failed to load game path")
+        return
     #TODO: enumerate mods and then convert textures
 
     dataPath = path.join(game_path, "data")
