@@ -1,10 +1,6 @@
-#RSBImageReader
-    #Load Game/Mod
-        #Gather all textures
-        #Convert Images (full color only)
-            #Add masked alpha data
-            #Strip unneccessary alpha channels (no alpha channel in source image and no key color in CXP)
-            #Save as {Filename}.CACHE.PNG
+"""
+Loads a game path and then converts all RSBs within to full colour PNGs with the extension .CACHE.PNG
+"""
 
 from os import path
 
