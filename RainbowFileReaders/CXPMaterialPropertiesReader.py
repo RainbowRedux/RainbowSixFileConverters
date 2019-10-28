@@ -119,7 +119,7 @@ def read_cxp(path):
 
     # Create and return a list of CXP properties, as many CXP files will be combined, and the order is important for matching
     MaterialProperties = []
-    for key, val in MaterialPropertiesDict.items():
+    for _, val in MaterialPropertiesDict.items():
         MaterialProperties.append(val)
     return MaterialProperties
 
