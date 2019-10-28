@@ -53,6 +53,8 @@ class CXPMaterialProperties(object):
             elif currKeyword == "colorkey":
                 #Set the blend mode, and grab the RGB color key
                 self.blendMode = currKeyword
+                #to handle cases of multiple definitions clear the color key
+                self.colorkey = []
                 for _ in range(3):
                     self.colorkey.append(int(keywords.pop(0)))
             elif currKeyword == "textureformat":
