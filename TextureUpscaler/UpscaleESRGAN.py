@@ -28,3 +28,5 @@ def upscale_esrgan(workingImages, workingPath):
         src = path.join(ESRGANDstPath, destFilename)
         dst = path.join(workingPath, currImage.workingFilename)
         copyfile(src, dst)
+        currImage.lastPath = dst
+        
