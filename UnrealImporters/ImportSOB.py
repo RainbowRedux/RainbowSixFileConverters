@@ -5,7 +5,7 @@ import PIL
 from PIL import Image # pylint: disable=W0611
 
 import unreal_engine as ue
-from unreal_engine.classes import SceneComponent, CustomProceduralMeshComponent, KismetMathLibrary, MaterialInterface, Texture2D
+from unreal_engine.classes import SceneComponent, RSEGeometryComponent, KismetMathLibrary, MaterialInterface, Texture2D
 from unreal_engine import FVector, FVector2D, FColor, FLinearColor
 from unreal_engine.enums import EPixelFormat, TextureAddress
 
@@ -48,7 +48,7 @@ def determine_parent_material_required(materialDefinition: RSEMaterialDefinition
 
     return materialRequired
 
-def import_renderable(mesh_component, renderable, materials):
+def import_renderable(newRSEGeoComp, renderable, materials):
     """Adds the specified renderable as a mesh section to the supplied procedural mesh component"""
     vertexArray = []
     #Repack vertices into array of FVectors, and invert X coordinate
@@ -84,11 +84,11 @@ def import_renderable(mesh_component, renderable, materials):
         indexArray.append(face[1])
         indexArray.append(face[0])
 
-    newMeshSectionIdx = mesh_component.AutoCreateMeshSection(vertexArray, indexArray, normalArray, UV0=uvArray, VertexColors=colorArray, bCreateCollision=True)
-    newMeshSectionIdx = mesh_component.GetLastCreatedMeshIndex()
+    newMeshSectionIdx = newRSEGeoComp.AutoCreateMeshSection(vertexArray, indexArray, normalArray, UV0=uvArray, VertexColors=colorArray, bCreateCollision=True)
+    newMeshSectionIdx = newRSEGeoComp.GetLastCreatedMeshIndex()
 
     if renderable.materialIndex != R6Constants.UINT_MAX:
-        mesh_component.SetMaterial(newMeshSectionIdx, materials[renderable.materialIndex])
+        newRSEGeoComp.SetMaterial(newMeshSectionIdx, materials[renderable.materialIndex])
 
 def set_rse_geometry_flags_on_mesh_component(mesh_component, collision_only, flags_dict):
     """Set flags from a dictionary that contains geometry flags for an object"""
@@ -570,7 +570,7 @@ class MAPLevel(RSEResourceLoader):
     def refresh_geometry_flag_settings(self):
         """Force the meshes to update their visibility based on their flags and materials"""
         for currentMesh in self.proceduralMeshComponents:
-            currentMesh.UpdateFlagSettings()
+            currentMesh.UpdateRSEFlagSettings()
 
     def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], parent_component):
         """Will import a list of renderables into a single Mesh Component.
@@ -578,13 +578,13 @@ class MAPLevel(RSEResourceLoader):
         Returns a mesh component"""
 
         # Treat each geometryObject as a single component
-        newPMC = self.uobject.add_actor_component(CustomProceduralMeshComponent, name, parent_component)
-        self.uobject.add_instance_component(newPMC)
+        newRSEGeoComp = self.uobject.add_actor_component(RSEGeometryComponent, name, parent_component)
+        self.uobject.add_instance_component(newRSEGeoComp)
         self.uobject.modify()
-        self.proceduralMeshComponents.append(newPMC)
+        self.proceduralMeshComponents.append(newRSEGeoComp)
 
         # Import each renderable as a mesh now
         for renderable in renderables:
-            import_renderable(newPMC, renderable, self.generatedMaterials)
+            import_renderable(newRSEGeoComp, renderable, self.generatedMaterials)
 
-        return newPMC
+        return newRSEGeoComp
