@@ -5,7 +5,7 @@ import PIL
 from PIL import Image # pylint: disable=W0611
 
 import unreal_engine as ue
-from unreal_engine.classes import SceneComponent, RSEGeometryComponent, KismetMathLibrary, MaterialInterface, Texture2D
+from unreal_engine.classes import Blueprint, SceneComponent, RSEGeometryComponent, KismetMathLibrary, MaterialInterface, Texture2D
 from unreal_engine import FVector, FVector2D, FColor, FLinearColor
 from unreal_engine.enums import EPixelFormat, TextureAddress
 
@@ -96,17 +96,17 @@ def set_rse_geometry_flags_on_mesh_component(mesh_component, collision_only, fla
         return
 
     mesh_component.bCollisionOnly = collision_only
-    mesh_component.bHasRSEGeometryFlags = True
 
     if flags_dict is not None:
-        mesh_component.bGF_Climbable = flags_dict["GF_CLIMBABLE"]
-        mesh_component.bGF_NoCollide2D = flags_dict["GF_NOCOLLIDE2D"]
-        mesh_component.bGF_Invisible = flags_dict["GF_INVISIBLE"]
-        mesh_component.bGF_Unknown2 = flags_dict["GF_UNKNOWN2"]
-        mesh_component.bGF_FloorPolygon = flags_dict["GF_FLOORPOLYGON"]
-        mesh_component.bGF_NoCollide3D = flags_dict["GF_NOCOLLIDE3D"]
-        mesh_component.bGF_Unknown4 = flags_dict["GF_UNKNOWN4"]
-        mesh_component.bGF_NotShownInPlan = flags_dict["GF_NOTSHOWNINPLAN"]
+        mesh_component.SetRSEGeometryFlags(True,
+                                           flags_dict["GF_CLIMBABLE"],
+                                           flags_dict["GF_NOCOLLIDE2D"],
+                                           flags_dict["GF_INVISIBLE"],
+                                           flags_dict["GF_UNKNOWN2"],
+                                           flags_dict["GF_FLOORPOLYGON"],
+                                           flags_dict["GF_NOCOLLIDE3D"],
+                                           flags_dict["GF_UNKNOWN4"],
+                                           flags_dict["GF_NOTSHOWNINPLAN"])
 
 def arrayvector_to_fvector(position, performRotation=False):
     """Converts a list of 3 floats into an unreal FVector class"""
@@ -318,11 +318,19 @@ class SOBModel(RSEResourceLoader):
         """Called when the actor is beginning play, or the world is beginning play"""
         #self.load_model()
 
+bp_RoomComponent = None
+
 class MAPLevel(RSEResourceLoader):
     """Loads an RSE MAP file into unreal assets"""
     # constructor adding a component
     def begin_play(self):
-        self.defaultSceneComponent = self.uobject.add_actor_root_component(SceneComponent, 'DefaultSceneComponent')
+        self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
+        #self.defaultSceneComponent.own()
+
+        bp_RoomComponentObject = ue.load_object(Blueprint, '/Game/Rainbow/RoomComponent.RoomComponent')
+        global bp_RoomComponent
+        bp_RoomComponent = bp_RoomComponentObject.GeneratedClass
+
         self.proceduralMeshComponents = []
         # All AABBs for each static geometry object should be added to this worldAABB
         # This will allow an offset to be calculated to shift the map closer to the world origin, buying back precision
@@ -411,10 +419,8 @@ class MAPLevel(RSEResourceLoader):
         material = self.materialDefinitions[materialIndex]
         if material is not None:
             if material.CXPMaterialProperties is not None:
-                if material.CXPMaterialProperties.gunpass:
-                    rsemeshcomponent.bGunPass = True
-                if material.CXPMaterialProperties.grenadepass:
-                    rsemeshcomponent.bGrenadePass = True
+                rsemeshcomponent.SetProjectilePassFlags(material.CXPMaterialProperties.gunpass,
+                                                        material.CXPMaterialProperties.grenadepass)
 
     def import_rogue_spear_geometry_object(self, geoObjectDefinition, geoObjComponent):
         """Imports geometry from a rogue spear map geometryObject definition"""
@@ -470,6 +476,7 @@ class MAPLevel(RSEResourceLoader):
             set_rse_geometry_flags_on_mesh_component(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
 
     def import_portals(self, portallist):
+        self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
         portalParentComponent = self.uobject.add_actor_component(SceneComponent, "portals", self.defaultSceneComponent)
         portalComponents = []
         for portal in portallist.portals:
@@ -497,7 +504,7 @@ class MAPLevel(RSEResourceLoader):
                 vertex = aabb.get_size()
                 scale = FVector(vertex[0], vertex[1], vertex[2])
                 scale = KismetMathLibrary.RotateAngleAxis(scale, 90.0, FVector(1.0, 0.0, 0.0))
-                self.uobject.AddRoom(levelDef.nameString, center, scale)
+                self.uobject.AddRoomTrigger(levelDef.nameString, center, scale)
 
     def load_map(self):
         #import cProfile
@@ -523,6 +530,7 @@ class MAPLevel(RSEResourceLoader):
         self.objectsToShift = []
 
         self.worldOffsetVec = FVector(0, 0, 0)
+        self.rooms = {}
 
         for _, geoObjectDefinition in enumerate(MAPFile.geometryObjects):
             name = geoObjectDefinition.nameString
@@ -532,7 +540,9 @@ class MAPLevel(RSEResourceLoader):
                 usedNames.append(name)
 
             #print("Processing geoobj: " + name)
+            self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
             geoObjComponent = self.uobject.add_actor_component(SceneComponent, name, self.defaultSceneComponent)
+            self.rooms[name] = geoObjComponent
             self.uobject.add_instance_component(geoObjComponent)
             self.uobject.modify()
             self.objectComponents.append(geoObjComponent)
