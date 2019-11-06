@@ -1,6 +1,7 @@
 """Provides classes that will read and parse RSB Image files."""
 import PIL
 from PIL import Image
+from PIL import ImagePalette
 from FileUtilities.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader, bytes_to_shortint
 
 class RSBImageFile(FileFormatReader):
@@ -55,6 +56,32 @@ class RSBImageFile(FileFormatReader):
                 pixel_color = self.palette.get_color(ord(pixel_data))
                 #alpha is ignored as it caused fully invisible PNGs
                 pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], 255) # set the colour accordingly, ignoring alpha
+        return newImage
+
+    def convert_palette_image_pil_palette(self):
+        """Converts the stored palettized version of the image into a full color RGBA image"""
+        #TODO: explore putting the palette information directory into PIL Image, rather than converting to full color
+        print("Palette conversion pending")
+        newImage = Image.new('P', (self.header.width, self.header.height))
+        pixels = newImage.load()
+
+        newPalette = ImagePalette.ImagePalette(mode='RGBA')
+        for index, color in enumerate(self.palette.palette_entries):
+            newColorTuple = tuple(color[:3])
+            newPalette.colors[newColorTuple] = index
+            newPalette.palette[index] = newColorTuple[0]
+            newPalette.palette[index+256] = newColorTuple[1]
+            newPalette.palette[index+512] = newColorTuple[2]
+            newPalette.palette[index+768] = 128
+            print(str(index) + str(newColorTuple))
+        newPalette.dirty = 1
+
+        imageData = []
+        for data in self.image256.image:
+            imageData.append(ord(data))
+        newImage.putdata(imageData)
+        newImage.palette = newPalette
+
         return newImage
 
 
