@@ -208,11 +208,6 @@ def bytes_to_shortint(byteStream):
     """Converts 2 bytes to a short integer"""
     return struct.unpack('H', byteStream)
 
-def isPowerOf2(number):
-    """Checks if a number is a power of 2"""
-    num1 = ((number & (number - 1)) == 0)
-    return num1
-
 import functools
 
 @functools.lru_cache(maxsize=10)
