@@ -18,6 +18,7 @@ import os
 
 from RainbowFileReaders.RSBImageReader import RSBImageFile
 from FileUtilities import JSONMetaInfo, DirectoryProcessor
+from FileUtilities import MipMapGenerator
 
 def convert_RSB(filename):
     """Reads an RSB file and writes to 2 PNGs (or 1 if there is not palette version stored) """
@@ -36,6 +37,12 @@ def convert_RSB(filename):
     newImg2 = imageFile.convert_full_color_image()
     newFilename = filename + ".PNG"
     newImg2.save(newFilename, "PNG")
+
+    mips = MipMapGenerator.generate_mip_maps(newImg2)
+    if mips is None:
+        print("Failed to generate mips for " + filename + " , with dimensions: " + str(newImg2.size))
+    else:
+        print("Sucessfully generated mipmaps for " + filename)
 
     #save meta data to JSON file
     newFilename = newFilename.replace(".PNG", ".JSON")
