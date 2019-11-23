@@ -3,6 +3,7 @@ Utilities to run various processing and upscaling processes on images
 """
 
 from os import path
+from shutil import copyfile
 
 from FileUtilities.DirectoryUtils import gather_files_in_path
 
@@ -23,18 +24,13 @@ class WorkingImageData:
         self.workingPath = path.join(workingPath, self.workingFilename)
         self.lastPath = self.originalPath
 
-#Paths
-    #Source/Dest
-    #Working folder
-
-
 #Gather Textures
     #Find all .PNG
     #put into list of objects
     #assign ID
 def gather_textures(source_path, workingPath, extensionsToFind):
     """
-    Finds all textures and returns them in the working data structure
+    Finds all textures and returns them in the workingImage data structure
     """
     filepaths = []
     for ext in extensionsToFind:
@@ -80,6 +76,15 @@ def denoise_texture(inpath, outpath, workingImage):
     img = cv.imread(inpath)
     dst = cv.fastNlMeansDenoisingColored(src=img,dst=None,h=5,hColor=5,templateWindowSize=1,searchWindowSize=5)
     cv.imwrite(outpath,dst)
+
+def save_hires_image(inpath, outpath, workingImage):
+    """Takes a working image and saves it in the original place with .HIRES before the original extension"""
+    src = inpath
+    ext = path.splitext(workingImage.originalPath)[1]
+    dst = workingImage.originalPath[:-len(ext)] + ".HIRES" + ext
+    print("source: " + src)
+    print("\tdest: " + dst)
+    copyfile(src, dst)
 
 #Upscale Textures
     #ESRGAN
