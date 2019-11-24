@@ -1,3 +1,0 @@
-[submodule "TextureUpscaler/ESRGAN"]
-	path = TextureUpscaler/ESRGAN
-	url = https://github.com/boristsr/ESRGAN
