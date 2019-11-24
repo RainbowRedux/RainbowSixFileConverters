@@ -45,7 +45,7 @@ class CXPMaterialProperties(object):
             if currKeyword.lower() == "end":
                 bFoundEnd = True
                 break
-            
+
             if currKeyword == "mipmap":
                 #read 2 values for this
                 #TODO: Work out what these values mean
