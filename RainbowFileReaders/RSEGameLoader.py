@@ -17,12 +17,19 @@ class RSEGameLoader(object):
         self.mods = {}
 
     def load_game(self, path):
-        """Loads a game from the given path. Will determine engine version and determine mods available (if available)"""
+        """
+        Loads a game from the given path. Will determine engine version and determine mods available (if available)
+        Returns True if it was able to identify the game version
+        """
         if os.path.isdir(path) is False:
             return False
 
         self.game_path = path
-        gameVer = self._determine_game_from_exes()
+        self._determine_game_from_exes()
+
+        if self.game_version is RSEGameVersions.UNKNOWN:
+            return False
+        return True
 
     def _determine_game_from_exes(self):
         if not self.game_path:
@@ -52,6 +59,9 @@ class RSEGameLoader(object):
         return self.game_version
 
     def get_mission_list(self):
+        """
+        Returns a list of missions that are avaible in the current game and loaded mods
+        """
         mission_paths = gather_files_in_path(".MIS", self.game_path)
 
         missions = {}
@@ -62,6 +72,9 @@ class RSEGameLoader(object):
         return missions
 
     def get_map_list(self):
+        """
+        Returns a lost of maps available in the current game
+        """
         map_paths = gather_files_in_path(".MAP", self.game_path)
 
         maps = {}
@@ -72,14 +85,23 @@ class RSEGameLoader(object):
         return maps
 
     def get_mod_list(self):
+        """
+        Returns a list of mods available in the current game
+        """
         #TODO: read mods
         pass
 
     def load_mod(self, mod_name):
+        """
+        Loads the specified name and allows resources belonging to the mod to be retrieved
+        """
         #TODO: load a mod
         pass
 
     def print_game_info(self):
+        """
+        Prints information about the currently loaded game
+        """
         print("Game Path = " + self.game_path)
         print("Game Name = " + self.game_name)
         print("Game Version = " + self.game_version)

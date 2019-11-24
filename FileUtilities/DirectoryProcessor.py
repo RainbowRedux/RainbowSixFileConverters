@@ -4,24 +4,12 @@ and then run a designated function on them
 """
 import random
 import multiprocessing
-import os
-from os.path import join
+
+from FileUtilities.DirectoryUtils import gather_files_in_path
 
 def processorNotImplementedDefault(path):
     """Default processor function. Should never be called"""
     print("No processor has been assigned, so no processing will be performed on: " + str(path))
-
-def gather_files_in_path(extension, folder):
-    """Walks a folder and it's sub directories and finds all files with matching extension"""
-    filesToProcess = []
-    for root, dirs, files in os.walk(folder, topdown=True):
-        for name in files:
-            if name.upper().endswith(extension.upper()):
-                filesToProcess.append(join(root, name))
-        for name in dirs:
-            pass
-            #print("Walking directory: " + os.path.join(root, name))
-    return filesToProcess
 
 class DirectoryProcessor(object):
     """
@@ -76,6 +64,7 @@ class DirectoryProcessor(object):
     # pylint Disabled R0201 since i want this to be an option for developers to run easily for instances of this class, allowing easy profiling of their code
     def profile(self):  # pylint: disable=R0201
         """Ease of use function to quickly profile how quickly the designated function runs on the given path"""
-        import cProfile
+        import cProfile # pylint: disable=C0415
+        #pylint disabled c0415 as i want to import here since i don't want profiling loaded when not necessary
         #TODO: check this is valid
         cProfile.runctx('self.profileRun()', globals(), locals())
