@@ -210,7 +210,7 @@ def bytes_to_shortint(byteStream):
 
 import functools
 
-@functools.lru_cache(maxsize=10)
+@functools.lru_cache(maxsize=8)
 def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):
     """Calculates the appropriate bitmasks for a color stored in ARGB format."""
 
