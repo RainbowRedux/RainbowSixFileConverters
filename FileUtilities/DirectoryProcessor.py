@@ -64,6 +64,7 @@ class DirectoryProcessor(object):
     # pylint Disabled R0201 since i want this to be an option for developers to run easily for instances of this class, allowing easy profiling of their code
     def profile(self):  # pylint: disable=R0201
         """Ease of use function to quickly profile how quickly the designated function runs on the given path"""
-        import cProfile
+        import cProfile # pylint: disable=C0415
+        #pylint disabled c0415 as i want to import here since i don't want profiling loaded when not necessary
         #TODO: check this is valid
         cProfile.runctx('self.profileRun()', globals(), locals())
