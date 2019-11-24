@@ -110,7 +110,6 @@ def get_relevant_global_texture_paths(filename):
 
 def restore_original_texture_name(filename):
     """Create original texture name from RSB filename"""
-    ext = filename.lower()[-4:]
     newfilename = filename
     if filename.startswith("TGA"):
         #Strip TGA from front of filename

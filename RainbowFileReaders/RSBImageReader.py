@@ -63,7 +63,6 @@ class RSBImageFile(FileFormatReader):
         #TODO: explore putting the palette information directory into PIL Image, rather than converting to full color
         print("Palette conversion pending")
         newImage = Image.new('P', (self.header.width, self.header.height))
-        pixels = newImage.load()
 
         newPalette = ImagePalette.ImagePalette(mode='RGBA')
         for index, color in enumerate(self.palette.palette_entries):
