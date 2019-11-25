@@ -48,7 +48,7 @@ def convert_game_images(game_path):
             image = imageFile.convert_full_color_image_with_colorkey_mask(colokeyMask)
         else:
             image = imageFile.convert_full_color_image()
-        PNGFilename = filepath[:-4] + ".CACHE.PNG"
+        PNGFilename = filepath + ".CACHE.PNG"
         image.save(PNGFilename, "PNG")
 
 if __name__ == "__main__":
