@@ -5,7 +5,7 @@ Also provides some functions to unpack data from packed structures
 import struct
 import pprint
 
-from math import ceil, floor
+from math import floor
 
 class BinaryFileReader(object):
     """A wrapper for reading and conversion operations on binary file data."""
