@@ -9,6 +9,7 @@ from RainbowFileReaders.RSEGameLoader import RSEGameLoader
 from RainbowFileReaders.RSBImageReader import RSBImageFile
 from RainbowFileReaders.R6Settings import restore_original_texture_name
 from FileUtilities.DirectoryUtils import gather_files_in_path
+from Settings import load_settings
 
 #Load Game
 def convert_game_images(game_path):
@@ -55,8 +56,12 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Generate cached PNGs for each RSB in a game')
-    parser.add_argument('gamepath', help='the path to the game to process')
+    parser.add_argument('gamepath', help='the path to the game to process',required=False)
 
     args = parser.parse_args()
     print("Gamepath: " + args.gamepath)
-    convert_game_images(args.gamepath)
+    gamepath = args.gamepath
+    if gamepath is None:
+        settings = load_settings()
+        gamepath = settings["gamePath"]
+    convert_game_images(gamepath)

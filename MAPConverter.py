@@ -3,6 +3,8 @@ from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders.R6Constants import RSEGameVersions
 from FileUtilities import JSONMetaInfo, DirectoryProcessor
 
+from Settings import load_settings
+
 lightTypes = []
 
 
@@ -78,17 +80,15 @@ def convert_MAP(filename):
 
 def main():
     """Main function that converts a test file"""
-    import ProcessorPathsHelper
-    paths = ProcessorPathsHelper.get_paths()
+    settings = load_settings()
 
     fp = DirectoryProcessor.DirectoryProcessor()
-    fp.paths = fp.paths + paths
+    fp.paths.append(settings["gamePath"])
     fp.fileExt = ".MAP"
 
     fp.processFunction = convert_MAP
 
-    fp.run_sequential()
-    #fp.run_async()
+    fp.run(mode=settings["runMode"])
 
     print("Light Types: ")
     print(lightTypes)

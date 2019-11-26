@@ -11,6 +11,7 @@ from FileUtilities import DirectoryProcessor
 from FileUtilities import JSONMetaInfo, OBJModelWriter
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders.MathHelpers import is_vector_normal
+from Settings import load_settings
 
 def convert_SOB(filename):
     """ Reads an SOB file and then writes to OBJ format """
@@ -64,17 +65,15 @@ def write_OBJ(filename, SOBObject):
 
 def main():
     """Main function that converts test data files"""
-    import ProcessorPathsHelper
-    paths = ProcessorPathsHelper.get_paths()
+    settings = load_settings()
 
     fp = DirectoryProcessor.DirectoryProcessor()
-    fp.paths = fp.paths + paths
+    fp.paths.append(settings["gamePath"])
     fp.fileExt = ".SOB"
 
     fp.processFunction = convert_SOB
 
-    fp.run_sequential()
-    #fp.run_async()
+    fp.run(mode=settings["runMode"])
 
 if __name__ == "__main__":
     main()
