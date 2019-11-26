@@ -1,9 +1,11 @@
 from RainbowFileReaders.RSEGameLoader import RSEGameLoader
 from RainbowFileReaders.R6MissionReader import R6MissionFile
+from Settings import load_settings
 
 if __name__ == "__main__":
+    settings = load_settings()
     game = RSEGameLoader()
-    game.load_game("D:/R6Data/FullGames/R6EWCD")
+    game.load_game(settings["gamePath"])
     game.print_game_info()
 
     missions = game.get_mission_list()
