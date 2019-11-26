@@ -68,3 +68,15 @@ class DirectoryProcessor(object):
         #pylint disabled c0415 as i want to import here since i don't want profiling loaded when not necessary
         #TODO: check this is valid
         cProfile.runctx('self.profileRun()', globals(), locals())
+
+    def run(self, mode="async"):
+        """Call this function to run the processor in any mode"""
+        if mode == "async":
+            self.run_async()
+        elif mode == "seq":
+            self.run_sequential()
+        elif mode == "profile":
+            self.profile()
+        else:
+            print("Unknown mode for directory processor, running asynchronously")
+            self.run_async()

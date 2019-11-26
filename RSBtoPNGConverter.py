@@ -16,6 +16,8 @@ Files with a format version later than 1 also store information after the image,
 
 import os
 
+from Settings import load_settings
+
 from RainbowFileReaders.RSBImageReader import RSBImageFile
 from FileUtilities import JSONMetaInfo, DirectoryProcessor
 from FileUtilities import MipMapGenerator
@@ -56,19 +58,15 @@ def convert_RSB(filename):
 
 def main():
     """Main function that converts test data files"""
-    import ProcessorPathsHelper
-    paths = ProcessorPathsHelper.get_paths()
-    for path in paths:
-        print(path)
+    settings = load_settings()
 
     fp = DirectoryProcessor.DirectoryProcessor()
-    fp.paths = fp.paths + paths
+    fp.paths.append(settings["gamePath"])
     fp.fileExt = ".RSB"
 
     fp.processFunction = convert_RSB
 
-    #fp.run_sequential()
-    fp.run_async()
+    fp.run(mode=settings["runMode"])
 
 if __name__ == "__main__":
     main()
