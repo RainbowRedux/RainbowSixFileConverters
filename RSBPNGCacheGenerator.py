@@ -53,15 +53,6 @@ def convert_game_images(game_path):
         image.save(PNGFilename, "PNG")
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Generate cached PNGs for each RSB in a game')
-    parser.add_argument('gamepath', help='the path to the game to process',required=False)
-
-    args = parser.parse_args()
-    print("Gamepath: " + args.gamepath)
-    gamepath = args.gamepath
-    if gamepath is None:
-        settings = load_settings()
-        gamepath = settings["gamePath"]
+    settings = load_settings()
+    gamepath = settings["gamePath"]
     convert_game_images(gamepath)
