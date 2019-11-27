@@ -493,11 +493,8 @@ class MAPLevel(RSEResourceLoader):
         return portalComponents
 
     def import_rooms(self, MAPFile):
-        print("Importing rooms")
         for room in MAPFile.roomList.rooms:
-            print("Iterating room: " + room.nameString)
             for levelDef in room.shermanLevels:
-                print("Iterating room level: " + levelDef.nameString)
                 aabb = levelDef.get_aabb()
                 vertex = aabb.get_center_position()
                 center = FVector(vertex[0], vertex[1], vertex[2])
