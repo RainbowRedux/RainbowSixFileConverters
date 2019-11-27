@@ -371,8 +371,16 @@ class MAPLevel(RSEResourceLoader):
             falloff = lightDef.falloff
             lightType = lightDef.type
             lightName = lightDef.nameString
+            roomNumber = str(int(lightName.split("_")[-1]))
+            self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
+            #roomAttachment = self.defaultSceneComponent
+            roomAttachment = None
+            if roomNumber in self.rooms:
+                roomAttachment = self.rooms[roomNumber]
+            else:
+                print("No room for light: " + lightName + " roomnumber: " + roomNumber)
 
-            self.uobject.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
+            self.uobject.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName, roomAttachment)
 
         #Import DMP lights
         if MAPFile.dmpLights is not None:
@@ -540,7 +548,7 @@ class MAPLevel(RSEResourceLoader):
 
             #print("Processing geoobj: " + name)
             self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
-            geoObjComponent = self.uobject.add_actor_component(SceneComponent, name, self.defaultSceneComponent)
+            geoObjComponent = self.uobject.add_actor_component(bp_RoomComponent, name, self.defaultSceneComponent)
             self.rooms[name] = geoObjComponent
             self.uobject.add_instance_component(geoObjComponent)
             self.uobject.modify()
