@@ -155,6 +155,8 @@ class RSEResourceLoader:
 
         #TODO: generate mip maps
         newTexture = ue.create_transient_texture(imageWidth, imageHeight, EPixelFormat.PF_R8G8B8A8)
+        if image.mode == 'RGB':
+            image.putalpha(255)
         newTexture.texture_set_data(image.tobytes())
 
         textureAddressModeConstant = TextureAddress.TA_Wrap
