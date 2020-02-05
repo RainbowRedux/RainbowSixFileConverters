@@ -18,7 +18,7 @@ This project consists of several python packages.
 
 ### RainbowFileReaders
 
-- Python 3.6 & 3.7
+- Python 3.6 & newer
 - Pillow 5.0 is required for the RSB conversion utility
 
 ### BlenderImporters
