@@ -7,6 +7,8 @@ These collection of python scripts will allow you to extract data from Rainbow S
 ## Discord
 If you'd like to follow this project or help out, please join the discord channel at https://discord.gg/YygR4S8
 
+Discussions of other projects related to older RSE games is also welcome.
+
 ## Packages
 This project consists of several python packages.
 
