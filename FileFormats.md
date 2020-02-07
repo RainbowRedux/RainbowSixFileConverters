@@ -4,6 +4,7 @@
 
 - Sherman - Rainbow Six Engine
 - Rommel - Rogue Spear Engine
+- Patton - Black Thorn engine?
 - Ike - Ghost Recon
 
 ## General/Shared files
