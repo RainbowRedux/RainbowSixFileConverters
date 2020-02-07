@@ -17,7 +17,8 @@ Complete means that files are fully read, all variables are understood.
 | [x]     | 100%     | CXP       | Text   | Texture/Material metadata such as color keying and animation properties |
 | [x]     | 95%      | SOB       | Binary | Static objects. Mainly used in R6, amd appears to be leftovers in RS. **S**herman **OB**jects? |
 | [ ]     |          | ROB       | Binary | Static objects. Used in RS. **R**ommel **OB**jects? |
-| [ ]     |          | QOB       |Binary  |Static objects |
+| [ ]     |          | QOB       |Binary  | Static objects |
+| [ ]     |          | KMP       |Binary  | Unknown |
 
 ## Map related files
 
