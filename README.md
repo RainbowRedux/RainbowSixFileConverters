@@ -51,7 +51,9 @@ Please refer to the [wiki](https://github.com/boristsr/RainbowSixFileConverters/
 
 ### Commandline
 
-Highly recommend the use of virtualenvwrapper. Currently paths are hardcoded into the python files, this will change ASAP, but for now look near the bottom of the Converter.py scripts and add your path by changing the following lines:
+I highly recommend the use of virtualenvwrapper.
+
+Currently the gamepath is defined in settings.json. Most of the tools should reference this.
 
 ```python
 paths = []
@@ -68,9 +70,17 @@ python RSBtoPNGConverter.py
 python SOBtoOBJConverter.py
 ```
 
+### List of provided commandline tools
+
+- MapConverter.py - Reads all maps and writes a plain text JSON to show the data in the file. Useful for learning the structure of maps.
+- RSBPNGCacheGenerator.py - Converts all RSBs to PNGs, with the suffix .CACHE.PNG. References the relevant CXP files to apply the alpha key. Single Threaded.
+- RSBtoPNGConverter.py - Converts all RSBs to PNGs. Does not reference CXP file, so no alpha keys are converted. Writes meta data to a JSON file beside the PNG. Uses multiprocessing.
+- SOBtoOBJConverter.py - Converts SOB files to OBJ files. OBJ doesn't support all data, so some data is lost in the process.
+- gameLoadTest.py - Uses RSEGameLoader to load a game and list missions. Will be expanded to test loading mods as well.
+
 ### Blender Usage
 
-Coming soon. It's a bit hacky at the moment. File an issue, and I'll work on this sooner.
+Coming soon. It's a bit hacky at the moment and the tools need a bit of love as Unreal has been the focus recently. If you would like some help with these, please file an issue or jump on discord and I'll help you out.
 
 ## Special Thanks
 
