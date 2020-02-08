@@ -5,9 +5,15 @@ These collection of python scripts will allow you to extract data from Rainbow S
 [![CodeFactor](https://www.codefactor.io/repository/github/boristsr/rainbowsixfileconverters/badge)](https://www.codefactor.io/repository/github/boristsr/rainbowsixfileconverters)
 
 ## Discord
+
 If you'd like to follow this project or help out, please join the discord channel at https://discord.gg/YygR4S8
 
 Discussions of other projects related to older RSE games is also welcome.
+
+## Wiki
+
+Currently the wiki is being filled out with information, make sure to check here for additional info.
+https://github.com/boristsr/RainbowSixFileConverters/wiki
 
 ## Packages
 This project consists of several python packages.
