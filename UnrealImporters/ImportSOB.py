@@ -329,7 +329,7 @@ class MAPLevel(RSEResourceLoader):
         self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
         #self.defaultSceneComponent.own()
 
-        bp_RoomComponentObject = ue.load_object(Blueprint, '/Game/Rainbow/RoomComponent.RoomComponent')
+        bp_RoomComponentObject = ue.load_object(Blueprint, '/Game/Rainbow/BP_RoomComponent.BP_RoomComponent')
         global bp_RoomComponent
         bp_RoomComponent = bp_RoomComponentObject.GeneratedClass
 
@@ -601,7 +601,8 @@ class MAPLevel(RSEResourceLoader):
         newRSEGeoComp = self.uobject.add_actor_component(mesh_component_type, name, parent_component)
         self.uobject.add_instance_component(newRSEGeoComp)
         self.uobject.modify()
-        self.proceduralMeshComponents.append(newRSEGeoComp)
+        if mesh_component_type is RSEGeometryComponent:
+            self.proceduralMeshComponents.append(newRSEGeoComp)
 
         # Import each renderable as a mesh now
         for renderable in renderables:
