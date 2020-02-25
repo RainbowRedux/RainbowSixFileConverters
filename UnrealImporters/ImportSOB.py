@@ -329,9 +329,8 @@ class MAPLevel(RSEResourceLoader):
         self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
         #self.defaultSceneComponent.own()
 
-        bp_RoomComponentObject = ue.load_object(Blueprint, '/Game/Rainbow/Blueprints/BP_RoomComponent.BP_RoomComponent')
         global bp_RoomComponent
-        bp_RoomComponent = bp_RoomComponentObject.GeneratedClass
+        bp_RoomComponent =  ue.find_class('BP_RoomComponent_C')
 
         self.proceduralMeshComponents = []
         # All AABBs for each static geometry object should be added to this worldAABB
