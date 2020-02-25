@@ -42,7 +42,7 @@ def determine_parent_material_required(materialDefinition: RSEMaterialDefinition
         if tuple(cxpProps.textureformat) == (0, 4, 4, 4, 4):
             blendMode = "alpha"
 
-    materialRequired = "ShermanRommel_" + blendMode
+    materialRequired = "MI_ShermanRommel_" + blendMode
     if bTwoSided:
         materialRequired += "_twosided"
 
