@@ -5,7 +5,7 @@ import PIL
 from PIL import Image # pylint: disable=W0611
 
 import unreal_engine as ue
-from unreal_engine.classes import Blueprint, SceneComponent, RSEGeometryComponent, KismetMathLibrary, MaterialInterface, Texture2D
+from unreal_engine.classes import Blueprint, SceneComponent, RSEGeometryComponent, KismetMathLibrary, MaterialInterface, Texture2D, RSEPortalMeshComponent
 from unreal_engine import FVector, FVector2D, FColor, FLinearColor
 from unreal_engine.enums import EPixelFormat, TextureAddress
 
@@ -484,6 +484,7 @@ class MAPLevel(RSEResourceLoader):
             self.objectsToShift.append(newMeshComponent)
 
             set_rse_geometry_flags_on_mesh_component(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
+            geoObjComponent.AddMesh(newMeshComponent)
 
     def import_portals(self, portallist):
         self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
@@ -492,8 +493,10 @@ class MAPLevel(RSEResourceLoader):
         for portal in portallist.portals:
             portalRA = portal.generate_renderable_array_object()
             offsetVec = self.shift_origin_of_new_renderables([portalRA])
-            newMeshComponent = self.import_renderables_as_mesh_component(portal.nameString, [portalRA], portalParentComponent)
+            newMeshComponent = self.import_renderables_as_mesh_component(portal.nameString, [portalRA], portalParentComponent, RSEPortalMeshComponent)
             newMeshComponent.set_relative_location(offsetVec)
+            newMeshComponent.roomA = portal.roomA
+            newMeshComponent.roomB = portal.roomB
             portalComponents.append(newMeshComponent)
 
         self.uobject.RefreshPortals(portalComponents)
@@ -589,13 +592,13 @@ class MAPLevel(RSEResourceLoader):
         for currentMesh in self.proceduralMeshComponents:
             currentMesh.UpdateRSEFlagSettings()
 
-    def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], parent_component):
+    def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], parent_component, mesh_component_type=RSEGeometryComponent):
         """Will import a list of renderables into a single Mesh Component.
         parent_component is the component that the new mesh component will attach to. Currently cannot be None.
         Returns a mesh component"""
 
         # Treat each geometryObject as a single component
-        newRSEGeoComp = self.uobject.add_actor_component(RSEGeometryComponent, name, parent_component)
+        newRSEGeoComp = self.uobject.add_actor_component(mesh_component_type, name, parent_component)
         self.uobject.add_instance_component(newRSEGeoComp)
         self.uobject.modify()
         self.proceduralMeshComponents.append(newRSEGeoComp)
