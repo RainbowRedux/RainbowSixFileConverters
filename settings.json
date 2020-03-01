@@ -2,5 +2,7 @@
     "gamePath":"D:\\R6Data\\FullGames\\R6EWCD",
     "gamePathRS":"/Users/philipedwards/Desktop/R6Data/FullGames/RSUOCD",
     "gamePathReduced":"/Users/philipedwards/Desktop/R6Data/TestData/ReducedGames",
-    "runMode": "async"
+    "runMode": "async",
+    "imageCacheSuffix": ".CACHE.PNG",
+    "imageCacheFormat": "PNG"
 }
