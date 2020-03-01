@@ -4,8 +4,13 @@ import PIL
 # Pylint disabled error W0611 as this is actually due to python not loading submodules by default
 from PIL import Image # pylint: disable=W0611
 
+# pylint: disable=no-member, broad-except
+# Disabled no-member for this module since a lot of functionality exposed by UnrealEnginePython doesn't exist outside of unreal and generates false positives
+# Disabled unresolved-import since many imports are only available at runtime
+# Disabled broad-except as UnrealEnginePython only raises the Exception class.
+
 import unreal_engine as ue
-from unreal_engine.classes import Blueprint, SceneComponent, RSEGeometryComponent, KismetMathLibrary, MaterialInterface, Texture2D
+from unreal_engine.classes import SceneComponent, RSEGeometryComponent, KismetMathLibrary, MaterialInterface, Texture2D, RSEPortalMeshComponent
 from unreal_engine import FVector, FVector2D, FColor, FLinearColor
 from unreal_engine.enums import EPixelFormat, TextureAddress
 
@@ -22,6 +27,20 @@ from RainbowFileReaders.MathHelpers import AxisAlignedBoundingBox
 from UnrealImporters import ImporterSettings
 
 ue.log('Initializing SOB File importer')
+
+bp_RoomComponent = None
+
+def refresh_class_references():
+    """Called to load blueprint class references. Can be run at anytime to ensure class references are valid."""
+    # pylint: disable=global-statement
+    # Global statement warning disabled in this function as this is a work around for delayed loading of blueprint classes
+    try:
+        global bp_RoomComponent
+        bp_RoomComponent = ue.find_class('BP_RoomComponent_C')
+    except Exception:
+        ue.log_warning("Unable to load class BP_RoomComponent_C. This happens during cooking. If this is happening during gameplay something has gone wrong.")
+
+refresh_class_references()
 
 def determine_parent_material_required(materialDefinition: RSEMaterialDefinition) -> (str):
     """Assesses the material definition and determines the correct parent material to use"""
@@ -42,7 +61,7 @@ def determine_parent_material_required(materialDefinition: RSEMaterialDefinition
         if tuple(cxpProps.textureformat) == (0, 4, 4, 4, 4):
             blendMode = "alpha"
 
-    materialRequired = "ShermanRommel_" + blendMode
+    materialRequired = "MI_ShermanRommel_" + blendMode
     if bTwoSided:
         materialRequired += "_twosided"
 
@@ -125,7 +144,6 @@ class RSEResourceLoader:
 
     def begin_play(self):
         """Called when the actor is beginning play, or the world is beginning play"""
-        pass
 
     def LoadTexture(self, texturePath: str, colorKeyR: int, colorKeyG: int, colorKeyB: int, textureAddressMode: int) -> (Texture2D):
         """Attempts to load the texture at the specified path."""
@@ -185,10 +203,90 @@ class RSEResourceLoader:
         loadedMaterial = None
         try:
             loadedMaterial = ue.load_object(MaterialInterface, materialFullPath)
-        except:
-            pass
+        except Exception:
+            ue.log_warning(f"Failed to load material: {materialFullPath} for materialDefinition: {material_name}")
+            raise
         self.loadedParentMaterials[material_name] = loadedMaterial
         return loadedMaterial
+
+    def LoadMaterial(self, materialDefinition):
+        """Creates a single material instance from a material definition"""
+        verbose = False
+        if materialDefinition.textureName.startswith("cl02_spray1"):
+            verbose = True
+        parentMaterialName = determine_parent_material_required(materialDefinition)
+        parentMaterial = self.get_unreal_master_material(parentMaterialName)
+        if verbose:
+            ue.log("=====================")
+            ue.log(materialDefinition.textureName)
+            ue.log(parentMaterialName)
+        if parentMaterial is None:
+            ue.log("Error, could not load parent material: {}".format(parentMaterialName))
+            self.generatedMaterials.append(None)
+            return None
+        mid = self.uobject.create_material_instance_dynamic(parentMaterial)
+
+        mid.set_material_scalar_parameter("EmissiveStrength", materialDefinition.emissiveStrength)
+        mid.set_material_scalar_parameter("SpecularLevel", materialDefinition.specularLevel)
+        mid.set_material_scalar_parameter("Opacity", materialDefinition.opacity)
+
+        colorKeyRGB = None
+
+        if materialDefinition.CXPMaterialProperties is not None:
+            if materialDefinition.CXPMaterialProperties.blendMode == "colorkey":
+                cxpProps = materialDefinition.CXPMaterialProperties
+                colorKeyRGB = cxpProps.colorkey
+
+        if colorKeyRGB is None:
+            # set this to out of range values, so no special case handling is needed elsewhere as the comparison will always fail, and work will be skipped
+            colorKeyRGB = [300, 300, 300]
+
+        # Determine, load and Set diffuse texture
+        if materialDefinition.textureName == "NULL":
+            mid.set_material_scalar_parameter('UseVertexColor', 1.0)
+        else:
+            mid.set_material_scalar_parameter('UseVertexColor', 0.0)
+            texturesToLoad = []
+            # Add the first texture
+            texturesToLoad.append(materialDefinition.textureName)
+            # Gather all other texture names
+            if materialDefinition.CXPMaterialProperties is not None:
+                for additionalTexture in materialDefinition.CXPMaterialProperties.animAdditionalTextures:
+                    texturesToLoad.append(additionalTexture)
+            # Load all textures
+            LastTexture = None
+            for i, currentTextureName in enumerate(texturesToLoad):
+                foundTexture = None
+                for path in self.texturePaths:
+                    foundTexture = R6Settings.find_texture(currentTextureName, path)
+                    if foundTexture is not None:
+                        break
+                if foundTexture is not None:
+                    #This assumes all textures in a flipbook use the same colorkey
+                    LastTexture = self.LoadTexture(foundTexture, colorKeyRGB[0], colorKeyRGB[1], colorKeyRGB[2], materialDefinition.textureAddressMode)
+                    if LastTexture is not None:
+                        currentTextureSlotName = "DiffuseTexture" + str(i)
+                        #Add texture to appropriate slot
+                        mid.set_material_texture_parameter(currentTextureSlotName,LastTexture)
+                else:
+                    ue.log("Failed to find texture: " + currentTextureName)
+
+            #Setup animation properties
+            if materialDefinition.CXPMaterialProperties is not None:
+                if materialDefinition.CXPMaterialProperties.animated:
+                    mid.set_material_scalar_parameter("AnimationInterval", materialDefinition.CXPMaterialProperties.animInterval)
+                    numFrames = len(texturesToLoad)
+                    ue.log("Number of animation frames: " + str(numFrames))
+                    mid.set_material_scalar_parameter("NumberOfAnimationFrames", numFrames)
+                else:
+                    mid.set_material_scalar_parameter("AnimationInterval", 0.1)
+                    mid.set_material_scalar_parameter("NumberOfAnimationFrames", 1)
+
+                if materialDefinition.CXPMaterialProperties.scrolling:
+                    mid.set_material_scalar_parameter("ScrollSpeedX", materialDefinition.CXPMaterialProperties.scrollParams[1])
+                    mid.set_material_scalar_parameter("ScrollSpeedY", materialDefinition.CXPMaterialProperties.scrollParams[2])
+
+        return mid
 
     def LoadMaterials(self):
         """Creates Unreal Material Instances for each material definition"""
@@ -196,89 +294,15 @@ class RSEResourceLoader:
         for path in self.texturePaths:
             ue.log("Using Texture Path: " + path)
 
-        verbose = False
         for matDef in self.materialDefinitions:
-            verbose = False
-            if matDef.textureName.startswith("cl02_spray1"):
-                verbose = True
-            parentMaterialName = determine_parent_material_required(matDef)
-            parentMaterial = self.get_unreal_master_material(parentMaterialName)
-            if verbose:
-                ue.log("=====================")
-                ue.log(matDef.textureName)
-                ue.log(parentMaterialName)
-            if parentMaterial is None:
-                ue.log("Error, could not load parent material: {}".format(parentMaterialName))
-                self.generatedMaterials.append(None)
-                continue
-            mid = self.uobject.create_material_instance_dynamic(parentMaterial)
-
-            mid.set_material_scalar_parameter("EmissiveStrength", matDef.emissiveStrength)
-            mid.set_material_scalar_parameter("SpecularLevel", matDef.specularLevel)
-            mid.set_material_scalar_parameter("Opacity", matDef.opacity)
-
-            colorKeyRGB = None
-
-            if matDef.CXPMaterialProperties is not None:
-                if matDef.CXPMaterialProperties.blendMode == "colorkey":
-                    cxpProps = matDef.CXPMaterialProperties
-                    colorKeyRGB = cxpProps.colorkey
-
-            if colorKeyRGB is None:
-                # set this to out of range values, so no special case handling is needed elsewhere as the comparison will always fail, and work will be skipped
-                colorKeyRGB = [300, 300, 300]
-
-            #Determine, load and Set diffuse texture
-            if matDef.textureName == "NULL":
-                mid.set_material_scalar_parameter('UseVertexColor', 1.0)
-            else:
-                mid.set_material_scalar_parameter('UseVertexColor', 0.0)
-                texturesToLoad = []
-                #Add the first texture
-                texturesToLoad.append(matDef.textureName)
-                #Gather all other texture names
-                if matDef.CXPMaterialProperties is not None:
-                    for additionalTexture in matDef.CXPMaterialProperties.animAdditionalTextures:
-                        texturesToLoad.append(additionalTexture)
-                #Load all textures
-                LastTexture = None
-                for i, currentTextureName in enumerate(texturesToLoad):
-                    foundTexture = None
-                    for path in self.texturePaths:
-                        foundTexture = R6Settings.find_texture(currentTextureName, path)
-                        if foundTexture is not None:
-                            break
-                    if foundTexture is not None:
-                        #This assumes all textures in a flipbook use the same colorkey
-                        LastTexture = self.LoadTexture(foundTexture, colorKeyRGB[0], colorKeyRGB[1], colorKeyRGB[2], matDef.textureAddressMode)
-                        if LastTexture is not None:
-                            currentTextureSlotName = "DiffuseTexture" + str(i)
-                            #Add texture to appropriate slot
-                            mid.set_material_texture_parameter(currentTextureSlotName,LastTexture)
-                    else:
-                        ue.log("Failed to find texture: " + currentTextureName)
-
-                #Setup animation properties
-                if matDef.CXPMaterialProperties is not None:
-                    if matDef.CXPMaterialProperties.animated:
-                        mid.set_material_scalar_parameter("AnimationInterval", matDef.CXPMaterialProperties.animInterval)
-                        numFrames = len(texturesToLoad)
-                        ue.log("Number of animation frames: " + str(numFrames))
-                        mid.set_material_scalar_parameter("NumberOfAnimationFrames", numFrames)
-                    else:
-                        mid.set_material_scalar_parameter("AnimationInterval", 0.1)
-                        mid.set_material_scalar_parameter("NumberOfAnimationFrames", 1)
-
-                    if matDef.CXPMaterialProperties.scrolling:
-                        mid.set_material_scalar_parameter("ScrollSpeedX", matDef.CXPMaterialProperties.scrollParams[1])
-                        mid.set_material_scalar_parameter("ScrollSpeedY", matDef.CXPMaterialProperties.scrollParams[2])
-
+            mid = self.LoadMaterial(matDef)
             self.generatedMaterials.append(mid)
 
 class SOBModel(RSEResourceLoader):
     """Loads an RSE SOB file into unreal assets"""
     # constructor adding a component
     def __init__(self):
+        super().__init__()
         self.defaultSceneComponent = self.add_actor_root_component(SceneComponent, 'DefaultSceneComponent')
         self.shift_origin = False
         self.load_model()
@@ -320,8 +344,6 @@ class SOBModel(RSEResourceLoader):
         """Called when the actor is beginning play, or the world is beginning play"""
         #self.load_model()
 
-bp_RoomComponent = None
-
 class MAPLevel(RSEResourceLoader):
     """Loads an RSE MAP file into unreal assets"""
     # constructor adding a component
@@ -329,21 +351,18 @@ class MAPLevel(RSEResourceLoader):
         self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
         #self.defaultSceneComponent.own()
 
-        bp_RoomComponentObject = ue.load_object(Blueprint, '/Game/Rainbow/RoomComponent.RoomComponent')
-        global bp_RoomComponent
-        bp_RoomComponent = bp_RoomComponentObject.GeneratedClass
-
         self.proceduralMeshComponents = []
         # All AABBs for each static geometry object should be added to this worldAABB
         # This will allow an offset to be calculated to shift the map closer to the world origin, buying back precision
         self.worldAABB = AxisAlignedBoundingBox()
         self.shift_origin = True
+        refresh_class_references()
 
     def tick(self, delta_time):
         """Called every frame"""
-        pass
 
     def import_level_heights(self, MAPFile):
+        """Imports a level height definition from the map data structure"""
         for level in MAPFile.planningLevelList.planningLevels:
             adjustedHeight = level.floorHeight - self.worldOffsetVec[2]
             #self.worldOffsetVec[2]
@@ -403,7 +422,7 @@ class MAPLevel(RSEResourceLoader):
                 lightType = lightDef.lightType
                 lightName = lightDef.nameString
 
-                light_actor.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName)
+                self.uobject.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName, None)
 
     def shift_origin_of_new_renderables(self, renderables):
         """Calculates the combined bounds of the new renderables and shifts the origin
@@ -484,16 +503,20 @@ class MAPLevel(RSEResourceLoader):
             self.objectsToShift.append(newMeshComponent)
 
             set_rse_geometry_flags_on_mesh_component(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
+            geoObjComponent.AddMesh(newMeshComponent)
 
     def import_portals(self, portallist):
+        """Imports portals and creates appropriate static meshes for them."""
         self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
         portalParentComponent = self.uobject.add_actor_component(SceneComponent, "portals", self.defaultSceneComponent)
         portalComponents = []
         for portal in portallist.portals:
             portalRA = portal.generate_renderable_array_object()
             offsetVec = self.shift_origin_of_new_renderables([portalRA])
-            newMeshComponent = self.import_renderables_as_mesh_component(portal.nameString, [portalRA], portalParentComponent)
+            newMeshComponent = self.import_renderables_as_mesh_component(portal.nameString, [portalRA], portalParentComponent, RSEPortalMeshComponent)
             newMeshComponent.set_relative_location(offsetVec)
+            newMeshComponent.roomA = portal.roomA
+            newMeshComponent.roomB = portal.roomB
             portalComponents.append(newMeshComponent)
 
         self.uobject.RefreshPortals(portalComponents)
@@ -501,6 +524,7 @@ class MAPLevel(RSEResourceLoader):
         return portalComponents
 
     def import_rooms(self, MAPFile):
+        """Imports room volumes to for portals and occlusion checking"""
         for room in MAPFile.roomList.rooms:
             for levelDef in room.shermanLevels:
                 aabb = levelDef.get_aabb()
@@ -514,6 +538,7 @@ class MAPLevel(RSEResourceLoader):
                 self.uobject.AddRoomTrigger(levelDef.nameString, center, scale)
 
     def load_map(self):
+        """Wrapper function for load_map_actual, with some optional profiling code"""
         #import cProfile
         #cProfile.runctx('self.load_map_actual()', globals(), locals())
         self.load_map_actual()
@@ -589,16 +614,17 @@ class MAPLevel(RSEResourceLoader):
         for currentMesh in self.proceduralMeshComponents:
             currentMesh.UpdateRSEFlagSettings()
 
-    def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], parent_component):
+    def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], parent_component, mesh_component_type=RSEGeometryComponent):
         """Will import a list of renderables into a single Mesh Component.
         parent_component is the component that the new mesh component will attach to. Currently cannot be None.
         Returns a mesh component"""
 
         # Treat each geometryObject as a single component
-        newRSEGeoComp = self.uobject.add_actor_component(RSEGeometryComponent, name, parent_component)
+        newRSEGeoComp = self.uobject.add_actor_component(mesh_component_type, name, parent_component)
         self.uobject.add_instance_component(newRSEGeoComp)
         self.uobject.modify()
-        self.proceduralMeshComponents.append(newRSEGeoComp)
+        if mesh_component_type is RSEGeometryComponent:
+            self.proceduralMeshComponents.append(newRSEGeoComp)
 
         # Import each renderable as a mesh now
         for renderable in renderables:
