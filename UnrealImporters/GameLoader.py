@@ -1,15 +1,42 @@
 import os
+from pathlib import Path
 
 from RainbowFileReaders.RSEGameLoader import RSEGameLoader
 from RainbowFileReaders.R6MissionReader import R6MissionFile
 
 class GameLoader(object):
     """Loads an RSE game and allows interaction"""
+    
+
+    def ask_exe_file(self):
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+
+        file_path = filedialog.askopenfilename(title="Select your game exe file",filetypes = (("Executable","*.exe"),("all files","*.*")))
+
+        if file_path.lower().endswith("exe"):
+            print("Found rainbowsix executable")
+            p = Path(file_path)
+            file_path = p.parent
+
+        return file_path
+
     # constructor adding a component
     def begin_play(self):
         print("Testing game loader")
         self.game_loader = RSEGameLoader()
-        self.game_loader.load_game("D:/R6Data/FullGames/R6EWCD")
+        file_path = self.ask_exe_file()
+        if not file_path:
+            file_path = "D:/R6Data/FullGames/R6EWCD"
+        
+        print(f'Using gamepath: {file_path}')
+        self.game_loader.load_game(file_path)
+
+        self.list_missions()
+        self.uobject.PresentMenu()
 
     def list_missions(self):
         print("listing missions")
