@@ -63,6 +63,10 @@ class RSEGameLoader(object):
         Returns a list of missions that are avaible in the current game and loaded mods
         """
         mission_paths = gather_files_in_path(".MIS", self.game_path)
+        if "Eagle Watch" in self.mods:
+            mp_mission_paths = gather_files_in_path(".MPS", self.game_path)
+            mission_paths = mission_paths + mp_mission_paths
+
 
         missions = {}
         for mission_path in mission_paths:
