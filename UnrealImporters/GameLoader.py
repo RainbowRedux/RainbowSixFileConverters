@@ -35,6 +35,9 @@ class GameLoader(object):
         print(f'Using gamepath: {file_path}')
         self.game_loader.load_game(file_path)
 
+        self.list_missions()
+        self.uobject.PresentMenu()
+
     def list_missions(self):
         print("listing missions")
         missions = self.game_loader.get_mission_list()
