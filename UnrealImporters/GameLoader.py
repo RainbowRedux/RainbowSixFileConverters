@@ -59,6 +59,7 @@ class GameLoader(object):
             else:
                 self.uobject.LoadedMap.SetFogEnabled(False)
             self.uobject.LoadedMap.SetAmbientLightColor(missionFile.render_ambient_light_color[0], missionFile.render_ambient_light_color[1], missionFile.render_ambient_light_color[2])
+            self.uobject.LoadedMap.SetSkyColor(missionFile.render_background_color[0], missionFile.render_background_color[1], missionFile.render_background_color[2])
 
 
     def tick(self, delta_time):
