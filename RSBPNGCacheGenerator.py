@@ -45,8 +45,8 @@ def convert_game_images(game_path):
         image = None
 
         if colorKeyRGB is not None:
-            colokeyMask = tuple(colorKeyRGB)
-            image = imageFile.convert_full_color_image_with_colorkey_mask(colokeyMask)
+            colorkeyMask = tuple(colorKeyRGB)
+            image = imageFile.convert_full_color_image_with_colorkey_mask(colorkeyMask)
         else:
             image = imageFile.convert_full_color_image()
         PNGFilename = filepath + settings["imageCacheSuffix"]
