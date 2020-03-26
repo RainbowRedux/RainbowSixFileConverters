@@ -10,6 +10,7 @@ class R6RSBTests(unittest.TestCase):
     """Test R6 RSBs"""
 
     def test_palette_image(self):
+        """Tests reading an image that contains a palette"""
         settings = load_settings("test_settings.json")
 
         RSB_filepath = path.join(settings["gamePath_R6_EW"], "data", "texture", "08_engine.RSB")
@@ -38,6 +39,7 @@ class R6RSBTests(unittest.TestCase):
         self.assertEqual(fullColorImage.height, loadedFile.header.height, "Heights do not match on full color image")
 
     def test_full_color_image(self):
+        """Tests reading an image that does not contain a palette"""
         settings = load_settings("test_settings.json")
 
         RSB_filepath = path.join(settings["gamePath_R6_EW"], "data", "shell", "briefing", "Ac_a13.RSB")
@@ -48,7 +50,7 @@ class R6RSBTests(unittest.TestCase):
         self.assertTrue(readSucessfullyToEOF, "Failed to read whole file")
 
         self.assertEqual(loadedFile.header.width, 38, "Unexpected image width")
-        
+
         self.assertEqual(loadedFile.header.height, 46, "Unexpected image height")
 
         self.assertEqual(loadedFile.header.containsPalette, 0, "Detected palette in image that does not contain a palette")
