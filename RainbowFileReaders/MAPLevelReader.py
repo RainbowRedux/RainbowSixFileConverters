@@ -774,7 +774,6 @@ class R6MAPShermanLevelDefinition(BinaryFileDataStructure):
 
         self.hasShermanLevelPlanArea = filereader.read_bytes(1)[0]
         if self.hasShermanLevelPlanArea == 1:
-            print("ShermanLevelPlanArea")
             self.shermanLevelPlanArea = R6MAPShermanLevelPlanAreaDefinition()
             self.shermanLevelPlanArea.read(filereader)
     
