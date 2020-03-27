@@ -146,10 +146,12 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
 
         self.specularLevel = filereader.read_float()
         self.twoSidedRaw = filereader.read_bytes(1)
+        #TODO: Find a better way to read floats, maybe make this a function
         self.twoSidedRaw = int.from_bytes(self.twoSidedRaw, byteorder='little')
         self.twoSided = False
         if self.twoSidedRaw > 0:
             self.twoSided = True
 
+        #TODO: Change this to use new string functions
         self.textureName = self.textureNameRaw[:-1].decode("utf-8")
         self.materialName = self.materialNameRaw[:-1].decode("utf-8")
