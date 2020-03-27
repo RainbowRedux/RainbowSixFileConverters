@@ -10,6 +10,7 @@ class RSEGameVersions(object):
     UNKNOWN = "??"
 
 class RSEEngineVersions(object):
+    """Used to store constants representing the different engine versions available"""
     UNKNOWN = "Unknown"
     SHERMAN = "Sherman" # Rainbow Six, Eagle Watch
     ROMMEL = "Rommel" # Rogue Spear, Urban Ops, Covert Ops, Black Ops
