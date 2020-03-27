@@ -776,7 +776,7 @@ class R6MAPShermanLevelDefinition(BinaryFileDataStructure):
         if self.hasShermanLevelPlanArea == 1:
             self.shermanLevelPlanArea = R6MAPShermanLevelPlanAreaDefinition()
             self.shermanLevelPlanArea.read(filereader)
-    
+
     def get_aabb(self):
         newBounds = AxisAlignedBoundingBox()
         newBounds.add_point(self.AABB[:3])
