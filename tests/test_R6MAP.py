@@ -4,6 +4,7 @@ import unittest
 from os import path
 
 from Settings import load_settings
+from FileUtilities.DirectoryUtils import gather_files_in_path
 from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEMaterialFormatConstants
 
@@ -84,6 +85,25 @@ class R6MAPTests(unittest.TestCase):
         self.assertAlmostEqual(firstMaterial.specularLevel, 0.0, 3, "Wrong specular value")
         self.assertEqual(firstMaterial.twoSided, False, "Wrong two sided material flag value")
 
+    def test_load_all_R6_maps(self):
+        settings = load_settings(TEST_SETTINGS_FILE)
+
+        discovered_files = gather_files_in_path(".MAP", settings["gamePath_R6_EW"])
+
+        for map_filepath in discovered_files:
+            if map_filepath.endswith("obstacletest.map"):
+                #I believe this is an early test map that was shipped by accident.
+                # It's data structures are not consistent with the rest of the map files
+                # and it is not used anywhere so it is safe to skip
+                print("Skipping test map: " + map_filepath)
+                continue
+
+            loadedFile = MAPLevelReader.MAPLevelFile()
+            readSucessfullyToEOF = loadedFile.read_file(map_filepath)
+
+            self.assertTrue(readSucessfullyToEOF, f'Failed to read whole file: {map_filepath}')
+
+            self.check_section_strings(loadedFile)
 
 
 if __name__ == '__main__':
