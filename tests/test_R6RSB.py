@@ -6,12 +6,14 @@ from os import path
 from Settings import load_settings
 from RainbowFileReaders import RSBImageReader
 
+TEST_SETTINGS_FILE = "test_settings.json"
+
 class R6RSBTests(unittest.TestCase):
     """Test R6 RSBs"""
 
     def test_palette_image(self):
         """Tests reading an image that contains a palette"""
-        settings = load_settings("test_settings.json")
+        settings = load_settings(TEST_SETTINGS_FILE)
 
         RSB_filepath = path.join(settings["gamePath_R6_EW"], "data", "texture", "08_engine.RSB")
 
@@ -40,7 +42,7 @@ class R6RSBTests(unittest.TestCase):
 
     def test_full_color_image(self):
         """Tests reading an image that does not contain a palette"""
-        settings = load_settings("test_settings.json")
+        settings = load_settings(TEST_SETTINGS_FILE)
 
         RSB_filepath = path.join(settings["gamePath_R6_EW"], "data", "shell", "briefing", "Ac_a13.RSB")
 
