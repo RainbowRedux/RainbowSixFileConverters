@@ -40,4 +40,3 @@ class R6MAPTests(unittest.TestCase):
         self.assertEqual(normalGame.game_name, "Rainbow Six", "Didn't recognise game name")
         self.assertEqual(normalGame.game_version, RSEGameVersions.RAINBOW_SIX, "Didn't recognise game version")
         self.assertEqual(normalGame.engine_version, RSEEngineVersions.SHERMAN, "Didn't recognise engine version")
-
