@@ -6,7 +6,7 @@ from os import path
 from Settings import load_settings
 from FileUtilities.DirectoryUtils import gather_files_in_path
 from RainbowFileReaders import MAPLevelReader
-from RainbowFileReaders.R6Constants import RSEGameVersions, RSEMaterialFormatConstants
+from RainbowFileReaders.R6Constants import RSEGameVersions
 
 TEST_SETTINGS_FILE = "test_settings.json"
 
@@ -25,7 +25,6 @@ class R6MAPTests(unittest.TestCase):
         self.assertEqual(loadedMapFile.planningLevelList.sectionString, "PlanningLevelList")
 
         self.assertEqual(loadedMapFile.mapFooter.EndMapString, "EndMap", "Unexpected end of map footer string")
-
 
     def test_R6_MAP_Structure(self):
         """Tests reading an R6 MAP file, specifically M01"""
@@ -86,6 +85,7 @@ class R6MAPTests(unittest.TestCase):
         self.assertEqual(firstMaterial.twoSided, False, "Wrong two sided material flag value")
 
     def test_load_all_R6_maps(self):
+        """Attempt to load and validate the sections of each map in the directory"""
         settings = load_settings(TEST_SETTINGS_FILE)
 
         discovered_files = gather_files_in_path(".MAP", settings["gamePath_R6_EW"])
