@@ -101,7 +101,7 @@ def read_cxp(path):
             # The CXP key is the lowercase texture name, since this was a windows game, filename case is irrelevant
             materialKey = newMaterialName.lower()
             newMat = None
-            if newMaterialName in MaterialPropertiesDict:
+            if materialKey in MaterialPropertiesDict:
                 newMat = MaterialPropertiesDict[materialKey]
             else:
                 newMat = CXPMaterialProperties()
