@@ -92,15 +92,14 @@ class RSEGameLoader(object):
         """
         Returns a list of mods available in the current game
         """
-        #TODO: read mods
-        pass
+        #TODO: read mods in Rogue Spear games
+        return list(self.mods.keys())
 
     def load_mod(self, mod_name):
         """
         Loads the specified name and allows resources belonging to the mod to be retrieved
         """
         #TODO: load a mod
-        pass
 
     def print_game_info(self):
         """
@@ -115,7 +114,7 @@ class RSEGameLoader(object):
         print("Map list:")
         for mapCode, mapPath in maps.items():
             print("\t" + str(mapCode) + " : " + str(mapPath))
-        
+
         missions = self.get_mission_list()
         print("Mission list:")
         for missionCode, missionPath in missions.items():

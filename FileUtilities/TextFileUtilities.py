@@ -6,6 +6,7 @@ def read_tokenized_text_file(path):
     Keeps strings within quotes, and discards comments"""
     inFile = open(path, "r")
     lines = inFile.readlines()
+    inFile.close()
     keywords = []
     for line in lines:
         # Strip comments out from this line of text

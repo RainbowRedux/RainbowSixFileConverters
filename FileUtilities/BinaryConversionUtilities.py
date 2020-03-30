@@ -17,13 +17,14 @@ class BinaryFileReader(object):
     def openFile(self, path):
         """Opens the file at specified path and reads all data at once into buffer self.bytes"""
         #read entire file
+        self.filepath = path
         f = open(path, "rb")
         self.bytes = f.read()
         self._seekg = 0
         f.close()
 
     def read_bytes(self, size):
-        """Converts 2 bytes to a short integer"""
+        """Reads and returns a sequence of bytes of specified length"""
         if len(self.bytes) < self._seekg + size:
             raise ValueError("File not long enough to read " + str(size) + " bytes")
         val = self.bytes[self._seekg:self._seekg+size]
@@ -133,6 +134,11 @@ class BinaryFileReader(object):
         """Returns the current location that is due to be read next operation"""
         return self._seekg
 
+    def is_at_eof(self):
+        """Returns true if all bytes have been read, more specifically if seekg >= length of bytes"""
+        return self.get_seekg() >= self.get_length()
+
+
 class FileFormatReader(object):
     """A helper class that provides a common interface for all file formats
     Provides utility methods to print detailed information on class
@@ -162,12 +168,15 @@ class FileFormatReader(object):
             print("Length: " + str(self._filereader.get_length()) + " bytes")
             print("Unprocessed: " + str(self._filereader.get_length() - self._filereader.get_seekg()) + " bytes")
 
+        reachedEOF = self._filereader.is_at_eof()
+
         del self._filereader
         self._filereader = None
 
+        return reachedEOF
+
     def read_data(self):
         """The method to override with detailed data processing"""
-        pass
 
 
 class BinaryFileDataStructure(object):
@@ -198,7 +207,6 @@ class BinaryFileDataStructure(object):
 
     def read(self, filereader):
         """This is to be overriden in child classes. This is where all data for this structure can be read from"""
-        pass
 
     def print_structure_info(self):
         """Helper method to output class information for debugging"""
