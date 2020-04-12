@@ -30,10 +30,10 @@ class RSDMPHeader(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.FileID = filereader.read_uint()
+        self.FileID = filereader.read_uint32()
         self.AmbientLightColor = filereader.read_vec_f(4)
-        self.unknown5 = filereader.read_uint()
-        self.lightCount = filereader.read_uint()
+        self.unknown5 = filereader.read_uint32()
+        self.lightCount = filereader.read_uint32()
 
 class RSDMPLight(BinaryFileDataStructure):
     """Reads and stores Light structures from Rogue spear DMP files."""
@@ -50,12 +50,12 @@ class RSDMPLight(BinaryFileDataStructure):
             self.versionString = self.nameString
             self.versionStringRaw = self.nameStringRaw
             self.versionStringLength = self.nameStringLength
-            self.versionNumber = filereader.read_uint()
+            self.versionNumber = filereader.read_uint32()
 
             self.read_name_string(filereader)
             self.unknown6 = filereader.read_bytes(1)[0]
 
-        self.lightType = filereader.read_uint()
+        self.lightType = filereader.read_uint32()
         self.direction = filereader.read_vec_f(3)
         self.position = filereader.read_vec_f(3)
         self.falloff = filereader.read_float()

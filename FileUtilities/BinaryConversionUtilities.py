@@ -120,7 +120,7 @@ class BinaryFileReader(object):
         return vec
 
     @deprecated
-    def read_vec_short_uint(self, size):
+    def read_vec_uint16(self, size):
         """Reads a specified number of short uints into a list"""
         return self.read_vec_uint16(size)
 
@@ -146,14 +146,14 @@ class BinaryFileReader(object):
         """Reads 3 uints"""
         color = []
         for _ in range(3):
-            color.append(self.read_uint())
+            color.append(self.read_uint32())
         return color
 
     def read_rgba_color_32bpp_uint(self):
         """Reads 4 uints"""
         color = []
         for _ in range(4):
-            color.append(self.read_uint())
+            color.append(self.read_uint32())
         return color
 
     def read_rgba_color_32bpp_float(self):
@@ -235,7 +235,7 @@ class BinaryFileDataStructure(object):
 
     def read_named_string(self, filereader, stringName):
         """Read a string with the specified name"""
-        newStringLength = filereader.read_uint()
+        newStringLength = filereader.read_uint32()
         newStringRaw = filereader.read_bytes(newStringLength)
         newString = newStringRaw[:-1].decode("utf-8")
         self.__setattr__(stringName + "Length", newStringLength)

@@ -201,10 +201,10 @@ class RSBHeader(BinaryFileDataStructure):
     def read_bit_mask(self, filereader):
         """Reads the bitmask for each color channel. May be stored outside of the header in Version 0 files"""
         #bit depth information
-        self.bitDepthRed = filereader.read_uint()
-        self.bitDepthGreen = filereader.read_uint()
-        self.bitDepthBlue = filereader.read_uint()
-        self.bitDepthAlpha = filereader.read_uint()
+        self.bitDepthRed = filereader.read_uint32()
+        self.bitDepthGreen = filereader.read_uint32()
+        self.bitDepthBlue = filereader.read_uint32()
+        self.bitDepthAlpha = filereader.read_uint32()
 
     def get_rgba_bitmask_tuple(self):
         """Returns the bitmask in RGBA order as a tuple"""
@@ -213,18 +213,18 @@ class RSBHeader(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.version = filereader.read_uint()
-        self.width = filereader.read_uint()
-        self.height = filereader.read_uint()
+        self.version = filereader.read_uint32()
+        self.width = filereader.read_uint32()
+        self.height = filereader.read_uint32()
 
         if self.version == 0:
-            self.containsPalette = filereader.read_uint()
+            self.containsPalette = filereader.read_uint32()
 
         #num_bytes_processed += 1
         if self.version > 7:
             #process 3 more variables
-            self.unknown2 = filereader.read_uint()
-            self.unknown3 = filereader.read_uint()
+            self.unknown2 = filereader.read_uint32()
+            self.unknown3 = filereader.read_uint32()
             self.unknown4 = filereader.read_bytes(1)
 
         if self.version > 0:
@@ -232,9 +232,9 @@ class RSBHeader(BinaryFileDataStructure):
             self.read_bit_mask(filereader)
 
         if self.version >= 9:
-            self.unknown5 = filereader.read_uint()
+            self.unknown5 = filereader.read_uint32()
 
-            self.dxtType = filereader.read_uint()
+            self.dxtType = filereader.read_uint32()
             if self.dxtType >= 0 and self.dxtType < 5:
                 self.isDXT = True
 

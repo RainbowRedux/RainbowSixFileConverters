@@ -18,12 +18,12 @@ class RSEMaterialListHeader(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.size = filereader.read_uint()
-        self.unknown1 = filereader.read_uint()
-        self.materialListBeginMessageLength = filereader.read_uint()
+        self.size = filereader.read_uint32()
+        self.unknown1 = filereader.read_uint32()
+        self.materialListBeginMessageLength = filereader.read_uint32()
         self.materialListBeginMessageRaw = filereader.read_bytes(self.materialListBeginMessageLength)
         self.materialListBeginMessage = self.materialListBeginMessageRaw[:-1].decode("utf-8")
-        self.numMaterials = filereader.read_uint()
+        self.numMaterials = filereader.read_uint32()
 
 
 class RSEMaterialDefinition(BinaryFileDataStructure):
@@ -89,16 +89,16 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.size = filereader.read_uint()
-        self.ID = filereader.read_uint()
+        self.size = filereader.read_uint32()
+        self.ID = filereader.read_uint32()
 
-        self.versionStringLength = filereader.read_uint()
+        self.versionStringLength = filereader.read_uint32()
         self.versionNumber = None
         if self.versionStringLength == 8:
             self.versionStringRaw = filereader.read_bytes(self.versionStringLength)
             if self.versionStringRaw[:-1] == b'Version':
-                self.versionNumber = filereader.read_uint()
-                self.materialNameLength = filereader.read_uint()
+                self.versionNumber = filereader.read_uint32()
+                self.materialNameLength = filereader.read_uint32()
                 self.materialNameRaw = filereader.read_bytes(self.materialNameLength)
             else:
                 self.materialNameLength = self.versionStringLength
@@ -107,12 +107,12 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
             self.materialNameLength = self.versionStringLength
             self.materialNameRaw = filereader.read_bytes(self.materialNameLength)
 
-        self.textureNameLength = filereader.read_uint()
+        self.textureNameLength = filereader.read_uint32()
         self.textureNameRaw = filereader.read_bytes(self.textureNameLength)
 
         self.opacity = filereader.read_float()
         self.emissiveStrength = filereader.read_float()
-        self.textureAddressMode = filereader.read_uint() #1 = WRAP, 3 = CLAMP. https://docs.microsoft.com/en-au/windows/desktop/direct3d9/d3dtextureaddress
+        self.textureAddressMode = filereader.read_uint32() #1 = WRAP, 3 = CLAMP. https://docs.microsoft.com/en-au/windows/desktop/direct3d9/d3dtextureaddress
 
         gameVer = self.get_material_game_version()
 
