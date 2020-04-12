@@ -1,4 +1,7 @@
 """ A commandline utilty to read map files and output their data into JSON files """
+
+import logging
+
 from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders.R6Constants import RSEGameVersions
 from FileUtilities import JSONMetaInfo, DirectoryProcessor
@@ -7,6 +10,10 @@ from Settings import load_settings
 
 lightTypes = []
 
+log = logging.getLogger(__name__)
+
+#TODO: Improve logging for async. Add write out to file handler, which outputs txt for each file, and configure logging in each thread.
+logging.basicConfig(level=logging.DEBUG)
 
 def strip_extra_data_for_json(mapFile):
     """ Strips out lengthy data which is already being interpreted correctly to make it easier for humans to view the json file """
@@ -32,16 +39,14 @@ def strip_extra_data_for_json(mapFile):
             geometryObject.geometryData.collisionInformation.faces = ["Stripped from JSON"]
             geometryObject.geometryData.collisionInformation.collisionMeshDefinitions = ["Stripped from JSON"]
 
-flagErrors = []
-
 def convert_MAP(filename):
     """ Reads in MAP files, and then converts to JSON """
-    print("Processing: " + filename)
+    log.info("Processing: %s", filename)
     if filename.endswith("obstacletest.map"):
         #I believe this is an early test map that was shipped by accident.
         # It's data structures are not consistent with the rest of the map files
         # and it is not used anywhere so it is safe to skip
-        print("Skipping test map: " + filename)
+        log.debug("Skipping test map: %s", filename)
         return
 
     mapFile = MAPLevelReader.MAPLevelFile()
@@ -52,18 +57,16 @@ def convert_MAP(filename):
             for mesh in geometryObject.meshes:
                 if mesh.geometryFlagsEvaluated["UnevaluatedFlags"]:
                     errorMessage = filename + " UnevaluatedFlags for:" + geometryObject.nameString + "_" + mesh.nameString
-                    flagErrors.append(errorMessage)
-                    print(errorMessage)
+                    log.error(errorMessage)
                 geometryObject.generate_renderable_arrays_for_mesh(mesh)
         elif mapFile.gameVersion == RSEGameVersions.ROGUE_SPEAR:
             #Rogue Spear
             for collisionMeshDefinition in geometryObject.geometryData.collisionInformation.collisionMeshDefinitions:
                 if collisionMeshDefinition.geometryFlagsEvaluated["UnevaluatedFlags"]:
                     errorMessage = filename + " UnevaluatedFlags for:" + geometryObject.nameString + "_" + mesh.nameString
-                    flagErrors.append(errorMessage)
-                    print(errorMessage)
+                    log.error(errorMessage)
         else:
-            print("Unable to determine where geometryFlags are")
+            log.error("Unable to determine where geometryFlags are")
 
 
     for light in mapFile.lightList.lights:
@@ -90,11 +93,8 @@ def main():
 
     fp.run(mode=settings["runMode"])
 
-    print("Light Types: ")
-    print(lightTypes)
-    print("Geometry Flag errors: ")
-    for err in flagErrors:
-        print(err)
+    log.info("Light Types: ")
+    log.info(lightTypes)
 
 if __name__ == "__main__":
     main()

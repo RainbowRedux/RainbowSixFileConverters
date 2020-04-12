@@ -1,5 +1,5 @@
 """Test reading MAP files from Rainbow Six (1998)"""
-
+import logging
 import unittest
 from os import path
 
@@ -9,6 +9,8 @@ from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders.R6Constants import RSEGameVersions
 
 TEST_SETTINGS_FILE = "test_settings.json"
+
+logging.basicConfig(level=logging.CRITICAL)
 
 class R6MAPTests(unittest.TestCase):
     """Test R6 MAPs"""

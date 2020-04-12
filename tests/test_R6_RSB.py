@@ -1,5 +1,5 @@
 """Test reading RSB images from Rainbow Six (1998)"""
-
+import logging
 import unittest
 from os import path
 
@@ -7,6 +7,8 @@ from Settings import load_settings
 from RainbowFileReaders import RSBImageReader
 
 TEST_SETTINGS_FILE = "test_settings.json"
+
+logging.basicConfig(level=logging.CRITICAL)
 
 class R6RSBTests(unittest.TestCase):
     """Test R6 RSBs"""

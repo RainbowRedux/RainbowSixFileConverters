@@ -4,12 +4,15 @@ Also provides some functions to unpack data from packed structures
 """
 import struct
 import pprint
+import logging
 
 import functools
 
 from math import floor
 
 from deprecated import deprecated
+
+log = logging.getLogger(__name__)
 
 class BinaryFileReader(object):
     """
@@ -23,16 +26,20 @@ class BinaryFileReader(object):
 
     def open_file(self, path):
         """Opens the file at specified path and reads all data at once into buffer self.bytes"""
-        #read entire file
         self.filepath = path
+        log.debug("Opening file for read: %s", self.filepath)
         f = open(path, "rb")
+        # read entire file
         self.bytes = f.read()
-        self._seekg = 0
         f.close()
+
+        # note that we "seek" to the beginning of the file at load
+        self._seekg = 0
 
     def read_bytes(self, size):
         """Reads and returns a sequence of bytes of specified length"""
         if len(self.bytes) < self._seekg + size:
+            log.critical("File not long enough to read %d bytes", str(size))
             raise ValueError("File not long enough to read " + str(size) + " bytes")
         val = self.bytes[self._seekg:self._seekg+size]
         self._seekg += size
@@ -48,7 +55,7 @@ class BinaryFileReader(object):
         #https://stackoverflow.com/a/444610
         data = self.read_bytes(4)
         if len(data) < 4:
-            print("Data read not long enough, returning 0")
+            log.error("Data read not long enough, returning 0")
             return 0
         return struct.unpack("<I", data)[0]
 
@@ -62,7 +69,7 @@ class BinaryFileReader(object):
         #https://stackoverflow.com/a/444610
         data = self.read_bytes(4)
         if len(data) < 4:
-            print("Data read not long enough, returning 0")
+            log.error("Data read not long enough, returning 0")
             return 0
         return struct.unpack("<i", data)[0]
 
@@ -75,7 +82,7 @@ class BinaryFileReader(object):
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(2)
         if len(data) < 2:
-            print("Data read not long enough, returning 0")
+            log.error("Data read not long enough, returning 0")
             return 0
         return struct.unpack("<H", data)[0]
 
@@ -88,7 +95,7 @@ class BinaryFileReader(object):
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(2)
         if len(data) < 2:
-            print("Data read not long enough, returning 0")
+            log.error("Data read not long enough, returning 0")
             return 0
         return struct.unpack("<h", data)[0]
 
@@ -96,7 +103,7 @@ class BinaryFileReader(object):
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(4)
         if len(data) < 4:
-            print("Data read not long enough, returning 0")
+            log.error("Data read not long enough, returning 0")
             return 0
         return struct.unpack("f", data)[0]
 
@@ -186,24 +193,28 @@ class FileFormatReader(object):
 
     def print_structure_info(self):
         """Utility method to print detailed information on data stored"""
-        pprint.pprint(vars(self))
+        for line in pprint.pformat(vars(self)).split('\n'):
+            logging.info(line)
 
     def read_file(self, filepath, verboseOutput=False):
         """Reads the file specified into memory and then will call read_data to process"""
         #TODO: Add error checking to see if this file was loaded
         self.filepath = filepath
         self.verboseOutput = verboseOutput
-        if self.verboseOutput:
-            print("== Processing: " + str(self.filepath))
+
+        log.debug("Processing: %s", self.filepath)
         self._filereader = BinaryFileReader(filepath)
 
         self.read_data()
 
-        if self.verboseOutput:
-            print("== Finished Processing: " + str(self.filepath))
-            print("Processed: " + str(self._filereader.get_seekg()) + " bytes")
-            print("Length: " + str(self._filereader.get_length()) + " bytes")
-            print("Unprocessed: " + str(self._filereader.get_length() - self._filereader.get_seekg()) + " bytes")
+        unprocessed_bytes = self._filereader.get_length() - self._filereader.get_seekg()
+        if unprocessed_bytes > 0:
+            log.warning("Didn't read the final %d bytes of file %s", unprocessed_bytes, self.filepath)
+
+        log.debug("Finished Processing: %s", self.filepath)
+        log.debug("Length: %d bytes", self._filereader.get_length())
+        log.debug("Processed: %d bytes", self._filereader.get_seekg())
+        log.debug("Unprocessed: %d bytes", self._filereader.get_length() - self._filereader.get_seekg())
 
         reachedEOF = self._filereader.is_at_eof()
 
@@ -247,7 +258,8 @@ class BinaryFileDataStructure(object):
 
     def print_structure_info(self):
         """Helper method to output class information for debugging"""
-        pprint.pprint(vars(self))
+        for line in pprint.pformat(vars(self)).split('\n'):
+            logging.info(line)
 
 def bytes_to_shortint(byteStream):
     """Converts 2 bytes to a short integer"""
