@@ -120,7 +120,7 @@ class BinaryFileReader(object):
         return vec
 
     @deprecated
-    def read_vec_uint16(self, size):
+    def read_vec_short_uint(self, size):
         """Reads a specified number of short uints into a list"""
         return self.read_vec_uint16(size)
 
