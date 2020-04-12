@@ -7,8 +7,13 @@ import pprint
 
 from math import floor
 
+from deprecated import deprecated 
+
 class BinaryFileReader(object):
-    """A wrapper for reading and conversion operations on binary file data."""
+    """
+    A wrapper for reading and conversion operations on binary file data.
+    All datatypes assume they were written in little-endian format
+    """
     def __init__(self, path=None):
         super(BinaryFileReader, self).__init__()
         if path is not None:
@@ -31,7 +36,12 @@ class BinaryFileReader(object):
         self._seekg += size
         return val
 
+    @deprecated
     def read_uint(self):
+        """Converts 4 bytes to an integer"""
+        return self.read_uint32()
+
+    def read_uint32(self):
         """Converts 4 bytes to an integer"""
         #https://stackoverflow.com/a/444610
         data = self.read_bytes(4)
@@ -40,7 +50,12 @@ class BinaryFileReader(object):
             return 0
         return struct.unpack("<I", data)[0]
 
+    @deprecated
     def read_int(self):
+        """Converts 4 bytes to an integer"""
+        return self.read_int32()
+
+    def read_int32(self):
         """Converts 4 bytes to an integer"""
         #https://stackoverflow.com/a/444610
         data = self.read_bytes(4)
@@ -49,7 +64,12 @@ class BinaryFileReader(object):
             return 0
         return struct.unpack("<i", data)[0]
 
+    @deprecated
     def read_short_int(self):
+        """Converts 2 bytes to a short integer"""
+        return self.read_int16()
+
+    def read_int16(self):
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(2)
         if len(data) < 2:
@@ -57,7 +77,12 @@ class BinaryFileReader(object):
             return 0
         return struct.unpack("<H", data)[0]
 
+    @deprecated
     def read_short_uint(self):
+        """Converts 2 bytes to a short integer"""
+        return self.read_uint16()
+
+    def read_uint16(self):
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(2)
         if len(data) < 2:
@@ -80,18 +105,28 @@ class BinaryFileReader(object):
             vec.append(self.read_float())
         return vec
 
+    @deprecated
     def read_vec_uint(self, size):
+        """Reads a specified number of uints into a list"""
+        return self.read_vec_uint32(size)
+
+    def read_vec_uint32(self, size):
         """Reads a specified number of uints into a list"""
         vec = []
         for _ in range(size):
-            vec.append(self.read_uint())
+            vec.append(self.read_uint32())
         return vec
 
+    @deprecated
     def read_vec_short_uint(self, size):
+        """Reads a specified number of short uints into a list"""
+        return self.read_vec_uint16(size)
+
+    def read_vec_uint16(self, size):
         """Reads a specified number of short uints into a list"""
         vec = []
         for _ in range(size):
-            vec.append(self.read_short_uint())
+            vec.append(self.read_uint16())
         return vec
 
     def read_bgra_color_8bpp_byte(self):
