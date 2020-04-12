@@ -5,9 +5,11 @@ Also provides some functions to unpack data from packed structures
 import struct
 import pprint
 
+import functools
+
 from math import floor
 
-from deprecated import deprecated 
+from deprecated import deprecated
 
 class BinaryFileReader(object):
     """
@@ -17,9 +19,9 @@ class BinaryFileReader(object):
     def __init__(self, path=None):
         super(BinaryFileReader, self).__init__()
         if path is not None:
-            self.openFile(path)
+            self.open_file(path)
 
-    def openFile(self, path):
+    def open_file(self, path):
         """Opens the file at specified path and reads all data at once into buffer self.bytes"""
         #read entire file
         self.filepath = path
@@ -250,8 +252,6 @@ class BinaryFileDataStructure(object):
 def bytes_to_shortint(byteStream):
     """Converts 2 bytes to a short integer"""
     return struct.unpack('H', byteStream)
-
-import functools
 
 @functools.lru_cache(maxsize=8)
 def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):
