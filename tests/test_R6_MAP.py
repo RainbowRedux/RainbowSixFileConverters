@@ -95,7 +95,7 @@ class R6MAPTests(unittest.TestCase):
                 #I believe this is an early test map that was shipped by accident.
                 # It's data structures are not consistent with the rest of the map files
                 # and it is not used anywhere so it is safe to skip
-                print("Skipping test map: " + map_filepath)
+                #print("Skipping test map: " + map_filepath)
                 continue
 
             loadedFile = MAPLevelReader.MAPLevelFile()
