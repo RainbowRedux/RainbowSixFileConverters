@@ -1,14 +1,14 @@
 """Classes and functions to load and parse Mission files from Rainbow Six"""
-from RainbowFileReaders import R6Settings
-from FileUtilities.TextFileUtilities import read_tokenized_text_file, read_keyword_list
+from FileUtilities.TextFileUtilities import read_tokenized_text_file
 
 class R6MissionFile(object):
     """Mission description file for Rainbow Six"""
     def __init__(self):
         super(R6MissionFile, self).__init__()
-    
+
     def read_room_list(self, keywords):
-        room_list = []        
+        """Will read a list of rooms until the 'End' keyword is found"""
+        room_list = []
         nextKeyword = keywords[0]
         while nextKeyword != "End":
             room_list.append(keywords.pop(0))
@@ -18,8 +18,7 @@ class R6MissionFile(object):
         return room_list
 
     def load_mission(self, path):
-        pass
-
+        """Reads all mission properties from a .MIS or .MPS file"""
         self.filepath = path
         keywords = read_tokenized_text_file(path)
 
@@ -58,14 +57,12 @@ class R6MissionFile(object):
         outdoorRoomsKeyword = keywords.pop(0)
         if outdoorRoomsKeyword != "OutdoorRooms":
             raise ValueError("OutdoorRooms keyword expected but not found. Found: " + str(outdoorRoomsKeyword))
-            return
 
         self.outdoor_rooms = self.read_room_list(keywords)
 
         fogRoomsKeyword = keywords.pop(0)
         if fogRoomsKeyword != "FogRooms":
             raise ValueError("FogRooms keyword expected but not found. Found: " + str(fogRoomsKeyword))
-            return
 
         self.fog_rooms = self.read_room_list(keywords)
 
