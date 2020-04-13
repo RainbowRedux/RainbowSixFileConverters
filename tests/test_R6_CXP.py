@@ -3,7 +3,7 @@ import logging
 import unittest
 from os import path
 
-from Settings import load_settings
+from FileUtilities.Settings import load_settings
 from RainbowFileReaders import CXPMaterialPropertiesReader
 
 TEST_SETTINGS_FILE = "test_settings.json"

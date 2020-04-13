@@ -9,7 +9,7 @@ from RainbowFileReaders.RSEGameLoader import RSEGameLoader
 from RainbowFileReaders.RSBImageReader import RSBImageFile
 from RainbowFileReaders.R6Settings import restore_original_texture_name
 from FileUtilities.DirectoryUtils import gather_files_in_path
-from Settings import load_settings
+from FileUtilities.Settings import load_settings
 
 #Load Game
 def convert_game_images(game_path):

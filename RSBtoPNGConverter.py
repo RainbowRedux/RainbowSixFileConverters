@@ -16,7 +16,7 @@ Files with a format version later than 1 also store information after the image,
 
 import os
 
-from Settings import load_settings
+from FileUtilities.Settings import load_settings
 
 from RainbowFileReaders.RSBImageReader import RSBImageFile
 from FileUtilities import JSONMetaInfo, DirectoryProcessor

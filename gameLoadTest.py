@@ -1,6 +1,6 @@
 from RainbowFileReaders.RSEGameLoader import RSEGameLoader
 from RainbowFileReaders.R6MissionReader import R6MissionFile
-from Settings import load_settings
+from FileUtilities.Settings import load_settings
 
 if __name__ == "__main__":
     settings = load_settings()

@@ -3,7 +3,7 @@
 import logging
 import unittest
 
-from Settings import load_settings
+from FileUtilities.Settings import load_settings
 from RainbowFileReaders import RSEGameLoader
 from RainbowFileReaders.R6Constants import RSEEngineVersions, RSEGameVersions
 

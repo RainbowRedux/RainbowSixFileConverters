@@ -11,7 +11,7 @@ from FileUtilities import DirectoryProcessor
 from FileUtilities import JSONMetaInfo, OBJModelWriter
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders.MathHelpers import is_vector_normal
-from Settings import load_settings
+from FileUtilities.Settings import load_settings
 
 def convert_SOB(filename):
     """ Reads an SOB file and then writes to OBJ format """

@@ -3,7 +3,7 @@ import logging
 import unittest
 from os import path
 
-from Settings import load_settings
+from FileUtilities.Settings import load_settings
 from FileUtilities.DirectoryUtils import gather_files_in_path
 from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders.R6Constants import RSEGameVersions

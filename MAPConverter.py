@@ -6,7 +6,7 @@ from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders.R6Constants import RSEGameVersions
 from FileUtilities import JSONMetaInfo, DirectoryProcessor
 
-from Settings import load_settings
+from FileUtilities.Settings import load_settings
 
 lightTypes = []
 
