@@ -1,8 +1,12 @@
 """Provides classes that will read and parse Material definitions and related information in RSE game formats."""
+import logging
+
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEMaterialFormatConstants
 from RainbowFileReaders.MathHelpers import normalize_color, unnormalize_color
 from RainbowFileReaders.CXPMaterialPropertiesReader import get_cxp_definition
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure
+
+log = logging.getLogger(__name__)
 
 class RSEMaterialListHeader(BinaryFileDataStructure):
     """Reads and stores information in the header of a material list"""
@@ -142,7 +146,7 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
 
             self.normalizedColors = True
         else:
-            print("Unhandled case")
+            log.warning("Unhandled case")
 
         self.specularLevel = filereader.read_float()
         self.twoSidedRaw = filereader.read_bytes(1)
