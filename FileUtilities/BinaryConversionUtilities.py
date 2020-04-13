@@ -247,6 +247,12 @@ class BinaryFileDataStructure(object):
         """Read the string for the version. Does not read associated version numbers"""
         self.read_named_string(filereader, "versionString")
 
+    def copy_string(self, srcName, dstName):
+        """This will copy a string, and it's associated data to another name"""
+        self.__setattr__(dstName + "Length", self.__getattribute__(srcName + "Length"))
+        self.__setattr__(dstName + "Raw", self.__getattribute__(srcName + "Raw"))
+        self.__setattr__(dstName, self.__getattribute__(srcName))
+
     def read_named_string(self, filereader, stringName):
         """Read a string with the specified name"""
         newStringLength = filereader.read_uint32()

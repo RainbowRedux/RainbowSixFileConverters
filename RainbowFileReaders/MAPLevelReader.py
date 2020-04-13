@@ -566,9 +566,7 @@ class R6MAPLight(BinaryFileDataStructure):
         #Some maps store a version string, others don't, not quite sure why. Also makes unknown6 quite unclear as to whether they are separate fields or not
         self.read_name_string(filereader)
         if self.nameString == "Version":
-            self.versionString = self.nameString
-            self.versionStringRaw = self.nameStringRaw
-            self.versionStringLength = self.nameStringLength
+            self.copy_string("nameString", "versionString")
             self.versionNumber = filereader.read_uint32()
 
             self.read_name_string(filereader)
@@ -835,9 +833,7 @@ class R6MAPShermanLevelPlanAreaDefinition(BinaryFileDataStructure):
 
         self.read_name_string(filereader)
         if self.nameString == "Version":
-            self.versionString = self.nameString
-            self.versionStringRaw = self.nameStringRaw
-            self.versionStringLength = self.nameStringLength
+            self.copy_string("nameString", "versionString")
             self.versionNumber = filereader.read_uint32()
 
             self.read_name_string(filereader)
