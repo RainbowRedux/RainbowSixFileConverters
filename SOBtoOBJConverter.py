@@ -7,15 +7,22 @@ RSB Version 0 required looking into the bt file directly as the wiki is not comp
 Texture and surface data extraction to JSON file is not complete
 """
 
+import logging
+
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders.MathHelpers import is_vector_normal
 from FileUtilities.Settings import load_settings
 from FileUtilities import DirectoryProcessor
 from FileUtilities import JSONMetaInfo, OBJModelWriter
 
+log = logging.getLogger(__name__)
+
+#TODO: Improve logging for async. Add write out to file handler, which outputs txt for each file, and configure logging in each thread.
+logging.basicConfig(level=logging.INFO)
+
 def convert_SOB(filename):
     """ Reads an SOB file and then writes to OBJ format """
-    print("Processing: " + filename)
+    log.info("Processing: %s", filename)
 
     modelFile = SOBModelReader.SOBModelFile()
     modelFile.read_file(filename)
@@ -35,12 +42,15 @@ def convert_SOB(filename):
             else:
                 countBadNormals += 1
 
-    print("Num bad normals: " + str(countBadNormals))
-    print("Num good normals: " + str(countGoodNormals))
+    if countBadNormals > 0:
+        log.warning("Num bad normals: %d", countBadNormals)
+    else:
+        log.info("Num bad normals: %d", countBadNormals)
+    log.info("Num good normals: %d", countGoodNormals)
 
     write_OBJ(filename + ".obj", modelFile)
 
-    print("===============================================")
+    log.info("===============================================")
 
 def write_OBJ(filename, SOBObject):
     """Writes the given Geometry Object to an OBJ file """
