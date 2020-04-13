@@ -3,6 +3,7 @@ Functions to import MAP files into blender
 """
 import os
 import sys
+import logging
 from math import radians
 
 import bpy
@@ -17,6 +18,8 @@ from RainbowFileReaders.R6Constants import RSEGameVersions
 
 from BlenderImporters import BlenderUtils
 from BlenderImporters.BlenderUtils import create_objects_from_R6GeometryObject, create_objects_from_RSMAPGeometryObject
+
+log = logging.getLogger(__name__)
 
 def create_spotlight_from_r6_light_specification(lightSpec, name):
     """Create a spotlight from a rainbow six light specification"""
@@ -151,15 +154,14 @@ def import_MAP_to_scene(filename):
         #I believe this is an early test map that was shipped by accident.
         # It's data structures are not consistent with the rest of the map files
         # and it is not used anywhere so it is safe to skip
-        print("Skipping test map: " + filename)
+        log.info("Skipping test map: " + filename)
         return False
     MAPObject = MAPLevelReader.MAPLevelFile()
     MAPObject.read_file(filename)
 
     BlenderUtils.setup_blank_scene()
 
-    print("")
-    print("Beginning import")
+    log.info("Beginning import")
 
     texturePaths = R6Settings.get_relevant_global_texture_paths(filename)
 
@@ -177,7 +179,7 @@ def import_MAP_to_scene(filename):
     else:
         import_rs_lights(MAPObject.dmpLights)
 
-    print("Import Map Succeeded")
+    log.info("Import Map Succeeded")
     return True
 
 

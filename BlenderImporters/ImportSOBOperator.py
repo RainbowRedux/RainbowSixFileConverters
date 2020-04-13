@@ -3,6 +3,7 @@ Blender operator for giving an SOB import GUI interface
 """
 
 import sys
+import logging
 
 import bpy
 # ImportHelper is a helper class, defines filename and
@@ -17,9 +18,11 @@ sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixF
 sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 from BlenderImporters import ImportSOB
 
+log = logging.getLogger(__name__)
+
 def import_SOB(context, filename, use_some_setting):
     """Function that is called to import SOB file by GUI"""
-    print("running read_some_data...")
+    log.info("running read_some_data...")
     ImportSOB.import_SOB_to_scene(filename)
     return {'FINISHED'}
 

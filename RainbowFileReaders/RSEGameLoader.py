@@ -1,9 +1,12 @@
 """Contains utility class to load a game from a directory and load/calculate associated settings, parameters and find resources"""
 
+import logging
 import os
 
 from RainbowFileReaders.R6Constants import RSEEngineVersions, RSEGameVersions
 from FileUtilities.DirectoryProcessor import gather_files_in_path
+
+log = logging.getLogger(__name__)
 
 class RSEGameLoader(object):
     """Utility class to load a game from a directory and load/calculate associated settings, parameters and find resources"""
@@ -105,31 +108,17 @@ class RSEGameLoader(object):
         """
         Prints information about the currently loaded game
         """
-        print("Game Path = " + self.game_path)
-        print("Game Name = " + self.game_name)
-        print("Game Version = " + self.game_version)
-        print("EngineVersion = " + self.engine_version)
+        log.info("Game Path = %s", self.game_path)
+        log.info("Game Name = %s", self.game_name)
+        log.info("Game Version = %s", self.game_version)
+        log.info("EngineVersion = %s", self.engine_version)
 
         maps = self.get_map_list()
-        print("Map list:")
+        log.info("Map list:")
         for mapCode, mapPath in maps.items():
-            print("\t" + str(mapCode) + " : " + str(mapPath))
+            log.info("\t%s : %s", mapCode, mapPath)
 
         missions = self.get_mission_list()
-        print("Mission list:")
+        log.info("Mission list:")
         for missionCode, missionPath in missions.items():
-            print("\t" + str(missionCode) + " : " + str(missionPath))
-
-
-def test_game_path(path):
-    """Test function to load a specific directory and display information"""
-    print("===============================")
-    print("Loading new game directory: " + path)
-    print("===============================")
-    game = RSEGameLoader()
-    game.load_game(path)
-    game.print_game_info()
-
-if __name__ == "__main__":
-    test_game_path("D:/R6Data/FullGames/R6EWCD")
-    test_game_path("D:/R6Data/FullGames/RSUOCOCD")
+            log.info("\t%s : %s", missionCode, missionPath)

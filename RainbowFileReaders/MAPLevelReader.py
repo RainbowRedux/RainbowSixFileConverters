@@ -1,9 +1,11 @@
 """
 This module defines the fileformat and data structures specific to MAP files used in Rainbow Six and Rogue Spear
 """
+import logging
 from datetime import datetime
 
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
+from FileUtilities.LoggingUtils import log_pprint
 from RainbowFileReaders import R6Settings, R6Constants
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEGeometryFlags
 from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject, R6VertexParameterCollection, R6FaceDefinition
@@ -12,6 +14,8 @@ from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 from RainbowFileReaders.RSDMPLightReader import RSDMPLightFile
 from RainbowFileReaders.MathHelpers import normalize_color, pad_color, Vector, AxisAlignedBoundingBox
 from RainbowFileReaders.RenderableArray import RenderableArray
+
+log = logging.getLogger(__name__)
 
 class MAPLevelFile(FileFormatReader):
     """Class to read full MAP files"""
@@ -123,7 +127,7 @@ class MAPHeader(BinaryFileDataStructure):
         super().read(filereader)
 
         self.read_named_string(filereader, "headerBeginMessage")
-        self.timePOSIXRaw = filereader.read_uint()
+        self.timePOSIXRaw = filereader.read_uint32()
         #special case handling, some files have a zero timestamp recorded, which datetime.fromtimestamp() doesn't like
         if self.timePOSIXRaw == 0:
             self.time = datetime(1970,1,1)
@@ -138,11 +142,11 @@ class RSMAPGeometryObject(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.size = filereader.read_uint()
-        self.id = filereader.read_uint()
+        self.size = filereader.read_uint32()
+        self.id = filereader.read_uint32()
 
         self.read_version_string(filereader)
-        self.versionNumber = filereader.read_uint()
+        self.versionNumber = filereader.read_uint32()
 
         self.read_name_string(filereader)
 
@@ -177,11 +181,11 @@ class RSMAPGeometryData(BinaryFileDataStructure):
 
     def read_header_info(self, filereader):
         """Reads top level information for this data structure"""
-        self.size = filereader.read_uint()
-        self.id = filereader.read_uint()
+        self.size = filereader.read_uint32()
+        self.id = filereader.read_uint32()
 
         self.read_version_string(filereader)
-        self.versionNumber = filereader.read_uint()
+        self.versionNumber = filereader.read_uint32()
 
         self.read_name_string(filereader)
 
@@ -235,14 +239,14 @@ class RSMAPGeometryData(BinaryFileDataStructure):
 
     def read_vertices(self, filereader):
         """Reads the list of vertices from the file"""
-        self.vertexCount = filereader.read_uint()
+        self.vertexCount = filereader.read_uint32()
         self.vertices = []
         for _ in range(self.vertexCount):
             self.vertices.append(filereader.read_vec_f(3))
 
     def read_face_groups(self, filereader):
         """Reads the list of RSMAPFaceGroups from the file"""
-        self.faceGroupCount = filereader.read_uint()
+        self.faceGroupCount = filereader.read_uint32()
         self.faceGroups = []
 
         for _ in range(self.faceGroupCount):
@@ -259,9 +263,9 @@ class RSMAPFaceGroup(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.materialIndex = filereader.read_uint()
+        self.materialIndex = filereader.read_uint32()
 
-        self.faceCount = filereader.read_uint()
+        self.faceCount = filereader.read_uint32()
 
         self.faceNormals = []
         self.faceDistancesFromOrigin = []
@@ -272,11 +276,11 @@ class RSMAPFaceGroup(BinaryFileDataStructure):
 
         self.faceVertexIndices = []
         for _ in range(self.faceCount):
-            self.faceVertexIndices.append(filereader.read_vec_short_uint(3))
+            self.faceVertexIndices.append(filereader.read_vec_uint16(3))
 
         self.faceVertexParamIndices = []
         for _ in range(self.faceCount):
-            self.faceVertexParamIndices.append(filereader.read_vec_short_uint(3))
+            self.faceVertexParamIndices.append(filereader.read_vec_uint16(3))
 
         self.vertexParams = RSMAPVertexParameterCollection()
         self.vertexParams.read(filereader)
@@ -290,7 +294,7 @@ class RSMAPVertexParameterCollection(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.vertexParamCount = filereader.read_uint()
+        self.vertexParamCount = filereader.read_uint32()
 
         self.normals = []
         for _ in range(self.vertexParamCount):
@@ -356,10 +360,9 @@ class RSMAPCollisionInformation(BinaryFileDataStructure):
                 currentVertex = geometryData.vertices[currentAttribSet[0]]
                 #currentNormal = geometryData.normals[currentAttribSet[1]]
             except IndexError:
-                print("Error in mesh. Vertex index out of range")
-                print(str(currentAttribSet[0]))
-                import pprint
-                pprint.pprint(collisionMesh.geometryFlagsEvaluated)
+                log.error("Error in mesh. Vertex index out of range")
+                log.error(str(currentAttribSet[0]))
+                log_pprint(collisionMesh.geometryFlags, logging.ERROR)
                 exit(1)
 
             currentRenderable.vertices.append(currentVertex.copy())
@@ -377,13 +380,13 @@ class RSMAPCollisionInformation(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.vertexCount = filereader.read_uint()
+        self.vertexCount = filereader.read_uint32()
 
         self.vertices = []
         for _ in range(self.vertexCount):
             self.vertices.append(filereader.read_vec_f(3))
 
-        self.normalCount = filereader.read_uint()
+        self.normalCount = filereader.read_uint32()
 
         self.normals = []
         self.faceDistancesFromOrigin = []
@@ -392,7 +395,7 @@ class RSMAPCollisionInformation(BinaryFileDataStructure):
             self.normals.append(filereader.read_vec_f(3))
             self.faceDistancesFromOrigin.append(filereader.read_float())
 
-        self.faceCount = filereader.read_uint()
+        self.faceCount = filereader.read_uint32()
 
         self.faces = []
         for _ in range(self.faceCount):
@@ -400,7 +403,7 @@ class RSMAPCollisionInformation(BinaryFileDataStructure):
             faceObject.read(filereader)
             self.faces.append(faceObject)
 
-        self.collisionMeshDefinitionsCount = filereader.read_uint()
+        self.collisionMeshDefinitionsCount = filereader.read_uint32()
         self.collisionMeshDefinitions = []
         for _ in range(self.collisionMeshDefinitionsCount):
             dataObject = RSMAPCollisionMesh()
@@ -415,13 +418,13 @@ class RSMAPCollisionFaceInformation(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.vertexIndices = filereader.read_vec_short_uint(3)
+        self.vertexIndices = filereader.read_vec_uint16(3)
 
-        self.unknown1 = filereader.read_short_uint()
+        self.unknown1 = filereader.read_uint16()
 
-        self.normalIndices = filereader.read_vec_short_uint(3)
+        self.normalIndices = filereader.read_vec_uint16(3)
 
-        self.unknown2 = filereader.read_short_uint()
+        self.unknown2 = filereader.read_uint16()
 
 
 class RSMAPCollisionMesh(BinaryFileDataStructure):
@@ -434,11 +437,11 @@ class RSMAPCollisionMesh(BinaryFileDataStructure):
 
         self.read_name_string(filereader)
 
-        self.geometryFlags = filereader.read_uint() #??
+        self.geometryFlags = filereader.read_uint32() #??
         self.geometryFlagsEvaluated = RSEGeometryFlags.EvaluateFlags(self.geometryFlags)
 
-        self.faceCount = filereader.read_uint()
-        self.faceIndices = filereader.read_vec_short_uint(self.faceCount)
+        self.faceCount = filereader.read_uint32()
+        self.faceIndices = filereader.read_vec_uint16(self.faceCount)
 
 class RSEMAPPortalList(BinaryFileDataStructure):
     """Contains a list of RSEMAPPortals used for occlusion culling"""
@@ -453,14 +456,14 @@ class RSEMAPPortalList(BinaryFileDataStructure):
 
     def read_header_info(self, filereader):
         """Reads top level information for this data structure"""
-        self.portalListSize = filereader.read_uint()
-        self.ID = filereader.read_uint()
+        self.portalListSize = filereader.read_uint32()
+        self.ID = filereader.read_uint32()
 
         self.read_section_string(filereader)
 
     def read_portals(self, filereader):
         """reads all portals in list"""
-        self.portalCount = filereader.read_uint()
+        self.portalCount = filereader.read_uint32()
         self.portals = []
         for _ in range(self.portalCount):
             newPortal = RSEMAPPortal()
@@ -504,21 +507,21 @@ class RSEMAPPortal(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.portalSize = filereader.read_uint()
-        self.ID = filereader.read_uint()
+        self.portalSize = filereader.read_uint32()
+        self.ID = filereader.read_uint32()
 
         self.read_version_string(filereader)
-        self.versionNumber = filereader.read_uint()
+        self.versionNumber = filereader.read_uint32()
 
         self.read_name_string(filereader)
 
-        self.vertexCount = filereader.read_uint()
+        self.vertexCount = filereader.read_uint32()
         self.vertices = []
         for _ in range(self.vertexCount):
             self.vertices.append(filereader.read_vec_f(3))
 
-        self.roomA = filereader.read_uint()
-        self.roomB = filereader.read_uint()
+        self.roomA = filereader.read_uint32()
+        self.roomB = filereader.read_uint32()
 
 
 class R6MAPLightList(BinaryFileDataStructure):
@@ -534,14 +537,14 @@ class R6MAPLightList(BinaryFileDataStructure):
 
     def read_header_info(self, filereader):
         """Reads top level information for this data structure"""
-        self.lightListSize = filereader.read_uint()
-        self.ID = filereader.read_uint()
+        self.lightListSize = filereader.read_uint32()
+        self.ID = filereader.read_uint32()
 
         self.read_section_string(filereader)
 
     def read_lights(self, filereader):
         """Reads all lights into list"""
-        self.lightCount = filereader.read_uint()
+        self.lightCount = filereader.read_uint32()
 
         self.lights = []
         for _ in range(self.lightCount):
@@ -557,19 +560,17 @@ class R6MAPLight(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.lightSize = filereader.read_uint()
-        self.ID = filereader.read_uint()
+        self.lightSize = filereader.read_uint32()
+        self.ID = filereader.read_uint32()
 
         #Some maps store a version string, others don't, not quite sure why. Also makes unknown6 quite unclear as to whether they are separate fields or not
         self.read_name_string(filereader)
         if self.nameString == "Version":
-            self.versionString = self.nameString
-            self.versionStringRaw = self.nameStringRaw
-            self.versionStringLength = self.nameStringLength
-            self.versionNumber = filereader.read_uint()
+            self.copy_string("nameString", "versionString")
+            self.versionNumber = filereader.read_uint32()
 
             self.read_name_string(filereader)
-            self.unknown6 = filereader.read_uint()
+            self.unknown6 = filereader.read_uint32()
         else:
             self.unknown6 = filereader.read_bytes(3)
 
@@ -577,7 +578,7 @@ class R6MAPLight(BinaryFileDataStructure):
         self.transformMatrix = filereader.read_vec_f(9)
 
         self.position = filereader.read_vec_f(3)
-        self.color = filereader.read_vec_uint(3)
+        self.color = filereader.read_vec_uint32(3)
         self.constantAttenuation = filereader.read_float()
         self.linearAttenuation = filereader.read_float()
         self.quadraticAttenuation = filereader.read_float()
@@ -599,13 +600,13 @@ class RSEMAPObjectList(BinaryFileDataStructure):
 
     def read_header_info(self, filereader):
         """Reads top level information for this data structure"""
-        self.objectListSize = filereader.read_uint()
-        self.ID = filereader.read_uint()
+        self.objectListSize = filereader.read_uint32()
+        self.ID = filereader.read_uint32()
         self.read_section_string(filereader)
 
     def read_objects(self, filereader):
         """Reads all objects into a list"""
-        self.objectCount = filereader.read_uint()
+        self.objectCount = filereader.read_uint32()
 
         self.objects = []
         for _ in range(self.objectCount):
@@ -623,10 +624,10 @@ class RSEMAPObject(BinaryFileDataStructure):
         RS_OBJECT_VERSION = 5
         R6_OBJECT_VERSION = 1
 
-        self.objectSize = filereader.read_uint()
-        self.objectType = filereader.read_uint()
+        self.objectSize = filereader.read_uint32()
+        self.objectType = filereader.read_uint32()
         self.read_version_string(filereader)
-        self.versionNumber = filereader.read_uint()
+        self.versionNumber = filereader.read_uint32()
         self.read_name_string(filereader)
 
         if self.versionNumber >= RS_OBJECT_VERSION:
@@ -640,7 +641,7 @@ class RSEMAPObject(BinaryFileDataStructure):
             numberOfBytesToSkip = numberOfBytesToSkip - self.versionStringLength
             self.bytes = filereader.read_bytes(numberOfBytesToSkip)
         else:
-            print("BIG ERROR UNSUPPORTED OBJECT VERSION: " + str(self.versionNumber))
+            log.critical("Unsupported Map object version: %d", self.versionNumber)
             return
 
 class RSEMAPRoomList(BinaryFileDataStructure):
@@ -660,13 +661,13 @@ class RSEMAPRoomList(BinaryFileDataStructure):
 
     def read_header_info(self, filereader):
         """Reads top level information for this data structure"""
-        self.roomListSize = filereader.read_uint()
-        self.ID = filereader.read_uint()
+        self.roomListSize = filereader.read_uint32()
+        self.ID = filereader.read_uint32()
         self.read_section_string(filereader)
 
     def read_rooms(self, filereader, gameVer):
         """Reads every room in list. Will read appropriate data structure for gameVer"""
-        self.roomCount = filereader.read_uint()
+        self.roomCount = filereader.read_uint32()
 
         self.rooms = []
         for _ in range(self.roomCount):
@@ -685,9 +686,9 @@ class R6MAPRoomDefinition(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.ID = filereader.read_uint()
+        self.ID = filereader.read_uint32()
         self.read_version_string(filereader)
-        self.versionNumber = filereader.read_uint()
+        self.versionNumber = filereader.read_uint32()
 
         self.read_name_string(filereader)
 
@@ -696,24 +697,24 @@ class R6MAPRoomDefinition(BinaryFileDataStructure):
         if self.unknown1 == 0:
             self.unknown3 = filereader.read_bytes(1)[0]
 
-        self.shermanLevelCount = filereader.read_uint()
+        self.shermanLevelCount = filereader.read_uint32()
         self.shermanLevels = []
         for _ in range(self.shermanLevelCount):
             newObject = R6MAPShermanLevelDefinition()
             newObject.read(filereader)
             self.shermanLevels.append(newObject)
 
-        self.transitionCount = filereader.read_uint()
+        self.transitionCount = filereader.read_uint32()
         self.transitions = []
         for _ in range(self.transitionCount):
             tempTransition = R6MAPShermanLevelTransitionDefinition()
             tempTransition.read(filereader)
             self.transitions.append(tempTransition)
 
-        self.levelHeightsCount = filereader.read_uint()
+        self.levelHeightsCount = filereader.read_uint32()
         self.levelHeights = filereader.read_vec_f(self.levelHeightsCount * 2)
 
-        self.unknown5Count = filereader.read_uint()
+        self.unknown5Count = filereader.read_uint32()
         self.unknown5 = filereader.read_vec_f(self.unknown5Count)
 
 class RSMAPRoomDefinition(BinaryFileDataStructure):
@@ -724,9 +725,9 @@ class RSMAPRoomDefinition(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.ID = filereader.read_uint()
+        self.ID = filereader.read_uint32()
         self.read_version_string(filereader)
-        self.versionNumber = filereader.read_uint()
+        self.versionNumber = filereader.read_uint32()
 
         self.read_name_string(filereader)
 
@@ -742,7 +743,7 @@ class RSMAPRoomDefinition(BinaryFileDataStructure):
         if hasattr(self, 'unknown4') and self.unknown4 == 1:
             self.unknown6 = filereader.read_vec_f(6)
 
-        self.shermanLevelCount = filereader.read_uint()
+        self.shermanLevelCount = filereader.read_uint32()
         self.shermanLevels = []
         for _ in range(self.shermanLevelCount):
             newObject = RSMAPShermanLevelDefinition()
@@ -750,7 +751,7 @@ class RSMAPRoomDefinition(BinaryFileDataStructure):
             self.shermanLevels.append(newObject)
 
 
-        self.unknown4Count = filereader.read_uint()
+        self.unknown4Count = filereader.read_uint32()
 
         self.unknown5 = filereader.read_float()
         self.unknown4 = []
@@ -769,7 +770,7 @@ class R6MAPShermanLevelDefinition(BinaryFileDataStructure):
         self.read_name_string(filereader)
         self.AABB = filereader.read_vec_f(6)
 
-        self.unknown2Count = filereader.read_uint()
+        self.unknown2Count = filereader.read_uint32()
         self.unknown2 = filereader.read_vec_f(self.unknown2Count)
 
         self.hasShermanLevelPlanArea = filereader.read_bytes(1)[0]
@@ -778,6 +779,7 @@ class R6MAPShermanLevelDefinition(BinaryFileDataStructure):
             self.shermanLevelPlanArea.read(filereader)
 
     def get_aabb(self):
+        """Calculate an Axis Align Bounding Box from the 2 corners/vertices of this level"""
         newBounds = AxisAlignedBoundingBox()
         newBounds.add_point(self.AABB[:3])
         newBounds.add_point(self.AABB[3:])
@@ -793,14 +795,14 @@ class RSMAPShermanLevelDefinition(BinaryFileDataStructure):
         super().read(filereader)
 
         self.read_name_string(filereader)
-        self.transformCount = filereader.read_uint() # ACount
+        self.transformCount = filereader.read_uint32() # ACount
         self.transforms = []
         for _ in range(self.transformCount):
             transformObj = RSMAPShermanLevelTransformInformation()
             transformObj.read(filereader)
             self.transforms.append(transformObj)
 
-        self.unknown3Count = filereader.read_uint()
+        self.unknown3Count = filereader.read_uint32()
         self.unknown3 = filereader.read_vec_f(self.unknown3Count)
 
         self.unknown4 = filereader.read_bytes(1)[0]
@@ -826,51 +828,49 @@ class R6MAPShermanLevelPlanAreaDefinition(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.unknown1 = filereader.read_uint()
-        self.ID = filereader.read_uint()
+        self.unknown1 = filereader.read_uint32()
+        self.ID = filereader.read_uint32()
 
         self.read_name_string(filereader)
         if self.nameString == "Version":
-            self.versionString = self.nameString
-            self.versionStringRaw = self.nameStringRaw
-            self.versionStringLength = self.nameStringLength
-            self.versionNumber = filereader.read_uint()
+            self.copy_string("nameString", "versionString")
+            self.versionNumber = filereader.read_uint32()
 
             self.read_name_string(filereader)
 
         self.unknown2_bytes = filereader.read_bytes(4) #ABCD
-        self.unknown3 = filereader.read_uint() #U
+        self.unknown3 = filereader.read_uint32() #U
 
-        self.vertexCount = filereader.read_uint()
+        self.vertexCount = filereader.read_uint32()
         self.vertices = [] #coordinate
         for _ in range(self.vertexCount):
             self.vertices.append(filereader.read_vec_f(3))
 
-        self.vertexParamCount = filereader.read_uint()
+        self.vertexParamCount = filereader.read_uint32()
         self.vertexParams = [] #coordinate2
         for _ in range(self.vertexParamCount):
             newParams = R6VertexParameterCollection()
             newParams.read(filereader)
             self.vertexParams.append(newParams)
 
-        self.faceCount = filereader.read_uint()
+        self.faceCount = filereader.read_uint32()
         self.faces = [] #coordinate3
         for _ in range(self.faceCount):
             newFace = R6FaceDefinition()
             newFace.read(filereader)
             self.faces.append(newFace)
-        self.unknown5 = filereader.read_uint()
-        self.unknown6 = filereader.read_uint()
+        self.unknown5 = filereader.read_uint32()
+        self.unknown6 = filereader.read_uint32()
 
         self.read_named_string(filereader, "Unknown7String")
 
-        self.unknown8 = filereader.read_uint()
-        self.faceIndicesCount = filereader.read_uint()
-        self.faceIndices = filereader.read_vec_uint(self.faceIndicesCount)
+        self.unknown8 = filereader.read_uint32()
+        self.faceIndicesCount = filereader.read_uint32()
+        self.faceIndices = filereader.read_vec_uint32(self.faceIndicesCount)
 
-        self.unknown10 = filereader.read_uint()
+        self.unknown10 = filereader.read_uint32()
         self.read_named_string(filereader, "Unknown11String")
-        self.unknown12 = filereader.read_uint()
+        self.unknown12 = filereader.read_uint32()
 
 class RSMAPShermanLevelTransitionList(BinaryFileDataStructure):
     """This is related to the portal system and traversal between floors, but exact details and usage is still TBD"""
@@ -885,13 +885,13 @@ class RSMAPShermanLevelTransitionList(BinaryFileDataStructure):
 
     def read_header_info(self, filereader):
         """Reads top level information for this data structure"""
-        self.transitionListSize = filereader.read_uint() #L, moved here to match other header structures
-        self.ID = filereader.read_uint()
+        self.transitionListSize = filereader.read_uint32() #L, moved here to match other header structures
+        self.ID = filereader.read_uint32()
         self.read_section_string(filereader)
 
     def read_transition_objects(self, filereader):
         """Reads the transition objects into a list"""
-        self.transitionCount = filereader.read_uint()
+        self.transitionCount = filereader.read_uint32()
         self.transitions = []
         for _ in range(self.transitionCount):
             transition = RSMAPShermanLevelTransitionDefinition()
@@ -907,7 +907,7 @@ class RSMAPShermanLevelTransitionDefinition(BinaryFileDataStructure):
         super().read(filereader)
 
         self.read_name_string(filereader)
-        print(self.nameString)
+        log.debug(self.nameString)
 
         self.coords = filereader.read_vec_f(6)
 
@@ -946,13 +946,13 @@ class RSEMAPPlanningLevelList(BinaryFileDataStructure):
 
     def read_header_info(self, filereader):
         """Reads top level information for this data structure"""
-        self.planningLevelListSize = filereader.read_uint() #L, moved here to match other header structures
-        self.ID = filereader.read_uint()
+        self.planningLevelListSize = filereader.read_uint32() #L, moved here to match other header structures
+        self.ID = filereader.read_uint32()
         self.read_section_string(filereader)
 
     def read_planning_levels(self, filereader):
         """Reads the planning level objects into a list"""
-        self.planningLevelCount = filereader.read_uint()
+        self.planningLevelCount = filereader.read_uint32()
         self.planningLevels = []
         for _ in range(self.planningLevelCount):
             planLevel = R6MAPPlanningLevelDefinition()
@@ -969,7 +969,7 @@ class R6MAPPlanningLevelDefinition(BinaryFileDataStructure):
 
         self.levelNumber = filereader.read_float() #A
         self.floorHeight = filereader.read_float() #B
-        self.roomCount = filereader.read_uint()
+        self.roomCount = filereader.read_uint32()
         self.roomNames = []
         for _ in range(self.roomCount):
             string = SerializedCString()

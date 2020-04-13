@@ -148,14 +148,3 @@ def find_texture(filename, dataPath):
         for name in dirs:
             pass
     return result
-
-
-if __name__ == "__main__":
-    #A path that should work, with no mod
-    print(str(determine_data_paths_for_file("../Data/Test/ReducedGames/RSDemo/data/map/rm01/rm01.map")))
-    #A path that should work, with a mod
-    print(str(determine_data_paths_for_file("../Data/Test/ReducedGames/RSDemo/mods/CLASSIC MISSIONS/map/cl01/cl01.map")))
-    #A path that should work, with no mod
-    print(str(determine_data_paths_for_file("../Data/Test/ReducedGames/R6GOG/data/map/m01/M01.map")))
-    #A path that should not work, as it will be unable to determine directory structure
-    print(str(determine_data_paths_for_file("../Rainbow/")))

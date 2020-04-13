@@ -3,65 +3,103 @@ Provides some utility classes and functions for reading data from binary files
 Also provides some functions to unpack data from packed structures
 """
 import struct
-import pprint
+import logging
+
+import functools
 
 from math import floor
 
+from deprecated import deprecated
+
+from FileUtilities.LoggingUtils import log_pprint
+
+log = logging.getLogger(__name__)
+
+# Disabling "Too many public methods", as this is caused by some deprecated wrapper
+# functions that I don't want to remove just yet.
+# pylint: disable=R0904
 class BinaryFileReader(object):
-    """A wrapper for reading and conversion operations on binary file data."""
+    """
+    A wrapper for reading and conversion operations on binary file data.
+    All datatypes assume they were written in little-endian format
+    """
     def __init__(self, path=None):
         super(BinaryFileReader, self).__init__()
         if path is not None:
-            self.openFile(path)
+            self.open_file(path)
 
-    def openFile(self, path):
+    def open_file(self, path):
         """Opens the file at specified path and reads all data at once into buffer self.bytes"""
-        #read entire file
         self.filepath = path
+        log.debug("Opening file for read: %s", self.filepath)
         f = open(path, "rb")
+        # read entire file
         self.bytes = f.read()
-        self._seekg = 0
         f.close()
+
+        # note that we "seek" to the beginning of the file at load
+        self._seekg = 0
 
     def read_bytes(self, size):
         """Reads and returns a sequence of bytes of specified length"""
         if len(self.bytes) < self._seekg + size:
+            log.critical("File not long enough to read %d bytes", str(size))
             raise ValueError("File not long enough to read " + str(size) + " bytes")
         val = self.bytes[self._seekg:self._seekg+size]
         self._seekg += size
         return val
 
+    @deprecated
     def read_uint(self):
+        """Converts 4 bytes to an integer"""
+        return self.read_uint32()
+
+    def read_uint32(self):
         """Converts 4 bytes to an integer"""
         #https://stackoverflow.com/a/444610
         data = self.read_bytes(4)
         if len(data) < 4:
-            print("Data read not long enough, returning 0")
+            log.error("Data read not long enough, returning 0")
             return 0
         return struct.unpack("<I", data)[0]
 
+    @deprecated
     def read_int(self):
+        """Converts 4 bytes to an integer"""
+        return self.read_int32()
+
+    def read_int32(self):
         """Converts 4 bytes to an integer"""
         #https://stackoverflow.com/a/444610
         data = self.read_bytes(4)
         if len(data) < 4:
-            print("Data read not long enough, returning 0")
+            log.error("Data read not long enough, returning 0")
             return 0
         return struct.unpack("<i", data)[0]
 
+    @deprecated
     def read_short_int(self):
+        """Converts 2 bytes to a short integer"""
+        return self.read_int16()
+
+    def read_int16(self):
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(2)
         if len(data) < 2:
-            print("Data read not long enough, returning 0")
+            log.error("Data read not long enough, returning 0")
             return 0
         return struct.unpack("<H", data)[0]
 
+    @deprecated
     def read_short_uint(self):
+        """Converts 2 bytes to a short integer"""
+        return self.read_uint16()
+
+    def read_uint16(self):
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(2)
         if len(data) < 2:
-            print("Data read not long enough, returning 0")
+            log.error("Data read not long enough, returning 0")
             return 0
         return struct.unpack("<h", data)[0]
 
@@ -69,7 +107,7 @@ class BinaryFileReader(object):
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(4)
         if len(data) < 4:
-            print("Data read not long enough, returning 0")
+            log.error("Data read not long enough, returning 0")
             return 0
         return struct.unpack("f", data)[0]
 
@@ -80,18 +118,28 @@ class BinaryFileReader(object):
             vec.append(self.read_float())
         return vec
 
+    @deprecated
     def read_vec_uint(self, size):
+        """Reads a specified number of uints into a list"""
+        return self.read_vec_uint32(size)
+
+    def read_vec_uint32(self, size):
         """Reads a specified number of uints into a list"""
         vec = []
         for _ in range(size):
-            vec.append(self.read_uint())
+            vec.append(self.read_uint32())
         return vec
 
+    @deprecated
     def read_vec_short_uint(self, size):
+        """Reads a specified number of short uints into a list"""
+        return self.read_vec_uint16(size)
+
+    def read_vec_uint16(self, size):
         """Reads a specified number of short uints into a list"""
         vec = []
         for _ in range(size):
-            vec.append(self.read_short_uint())
+            vec.append(self.read_uint16())
         return vec
 
     def read_bgra_color_8bpp_byte(self):
@@ -109,14 +157,14 @@ class BinaryFileReader(object):
         """Reads 3 uints"""
         color = []
         for _ in range(3):
-            color.append(self.read_uint())
+            color.append(self.read_uint32())
         return color
 
     def read_rgba_color_32bpp_uint(self):
         """Reads 4 uints"""
         color = []
         for _ in range(4):
-            color.append(self.read_uint())
+            color.append(self.read_uint32())
         return color
 
     def read_rgba_color_32bpp_float(self):
@@ -149,24 +197,27 @@ class FileFormatReader(object):
 
     def print_structure_info(self):
         """Utility method to print detailed information on data stored"""
-        pprint.pprint(vars(self))
+        log_pprint(vars(self), logging.INFO)
 
     def read_file(self, filepath, verboseOutput=False):
         """Reads the file specified into memory and then will call read_data to process"""
         #TODO: Add error checking to see if this file was loaded
         self.filepath = filepath
         self.verboseOutput = verboseOutput
-        if self.verboseOutput:
-            print("== Processing: " + str(self.filepath))
+
+        log.debug("Processing: %s", self.filepath)
         self._filereader = BinaryFileReader(filepath)
 
         self.read_data()
 
-        if self.verboseOutput:
-            print("== Finished Processing: " + str(self.filepath))
-            print("Processed: " + str(self._filereader.get_seekg()) + " bytes")
-            print("Length: " + str(self._filereader.get_length()) + " bytes")
-            print("Unprocessed: " + str(self._filereader.get_length() - self._filereader.get_seekg()) + " bytes")
+        unprocessed_bytes = self._filereader.get_length() - self._filereader.get_seekg()
+        if unprocessed_bytes > 0:
+            log.warning("Didn't read the final %d bytes of file %s", unprocessed_bytes, self.filepath)
+
+        log.debug("Finished Processing: %s", self.filepath)
+        log.debug("Length: %d bytes", self._filereader.get_length())
+        log.debug("Processed: %d bytes", self._filereader.get_seekg())
+        log.debug("Unprocessed: %d bytes", self._filereader.get_length() - self._filereader.get_seekg())
 
         reachedEOF = self._filereader.is_at_eof()
 
@@ -196,9 +247,15 @@ class BinaryFileDataStructure(object):
         """Read the string for the version. Does not read associated version numbers"""
         self.read_named_string(filereader, "versionString")
 
+    def copy_string(self, srcName, dstName):
+        """This will copy a string, and it's associated data to another name"""
+        self.__setattr__(dstName + "Length", self.__getattribute__(srcName + "Length"))
+        self.__setattr__(dstName + "Raw", self.__getattribute__(srcName + "Raw"))
+        self.__setattr__(dstName, self.__getattribute__(srcName))
+
     def read_named_string(self, filereader, stringName):
         """Read a string with the specified name"""
-        newStringLength = filereader.read_uint()
+        newStringLength = filereader.read_uint32()
         newStringRaw = filereader.read_bytes(newStringLength)
         newString = newStringRaw[:-1].decode("utf-8")
         self.__setattr__(stringName + "Length", newStringLength)
@@ -210,13 +267,11 @@ class BinaryFileDataStructure(object):
 
     def print_structure_info(self):
         """Helper method to output class information for debugging"""
-        pprint.pprint(vars(self))
+        log_pprint(vars(self), logging.INFO)
 
 def bytes_to_shortint(byteStream):
     """Converts 2 bytes to a short integer"""
     return struct.unpack('H', byteStream)
-
-import functools
 
 @functools.lru_cache(maxsize=8)
 def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):

@@ -1,14 +1,16 @@
 """Test reading MAP files from Rainbow Six (1998)"""
-
+import logging
 import unittest
 from os import path
 
-from Settings import load_settings
+from FileUtilities.Settings import load_settings
 from FileUtilities.DirectoryUtils import gather_files_in_path
 from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders.R6Constants import RSEGameVersions
 
 TEST_SETTINGS_FILE = "test_settings.json"
+
+logging.basicConfig(level=logging.CRITICAL)
 
 class R6MAPTests(unittest.TestCase):
     """Test R6 MAPs"""
@@ -95,7 +97,6 @@ class R6MAPTests(unittest.TestCase):
                 #I believe this is an early test map that was shipped by accident.
                 # It's data structures are not consistent with the rest of the map files
                 # and it is not used anywhere so it is safe to skip
-                print("Skipping test map: " + map_filepath)
                 continue
 
             loadedFile = MAPLevelReader.MAPLevelFile()

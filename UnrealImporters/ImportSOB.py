@@ -1,8 +1,7 @@
 """This moduled defines classes and functions related to importing RSE assets into Unreal"""
 import os
-import PIL
-# Pylint disabled error W0611 as this is actually due to python not loading submodules by default
-from PIL import Image # pylint: disable=W0611
+import logging
+from PIL import Image as PILImage
 
 # pylint: disable=no-member, broad-except
 # Disabled no-member for this module since a lot of functionality exposed by UnrealEnginePython doesn't exist outside of unreal and generates false positives
@@ -25,6 +24,8 @@ from RainbowFileReaders.RenderableArray import RenderableArray, merge_renderable
 from RainbowFileReaders.MathHelpers import AxisAlignedBoundingBox
 
 from UnrealImporters import ImporterSettings
+
+log = logging.getLogger(__name__)
 
 ue.log('Initializing SOB File importer')
 
@@ -162,7 +163,7 @@ class RSEResourceLoader:
         PNGFilename = texturePath + ImporterSettings.PNG_CACHE_FILE_SUFFIX
         imageFile = None
         if os.path.isfile(PNGFilename) and ImporterSettings.bUsePNGCache:
-            image = PIL.Image.open(PNGFilename)
+            image = PILImage.open(PNGFilename)
         else:
             imageFile = RSBImageReader.RSBImageFile()
             imageFile.read_file(texturePath)
@@ -326,7 +327,7 @@ class SOBModel(RSEResourceLoader):
         for _, geoObj in enumerate(SOBFile.geometryObjects):
             name = geoObj.nameString
 
-            print("Processing geoobj: " + name)
+            ue.log("Processing geoobj: " + name)
             geoObjComponent = self.uobject.add_actor_component(SceneComponent, name, self.defaultSceneComponent)
             self.uobject.add_instance_component(geoObjComponent)
             self.uobject.modify()
@@ -400,7 +401,7 @@ class MAPLevel(RSEResourceLoader):
             if roomNumber in self.rooms:
                 roomAttachment = self.rooms[roomNumber]
             else:
-                print("No room for light: " + lightName + " roomnumber: " + roomNumber)
+                ue.log("No room for light: " + lightName + " roomnumber: " + roomNumber)
 
             self.uobject.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName, roomAttachment)
 
@@ -575,7 +576,7 @@ class MAPLevel(RSEResourceLoader):
             else:
                 usedNames.append(name)
 
-            #print("Processing geoobj: " + name)
+            #ue.log("Processing geoobj: " + name)
             self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
             geoObjComponent = self.uobject.add_actor_component(bp_RoomComponent, name, self.defaultSceneComponent)
             self.rooms[name] = geoObjComponent
@@ -591,7 +592,7 @@ class MAPLevel(RSEResourceLoader):
         self.objectsToShift.extend(self.import_portals(MAPFile.portalList))
 
         if self.shift_origin:
-            print("Recentering objects")
+            ue.log("Recentering objects")
             # Once all meshes have been imported, the WorldAABB will properly encapsulate the entire level,
             # and an appropriate offset can be calculated to bring each object back closer to the origin
             worldOffset = self.worldAABB.get_center_position()

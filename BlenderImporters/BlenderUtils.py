@@ -2,14 +2,16 @@
 Defines generic and often used functions to perform operations in Blender
 """
 import math
+import logging
 
 import bpy
 import bmesh
 from bpy_extras import node_shader_utils
 
-from RainbowFileReaders.R6Constants import RSEAlphaMethod
 from RainbowFileReaders import R6Constants
 from RainbowFileReaders.R6Settings import find_texture
+
+log = logging.getLogger(__name__)
 
 def flip_normals_on_object(blendObject):
     """Flips the normals on specified object"""
@@ -107,7 +109,7 @@ def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalO
     numFacesRemaining = len(newSubBlendObject.data.polygons)
 
     if numFacesRemaining != numFacesToKeep:
-        print("Face count mismatch!")
+        log.error("Face count mismatch!")
         #errorCount += 1
         #errorList.append(newObjectName + " missing " + str(numFacesToKeep - numFacesRemaining))
         #TODO: Add a way to log errors that can be summarised at the end of a set of operations
@@ -183,10 +185,9 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
             break
 
     if texToLoad is None:
-        print("Failed to find texture: " + str(textureName))
+        log.error("Failed to find texture: %s", textureName)
     else:
-        pass
-        #print("Final texture to load: " + str(texToLoad))
+        log.debug("Final texture to load: %s", texToLoad)
 
     #TODO: Refactor texture loading, expand to support image sequences
     if texToLoad is not None:

@@ -1,12 +1,15 @@
 """Tests the RSEGameLoader module with Rainbow Six (1998)"""
 
+import logging
 import unittest
 
-from Settings import load_settings
+from FileUtilities.Settings import load_settings
 from RainbowFileReaders import RSEGameLoader
 from RainbowFileReaders.R6Constants import RSEEngineVersions, RSEGameVersions
 
 TEST_SETTINGS_FILE = "test_settings.json"
+
+logging.basicConfig(level=logging.CRITICAL)
 
 class R6MAPTests(unittest.TestCase):
     """Test Gameloader on Rainbow Six (1998)"""
