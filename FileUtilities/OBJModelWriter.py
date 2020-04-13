@@ -1,7 +1,11 @@
 """
 Provides a class that can writes valid OBJ model files
 """
+import logging
+
 from RainbowFileReaders.MathHelpers import sanitize_float
+
+log = logging.getLogger(__name__)
 
 class OBJModelWriter(object):
     """Class to write OBJ file"""
@@ -14,7 +18,7 @@ class OBJModelWriter(object):
         if path:
             self.output_file = open(path, "w")
         if self.output_file is None:
-            print("Could not open file for output: " + str(path))
+            log.error("Could not open file for output: " + str(path))
             return
 
     def close_file(self):

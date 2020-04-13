@@ -1,6 +1,10 @@
 """Utilities to help working with images"""
 
+import logging
+
 import PIL
+
+log = logging.getLogger(__name__)
 
 def is_power_of_2(number):
     """Checks if a number is a power of 2"""
@@ -27,7 +31,7 @@ def generate_mip_maps(src_image):
 
     image_is_power_of_2 = is_power_of_2(original_dimensions[0]) and is_power_of_2(original_dimensions[1])
     if image_is_power_of_2 is False:
-        print("Skipping image as dimensions are not power of 2")
+        log.warning("Skipping image as dimensions are not power of 2")
         return None
 
     mips = []

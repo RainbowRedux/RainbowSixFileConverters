@@ -4,12 +4,15 @@ and then run a designated function on them
 """
 import random
 import multiprocessing
+import logging
 
 from FileUtilities.DirectoryUtils import gather_files_in_path
 
+log = logging.getLogger(__name__)
+
 def processorNotImplementedDefault(path):
     """Default processor function. Should never be called"""
-    print("No processor has been assigned, so no processing will be performed on: " + str(path))
+    log.error("No processor has been assigned, so no processing will be performed on: " + str(path))
 
 class DirectoryProcessor(object):
     """
@@ -43,8 +46,8 @@ class DirectoryProcessor(object):
 
         numWorkers = multiprocessing.cpu_count()
 
-        print("Number of files found to process: " + str(len(self.allFiles)))
-        print("Number of workers: " + str(numWorkers))
+        log.info("Number of files found to process: " + str(len(self.allFiles)))
+        log.info("Number of workers: " + str(numWorkers))
 
         pool = multiprocessing.Pool(numWorkers)
         pool.map(self.processFunction, self.allFiles)
@@ -78,5 +81,5 @@ class DirectoryProcessor(object):
         elif mode == "profile":
             self.profile()
         else:
-            print("Unknown mode for directory processor, running asynchronously")
+            log.warning("Unknown mode for directory processor, running asynchronously")
             self.run_async()
