@@ -252,8 +252,8 @@ class RSBPalette(BinaryFileDataStructure):
 
     def print_palette(self):
         """Debug function to print all colors stored in the palette"""
-        for color in self.palette_entries:
-            print("R: " + str(color[0]) + "\tG: " + str(color[1]) + "\tB: " + str(color[2]) + "\tA: " + str(color[3]))
+        for i, color in enumerate(self.palette_entries):
+            log.info("I: %d (R: %d\tG: %d\tB: %d\tA: %d)", i, color[0], color[1], color[2], color[3])
 
     def read(self, filereader):
         super().read(filereader)
@@ -275,13 +275,13 @@ class RSBImage(BinaryFileDataStructure):
     def get_pixel(self, index):
         """Retrieves the pixel stored at the specified index"""
         if index >= len(self.image):
-            print("Invalid index: " + str(index))
+            log.error("Invalid index: %d", index)
             return "0"
         return self.image[index]
 
     def read(self, filereader):
         super().read(filereader)
-        print("Error! This class does not support the base read operation as it requires extra parameters")
+        log.error("Error! This class does not support the base read operation as it requires extra parameters")
 
     def read_image(self, width, height, bytes_per_pixel, filereader):
         """Reads data from the file that is to be interpreted as an image. Size of data read is determined by resolution and bytes per pixel. Image is not converted to RGBA image here, as the data can be a number of internal formats"""
