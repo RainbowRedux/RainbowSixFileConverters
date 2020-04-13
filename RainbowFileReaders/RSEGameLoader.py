@@ -108,18 +108,17 @@ class RSEGameLoader(object):
         """
         Prints information about the currently loaded game
         """
-        log.info("Game Path = " + self.game_path)
-        log.info("Game Name = " + self.game_name)
-        log.info("Game Version = " + self.game_version)
-        log.info("EngineVersion = " + self.engine_version)
+        log.info("Game Path = %s", self.game_path)
+        log.info("Game Name = %s", self.game_name)
+        log.info("Game Version = %s", self.game_version)
+        log.info("EngineVersion = %s", self.engine_version)
 
         maps = self.get_map_list()
         log.info("Map list:")
         for mapCode, mapPath in maps.items():
-            log.info("\t" + str(mapCode) + " : " + str(mapPath))
+            log.info("\t%s : %s", mapCode, mapPath)
 
         missions = self.get_mission_list()
         log.info("Mission list:")
         for missionCode, missionPath in missions.items():
-            log.info("\t" + str(missionCode) + " : " + str(missionPath))
-
+            log.info("\t%s : %s", missionCode, missionPath)
