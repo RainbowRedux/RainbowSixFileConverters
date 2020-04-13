@@ -14,6 +14,7 @@ Files with DXT compressed images don't recover the image, since i haven't worked
 Files with a format version later than 1 also store information after the image, currently this is discarded but can easily be added.
 """
 
+import logging
 import os
 
 from RainbowFileReaders.RSBImageReader import RSBImageFile
@@ -21,9 +22,14 @@ from FileUtilities.Settings import load_settings
 from FileUtilities import JSONMetaInfo, DirectoryProcessor
 from FileUtilities import MipMapGenerator
 
+log = logging.getLogger(__name__)
+
+#TODO: Improve logging for async. Add write out to file handler, which outputs txt for each file, and configure logging in each thread.
+logging.basicConfig(level=logging.INFO)
+
 def convert_RSB(filename):
     """Reads an RSB file and writes to 2 PNGs (or 1 if there is not palette version stored) """
-    print("Processing: " + filename)
+    log.info("Processing: %s", filename)
 
     imageFile = RSBImageFile()
     imageFile.read_file(filename)
@@ -41,9 +47,9 @@ def convert_RSB(filename):
 
     mips = MipMapGenerator.generate_mip_maps(newImg2)
     if mips is None:
-        print("Failed to generate mips for " + filename + " , with dimensions: " + str(newImg2.size))
+        log.warning("Failed to generate mips for %s with dimensions: %d, %d", filename, newImg2.size[0], newImg2.size[1])
     else:
-        print("Sucessfully generated mipmaps for " + filename)
+        log.info("Sucessfully generated mipmaps for %s", filename)
 
     #save meta data to JSON file
     newFilename = newFilename.replace(".PNG", ".JSON")
@@ -52,8 +58,7 @@ def convert_RSB(filename):
     meta.add_info("header", imageFile.header)
     meta.writeJSON(newFilename)
 
-    print("Finished converting: " + filename)
-    print("")
+    log.info("Finished converting: %s", filename)
 
 def main():
     """Main function that converts test data files"""
