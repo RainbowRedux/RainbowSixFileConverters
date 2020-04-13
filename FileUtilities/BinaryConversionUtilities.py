@@ -3,7 +3,6 @@ Provides some utility classes and functions for reading data from binary files
 Also provides some functions to unpack data from packed structures
 """
 import struct
-import pprint
 import logging
 
 import functools
@@ -11,6 +10,8 @@ import functools
 from math import floor
 
 from deprecated import deprecated
+
+from FileUtilities.LoggingUtils import log_pprint
 
 log = logging.getLogger(__name__)
 
@@ -196,8 +197,7 @@ class FileFormatReader(object):
 
     def print_structure_info(self):
         """Utility method to print detailed information on data stored"""
-        for line in pprint.pformat(vars(self)).split('\n'):
-            logging.info(line)
+        log_pprint(vars(self), logging.INFO)
 
     def read_file(self, filepath, verboseOutput=False):
         """Reads the file specified into memory and then will call read_data to process"""
@@ -261,8 +261,7 @@ class BinaryFileDataStructure(object):
 
     def print_structure_info(self):
         """Helper method to output class information for debugging"""
-        for line in pprint.pformat(vars(self)).split('\n'):
-            logging.info(line)
+        log_pprint(vars(self), logging.INFO)
 
 def bytes_to_shortint(byteStream):
     """Converts 2 bytes to a short integer"""

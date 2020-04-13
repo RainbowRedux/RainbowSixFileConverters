@@ -1,9 +1,11 @@
 """
 This module defines the fileformat and data structures specific to MAP files used in Rainbow Six and Rogue Spear
 """
+import logging
 from datetime import datetime
 
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
+from FileUtilities.LoggingUtils import log_pprint
 from RainbowFileReaders import R6Settings, R6Constants
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEGeometryFlags
 from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, R6GeometryObject, R6VertexParameterCollection, R6FaceDefinition
@@ -12,6 +14,8 @@ from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 from RainbowFileReaders.RSDMPLightReader import RSDMPLightFile
 from RainbowFileReaders.MathHelpers import normalize_color, pad_color, Vector, AxisAlignedBoundingBox
 from RainbowFileReaders.RenderableArray import RenderableArray
+
+log = logging.getLogger(__name__)
 
 class MAPLevelFile(FileFormatReader):
     """Class to read full MAP files"""
@@ -356,10 +360,9 @@ class RSMAPCollisionInformation(BinaryFileDataStructure):
                 currentVertex = geometryData.vertices[currentAttribSet[0]]
                 #currentNormal = geometryData.normals[currentAttribSet[1]]
             except IndexError:
-                print("Error in mesh. Vertex index out of range")
-                print(str(currentAttribSet[0]))
-                import pprint
-                pprint.pprint(collisionMesh.geometryFlagsEvaluated)
+                log.error("Error in mesh. Vertex index out of range")
+                log.error(str(currentAttribSet[0]))
+                log_pprint(collisionMesh.geometryFlags, logging.ERROR)
                 exit(1)
 
             currentRenderable.vertices.append(currentVertex.copy())
@@ -640,7 +643,7 @@ class RSEMAPObject(BinaryFileDataStructure):
             numberOfBytesToSkip = numberOfBytesToSkip - self.versionStringLength
             self.bytes = filereader.read_bytes(numberOfBytesToSkip)
         else:
-            print("BIG ERROR UNSUPPORTED OBJECT VERSION: " + str(self.versionNumber))
+            log.critical("Unsupported Map object version: %d", self.versionNumber)
             return
 
 class RSEMAPRoomList(BinaryFileDataStructure):
@@ -778,6 +781,7 @@ class R6MAPShermanLevelDefinition(BinaryFileDataStructure):
             self.shermanLevelPlanArea.read(filereader)
 
     def get_aabb(self):
+        """Calculate an Axis Align Bounding Box from the 2 corners/vertices of this level"""
         newBounds = AxisAlignedBoundingBox()
         newBounds.add_point(self.AABB[:3])
         newBounds.add_point(self.AABB[3:])
@@ -907,7 +911,7 @@ class RSMAPShermanLevelTransitionDefinition(BinaryFileDataStructure):
         super().read(filereader)
 
         self.read_name_string(filereader)
-        print(self.nameString)
+        log.debug(self.nameString)
 
         self.coords = filereader.read_vec_f(6)
 
