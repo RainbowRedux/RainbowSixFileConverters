@@ -2,9 +2,12 @@
 Classes and functions to load and parse CXP material property files
 """
 import os
+import logging
 
 from RainbowFileReaders import R6Settings
 from FileUtilities.TextFileUtilities import read_tokenized_text_file
+
+log = logging.getLogger(__name__)
 
 class CXPMaterialProperties(object):
     """Material properties associated with a single texture/material"""
@@ -85,7 +88,7 @@ class CXPMaterialProperties(object):
                 for _ in range(3):
                     self.scrollParams.append(float(keywords.pop(0)))
             else:
-                print("Skipping: " + currKeyword)
+                log.warning("Skipping: " + currKeyword)
 
 def read_cxp(path):
     """Loads and parses a CXP and returns a list of material properties"""
@@ -115,8 +118,8 @@ def read_cxp(path):
             #One such instance is the Rommel.CXP file in the classic missions included with Urban Operations includes an extra "End" statement at the bottom, which is invalid
             #remove this errored keyword so that program can continue
             discardedWord = keywords.pop(0)
-            print("Skipping invalid material definition in CXP: " + str(ve))
-            print("\tDiscarded keyword: " + discardedWord)
+            log.error("Skipping invalid material definition in CXP: " + str(ve))
+            log.error("\tDiscarded keyword: " + discardedWord)
 
     # Create and return a list of CXP properties, as many CXP files will be combined, and the order is important for matching
     MaterialProperties = []
@@ -170,7 +173,7 @@ def get_cxp_definition(CXPDefinitions, texture_name):
     for cxp in CXPDefinitions:
         #Match on lowercase since it's a windows game and windows has no concept of case sensitive filenames
         if cxp.materialName.lower() == texture_name.lower():
-            #print("Matched CXP: " + cxp.materialName)
+            log.debug("Matched CXP: " + cxp.materialName)
             return cxp
 
     return None
