@@ -1,8 +1,10 @@
 """Provides classes that will read and parse RSB Image files."""
-import PIL
+import logging
 from PIL import Image
 from PIL import ImagePalette
 from FileUtilities.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader, bytes_to_shortint
+
+log = logging.getLogger(__name__)
 
 class RSBImageFile(FileFormatReader):
     """Class to read full RSB files"""
@@ -37,7 +39,7 @@ class RSBImageFile(FileFormatReader):
             self.header.read_bit_mask(fileReader)
 
         if self.header.is_valid() is False:
-            print("Header not valid, aborting")
+            log.critical("Header not valid, aborting")
             return
 
         #read full color image
@@ -61,7 +63,7 @@ class RSBImageFile(FileFormatReader):
     def convert_palette_image_pil_palette(self):
         """Converts the stored palettized version of the image into a full color RGBA image"""
         #TODO: explore putting the palette information directory into PIL Image, rather than converting to full color
-        print("Palette conversion pending")
+        log.debug("Palette conversion pending")
         newImage = Image.new('P', (self.header.width, self.header.height))
 
         newPalette = ImagePalette.ImagePalette(mode='RGBA')
@@ -72,7 +74,6 @@ class RSBImageFile(FileFormatReader):
             newPalette.palette[index+256] = newColorTuple[1]
             newPalette.palette[index+512] = newColorTuple[2]
             newPalette.palette[index+768] = 128
-            print(str(index) + str(newColorTuple))
         newPalette.dirty = 1
 
         imageData = []
@@ -104,12 +105,12 @@ class RSBImageFile(FileFormatReader):
 
         return newImage
 
-    def check_color_key(self, imageColor, colorKey, bitmask, verbose=False):
+    def check_color_key(self, imageColor, colorKey, bitmask):
         """Checks if the image color matches the colorkey. Fuzzy match based on the precision allowed by the bitmask"""
         #TODO: Improve matching
         bMatched = True
-        if verbose:
-            print("==NewColorComparison==")
+        log.debug("==NewColorComparison==")
+        # pylint: disable=consider-using-enumerate
         for i in range(len(imageColor)):
             elKey = colorKey[i]
             elCol = imageColor[i]
@@ -119,12 +120,11 @@ class RSBImageFile(FileFormatReader):
             elKeyMin = int(int(elKeyFactor) * bitmaskPrecision)
             elKeyMax = int(round((int(elKeyFactor) + 1) * bitmaskPrecision))
 
-            if verbose:
-                print("elKey: " + str(elKey))
-                print("elCol: " + str(elCol))
-                print("bitmaskPrecision: " + str(bitmaskPrecision))
-                print("elKeyMin: " + str(elKeyMin))
-                print("elKeyMax: " + str(elKeyMax))
+            log.debug("elKey: %s", str(elKey))
+            log.debug("elCol: %s", str(elCol))
+            log.debug("bitmaskPrecision: %s", str(bitmaskPrecision))
+            log.debug("elKeyMin: %s", str(elKeyMin))
+            log.debug("elKeyMax: %s", str(elKeyMax))
 
             #elKeyMin is actually from the range before generally speaking. In the case of a white key, elKeyMin and elKeyMax will match, so special case handling required.
             if elCol <= elKeyMin or elCol > elKeyMax:
@@ -136,7 +136,7 @@ class RSBImageFile(FileFormatReader):
                     bMatched = False
         return bMatched
 
-    def convert_full_color_image_with_colorkey_mask(self, colorkeyRGB, verbose=False):
+    def convert_full_color_image_with_colorkey_mask(self, colorkeyRGB):
         """Converts the stored "full color" version of the image into a full color RGBA image with 8bpp
         colorkeyRGB can be a list or tuple"""
         if colorkeyRGB is None:
@@ -153,7 +153,7 @@ class RSBImageFile(FileFormatReader):
         bitmask = self.header.get_rgba_bitmask_tuple()
         for y in range(imageHeight):
             for x in range(imageWidth):
-                if self.check_color_key(pixdata[x, y][:3], colorKey, bitmask, verbose):
+                if self.check_color_key(pixdata[x, y][:3], colorKey, bitmask):
                     pixdata[x, y] = colorKeyWithAlpha
 
         return newImage
