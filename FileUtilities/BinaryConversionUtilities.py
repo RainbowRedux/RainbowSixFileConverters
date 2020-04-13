@@ -14,6 +14,9 @@ from deprecated import deprecated
 
 log = logging.getLogger(__name__)
 
+# Disabling "Too many public methods", as this is caused by some deprecated wrapper
+# functions that I don't want to remove just yet.
+# pylint: disable=R0904
 class BinaryFileReader(object):
     """
     A wrapper for reading and conversion operations on binary file data.
