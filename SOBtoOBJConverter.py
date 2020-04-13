@@ -7,11 +7,11 @@ RSB Version 0 required looking into the bt file directly as the wiki is not comp
 Texture and surface data extraction to JSON file is not complete
 """
 
-from FileUtilities import DirectoryProcessor
-from FileUtilities import JSONMetaInfo, OBJModelWriter
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders.MathHelpers import is_vector_normal
 from FileUtilities.Settings import load_settings
+from FileUtilities import DirectoryProcessor
+from FileUtilities import JSONMetaInfo, OBJModelWriter
 
 def convert_SOB(filename):
     """ Reads an SOB file and then writes to OBJ format """

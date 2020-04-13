@@ -1,3 +1,5 @@
+"""A quick sample program to try loading games and listing missions"""
+
 from RainbowFileReaders.RSEGameLoader import RSEGameLoader
 from RainbowFileReaders.R6MissionReader import R6MissionFile
 from FileUtilities.Settings import load_settings
