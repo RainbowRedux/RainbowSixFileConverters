@@ -1,6 +1,7 @@
 """This file stores constants and settings related to R6 files and directory formats.
 This also contains a few functions to determine some relevant settings such as game installation directory """
 import os
+from typing import Tuple, Optional, List
 
 paths = {}
 #R6 and onwards
@@ -54,12 +55,14 @@ paths["DataPath"] = "data"
 paths["ModsPath"] = "mods"
 paths["UserPath"] = ""
 
-def determine_data_paths_for_file(filename):
-    """Takes the path of the file currently being processed, and will identify the base game path, and if applicable, the current mod.
+def determine_data_paths_for_file(filename: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    """
+    Takes the path of the file currently being processed, and will identify the base game path, and if applicable, the current mod.
     It assumes a file is being loaded from an installed game directory, installed as a full install. Not tested on partial installs, and CDs.
     If any path cannot be determined, it will be returned as None.
     All relative paths will be returned as absolute paths, which can be reversed with os.path.relpath()
-    @returns Tuple of (BaseGamePath, BaseDataPath, ModPath)"""
+    @returns Tuple of (BaseGamePath, BaseDataPath, ModPath)
+    """
 
     #Get the absolute path
     absPath = os.path.abspath(filename)
@@ -89,12 +92,12 @@ def determine_data_paths_for_file(filename):
 
     return (gamePath, baseDataPath, modPath)
 
-def get_relevant_global_texture_paths(filename):
+def get_relevant_global_texture_paths(filename: str) -> List[str]:
     """Returns a list of paths that are used as global texture paths in RSE games.
     Expects a full filepath to be passed in which can then be used for searching for the appropriate folders"""
     filepath = os.path.dirname(filename)
     filepath = os.path.normpath(filepath)
-    texturePaths = []
+    texturePaths: List[str] = []
     texturePaths.append(filepath)
     dataPaths = determine_data_paths_for_file(filename)[1:]
     for path in dataPaths:
@@ -108,7 +111,7 @@ def get_relevant_global_texture_paths(filename):
 
     return texturePaths
 
-def restore_original_texture_name(filename):
+def restore_original_texture_name(filename: str) -> str:
     """Create original texture name from RSB filename"""
     newfilename = filename
     if filename.startswith("TGA"):
@@ -119,7 +122,7 @@ def restore_original_texture_name(filename):
         newfilename = newfilename[:-4] + ".bmp"
     return newfilename
 
-def get_rsb_texture_name(filename):
+def get_rsb_texture_name(filename: str) -> str:
     """Match source texture names to RSB texture names that were shipped"""
     ext = filename.lower()[-4:]
     newfilename = filename
@@ -132,7 +135,7 @@ def get_rsb_texture_name(filename):
             newfilename = "TGA" + newfilename
     return newfilename
 
-def find_texture(filename, dataPath):
+def find_texture(filename: str, dataPath: str) -> Optional[str]:
     """Looks for a texture using the source name in the path.
     Will perform texture name fixups to match new names"""
     if filename.lower() == "null":
