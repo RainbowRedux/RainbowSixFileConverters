@@ -358,7 +358,8 @@ logging-modules=logging
 
 # List of note tags to take in consideration, separated by a comma.
 notes=FIXME,
-      XXX
+      XXX,
+      PETODO
       #TODO
 
 
