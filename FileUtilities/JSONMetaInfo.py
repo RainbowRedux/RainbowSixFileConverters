@@ -10,15 +10,15 @@ class JSONMetaInfo(object):
     def __init__(self):
         pass
 
-    def setFilename(self, filename):
+    def setFilename(self, filename: str):
         """Set a filename parameter"""
         self.filename = filename
 
-    def add_info(self, key, info):
+    def add_info(self, key: str, info: str):
         """Set a given attribute allowing freeform meta data addition"""
         self.__setattr__(key, info)
 
-    def getJSON(self):
+    def getJSON(self) -> str:
         """Returns the meta info object as a JSON string"""
         return json.dumps(self, cls=CustomJSONEncoder)
 

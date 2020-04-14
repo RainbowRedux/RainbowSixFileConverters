@@ -18,7 +18,7 @@ class OBJModelWriter(object):
         if path:
             self.output_file = open(path, "w")
         if self.output_file is None:
-            log.error("Could not open file for output: " + str(path))
+            log.error("Could not open file for output: %s", path)
             return
 
     def close_file(self):
@@ -27,13 +27,13 @@ class OBJModelWriter(object):
             self.output_file.close()
             self.output_file = None
 
-    def _writeline(self, newline):
+    def _writeline(self, newline: str):
         """Writes a text line to the file"""
         if self.output_file is not None:
             self.output_file.write(newline)
             self.output_file.write("\n")
 
-    def begin_new_object(self, ObjectName="Undefined"):
+    def begin_new_object(self, ObjectName: str="Undefined"):
         """Writes a begin object statement to file"""
         newline = "o "
         newline += str(ObjectName)

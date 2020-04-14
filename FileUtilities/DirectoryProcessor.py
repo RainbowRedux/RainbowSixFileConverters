@@ -6,23 +6,25 @@ import random
 import multiprocessing
 import logging
 
+from typing import List, Callable
+
 from FileUtilities.DirectoryUtils import gather_files_in_path
 
 log = logging.getLogger(__name__)
 
 def processorNotImplementedDefault(path):
     """Default processor function. Should never be called"""
-    log.error("No processor has been assigned, so no processing will be performed on: " + str(path))
+    log.error("No processor has been assigned, so no processing will be performed on: %s", path)
 
 class DirectoryProcessor(object):
     """
     Utility class to find all files with a matching extension
     and then run a designated function on them
     """
-    paths = []
-    fileExt = ".none"
-    processFunction = processorNotImplementedDefault
-    allFiles = []
+    paths: List[str] = []
+    fileExt: str = ".none"
+    processFunction: Callable = processorNotImplementedDefault
+    allFiles: List[str] = []
 
     def gather_all_files(self):
         """Gathers all files ready for processing"""
@@ -46,8 +48,8 @@ class DirectoryProcessor(object):
 
         numWorkers = multiprocessing.cpu_count()
 
-        log.info("Number of files found to process: " + str(len(self.allFiles)))
-        log.info("Number of workers: " + str(numWorkers))
+        log.info("Number of files found to process: %d", len(self.allFiles))
+        log.info("Number of workers: %d", numWorkers)
 
         pool = multiprocessing.Pool(numWorkers)
         pool.map(self.processFunction, self.allFiles)
