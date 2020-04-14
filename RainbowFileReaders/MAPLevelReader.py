@@ -2,6 +2,7 @@
 This module defines the fileformat and data structures specific to MAP files used in Rainbow Six and Rogue Spear
 """
 import logging
+from typing import List, Union
 from datetime import datetime
 
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
@@ -21,15 +22,15 @@ class MAPLevelFile(FileFormatReader):
     """Class to read full MAP files"""
     def __init__(self):
         super(MAPLevelFile, self).__init__()
-        self.header = None
-        self.materialListHeader = None
-        self.materials = []
-        self.geometryListHeader = None
-        self.geometryObjects = []
-        self.portalList = []
-        self.lightList = []
-        self.objectList = []
-        self.dmpLights = None
+        self.header: MAPHeader = None
+        self.materialListHeader: RSEMaterialListHeader  = None
+        self.materials: List[RSEMaterialDefinition] = []
+        self.geometryListHeader: RSEGeometryListHeader = None
+        self.geometryObjects: List[Union[R6GeometryObject, RSMAPGeometryObject]] = []
+        self.portalList: RSEMAPPortalList = []
+        self.lightList: RSEMAPPortalList = []
+        self.objectList: RSEMAPObjectList = []
+        self.dmpLights: RSDMPLightFile = None
 
         self.footer = None
         #Game version is not stored in file, and has to be determined by analysing the structure of stored materials. Stored here for easy use
