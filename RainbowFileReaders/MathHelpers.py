@@ -176,8 +176,8 @@ class Vector(object):
         """Adds a scalar to a vector.
         Element wise operation"""
         result = []
-        for i in range(len(vecA)):
-            result.append(vecA[i] + scalar)
+        for el in vecA:
+            result.append(el + scalar)
         return result
 
     @staticmethod
@@ -185,31 +185,31 @@ class Vector(object):
         """Subtracts a scalar from a vector.
         Element wise operation"""
         result = []
-        for i in range(len(vecA)):
-            result.append(vecA[i] - scalar)
+        for el in vecA:
+            result.append(el - scalar)
         return result
 
     @staticmethod
     def multiply_scalar(vecA, scalar):
         """Multiply a vector element-wise by a scalar value"""
         result = []
-        for i in range(len(vecA)):
-            result.append(vecA[i] * scalar)
+        for el in vecA:
+            result.append(el * scalar)
         return result
 
     @staticmethod
     def divide_scalar(vecA, scalar):
         """Divide a vector element-wise by a scalar value"""
         result = []
-        for i in range(len(vecA)):
-            result.append(vecA[i] / scalar)
+        for el in vecA:
+            result.append(el / scalar)
         return result
 
     @staticmethod
     def add_vector(vecA, vecB):
         """Add 2 vectors, element-wise, together"""
         result = []
-        for i in range(len(vecA)):
+        for i in range(len(vecA)): # pylint: disable=consider-using-enumerate
             result.append(vecA[i] + vecB[i])
         return result
 
@@ -217,7 +217,7 @@ class Vector(object):
     def subtract_vector(vecA, vecB):
         """Subtract 2 vectors, element-wise"""
         result = []
-        for i in range(len(vecA)):
+        for i in range(len(vecA)): # pylint: disable=consider-using-enumerate
             result.append(vecA[i] - vecB[i])
         return result
 
@@ -225,7 +225,7 @@ class Vector(object):
     def multiply_vector(vecA, vecB):
         """Multiply 2 vectors, element-wise"""
         result = []
-        for i in range(len(vecA)):
+        for i in range(len(vecA)): # pylint: disable=consider-using-enumerate
             result.append(vecA[i] * vecB[i])
         return result
 
@@ -233,7 +233,7 @@ class Vector(object):
     def divide_vector(vecA, vecB):
         """Divide 2 vectors, element-wise"""
         result = []
-        for i in range(len(vecA)):
+        for i in range(len(vecA)): # pylint: disable=consider-using-enumerate
             result.append(vecA[i] / vecB[i])
         return result
 
