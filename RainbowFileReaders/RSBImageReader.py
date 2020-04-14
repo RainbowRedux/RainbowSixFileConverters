@@ -1,7 +1,7 @@
 """Provides classes that will read and parse RSB Image files."""
 import logging
-from PIL import Image
-from PIL import ImagePalette
+from PIL import Image # type: ignore
+from PIL import ImagePalette # type: ignore
 from FileUtilities.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader, bytes_to_shortint
 
 log = logging.getLogger(__name__)
