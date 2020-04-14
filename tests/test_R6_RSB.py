@@ -3,8 +3,6 @@ import logging
 import unittest
 from os import path
 
-from PIL import Image
-
 from FileUtilities.Settings import load_settings
 from FileUtilities.MipMapGenerator import generate_mip_maps
 from RainbowFileReaders import RSBImageReader
@@ -17,7 +15,7 @@ class R6RSBTests(unittest.TestCase):
     """Test R6 RSBs"""
 
     def test_mip_map_generation(self):
-        """Tests reading an image that contains a palette"""
+        """Tests reading an image and generating mip maps for it"""
         settings = load_settings(TEST_SETTINGS_FILE)
 
         RSB_filepath = path.join(settings["gamePath_R6_EW"], "data", "texture", "08_engine.RSB")
@@ -34,6 +32,7 @@ class R6RSBTests(unittest.TestCase):
         self.assertEqual(len(mips), 8, "Failed to generate correct number of mipmaps")
 
     def test_impossible_mip_map_generation(self):
+        """Tests reading a non-power-of-2 image, and tries to generate mipmaps for it. This shouldn't be possible"""
         settings = load_settings(TEST_SETTINGS_FILE)
 
         RSB_filepath = path.join(settings["gamePath_R6_EW"], "data", "shell", "briefing", "Ac_a13.RSB")
