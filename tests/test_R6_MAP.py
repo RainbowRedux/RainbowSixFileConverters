@@ -17,16 +17,16 @@ class R6MAPTests(unittest.TestCase):
 
     def check_section_strings(self, loadedMapFile):
         """Check all strings in the mapFile are as expected"""
-        self.assertEqual(loadedMapFile.header.headerBeginMessage, "BeginMapv2.1")
+        self.assertEqual(loadedMapFile.header.header_begin_message.string, "BeginMapv2.1")
         self.assertEqual(loadedMapFile.materialListHeader.materialListBeginMessage, "MaterialList")
-        self.assertEqual(loadedMapFile.geometryListHeader.geometryListString, "GeometryList")
-        self.assertEqual(loadedMapFile.portalList.sectionString, "PortalList")
-        self.assertEqual(loadedMapFile.lightList.sectionString, "LightList")
-        self.assertEqual(loadedMapFile.objectList.sectionString, "ObjectList")
-        self.assertEqual(loadedMapFile.roomList.sectionString, "RoomList")
-        self.assertEqual(loadedMapFile.planningLevelList.sectionString, "PlanningLevelList")
+        self.assertEqual(loadedMapFile.geometryListHeader.geometry_list_string.string, "GeometryList")
+        self.assertEqual(loadedMapFile.portalList.section_string.string, "PortalList")
+        self.assertEqual(loadedMapFile.lightList.section_string.string, "LightList")
+        self.assertEqual(loadedMapFile.objectList.section_string.string, "ObjectList")
+        self.assertEqual(loadedMapFile.roomList.section_string.string, "RoomList")
+        self.assertEqual(loadedMapFile.planningLevelList.section_string.string, "PlanningLevelList")
 
-        self.assertEqual(loadedMapFile.mapFooter.EndMapString, "EndMap", "Unexpected end of map footer string")
+        self.assertEqual(loadedMapFile.mapFooter.end_map_string.string, "EndMap", "Unexpected end of map footer string")
 
     def test_R6_MAP_Structure(self):
         """Tests reading an R6 MAP file, specifically M01"""

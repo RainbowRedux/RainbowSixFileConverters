@@ -1,5 +1,5 @@
 """ This module contains classes to read DMP files that are associated with Rainbow Six Rogue Spear maps. These are light definitions """
-from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
+from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader, SizedCString
 
 class RSDMPLightFile(FileFormatReader):
     """Class to read full RSB files"""
@@ -43,16 +43,14 @@ class RSDMPLight(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.read_named_string(filereader, "parentRoomString")
+        self.parent_room_string = SizedCString(filereader)
 
-        self.read_name_string(filereader)
-        if self.nameString == "Version":
-            self.versionString = self.nameString
-            self.versionStringRaw = self.nameStringRaw
-            self.versionStringLength = self.nameStringLength
+        self.name_string = SizedCString(filereader)
+        if self.name_string.string == "Version":
+            self.version_string = self.name_string
             self.versionNumber = filereader.read_uint32()
+            self.name_string = SizedCString(filereader)
 
-            self.read_name_string(filereader)
             self.unknown6 = filereader.read_bytes(1)[0]
 
         self.lightType = filereader.read_uint32()

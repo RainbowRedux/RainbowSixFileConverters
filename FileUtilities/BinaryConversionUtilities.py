@@ -238,39 +238,30 @@ class BinaryFileDataStructure(object):
     def __init__(self):
         super().__init__()
 
-    def read_section_string(self, filereader: BinaryFileReader):
-        """Read a string that stores the name of this section - header related"""
-        self.read_named_string(filereader, "sectionString")
-
-    def read_name_string(self, filereader: BinaryFileReader):
-        """Read a string for the name of this object"""
-        self.read_named_string(filereader, "nameString")
-
-    def read_version_string(self, filereader: BinaryFileReader):
-        """Read the string for the version. Does not read associated version numbers"""
-        self.read_named_string(filereader, "versionString")
-
-    def copy_string(self, srcName: str, dstName: str):
-        """This will copy a string, and it's associated data to another name"""
-        self.__setattr__(dstName + "Length", self.__getattribute__(srcName + "Length"))
-        self.__setattr__(dstName + "Raw", self.__getattribute__(srcName + "Raw"))
-        self.__setattr__(dstName, self.__getattribute__(srcName))
-
-    def read_named_string(self, filereader: BinaryFileReader, stringName: str):
-        """Read a string with the specified name"""
-        newStringLength = filereader.read_uint32()
-        newStringRaw = filereader.read_bytes(newStringLength)
-        newString = newStringRaw[:-1].decode("utf-8")
-        self.__setattr__(stringName + "Length", newStringLength)
-        self.__setattr__(stringName + "Raw", newStringRaw)
-        self.__setattr__(stringName, newString)
-
     def read(self, filereader: BinaryFileReader):
         """This is to be overriden in child classes. This is where all data for this structure can be read from"""
 
     def print_structure_info(self):
         """Helper method to output class information for debugging"""
         log_pprint(vars(self), logging.INFO)
+
+class SizedCString(object):
+    """Reads a null-terminated string from a file. Assumes there is a 4 byte integer specifying size"""
+    def __init__(self, filereader: BinaryFileReader = None):
+        self.string_length: int = -1
+        self.string_value_raw: bytes = b''
+        self.string: str = ""
+
+        if filereader:
+            self.read(filereader)
+
+    def read(self, filereader: BinaryFileReader):
+        """Reads a length and then a null-terminated string of that length from the BinaryFileReader"""
+        self.string_length = filereader.read_uint32()
+        self.string_value_raw = filereader.read_bytes(self.string_length)
+        self.string = self.string_value_raw[:-1].decode("utf-8")
+
+
 
 def bytes_to_shortint(byteStream: bytes) -> Tuple[int]:
     """Converts 2 bytes to a short integer"""

@@ -1,5 +1,5 @@
 """Provides classes that will read and parse SOB model files."""
-from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader
+from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader, SizedCString
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
@@ -69,7 +69,7 @@ class SOBHeader(BinaryFileDataStructure):
     def read(self, filereader):
         super().read(filereader)
 
-        self.read_named_string(filereader, "headerBeginMessage")
+        self.header_begin_message = SizedCString(filereader)
 
 
 class SOBFooterDefinition(BinaryFileDataStructure):
@@ -79,7 +79,7 @@ class SOBFooterDefinition(BinaryFileDataStructure):
 
     def read(self, filereader):
         super().read(filereader)
-        self.read_named_string(filereader, "EndModelString")
+        self.end_model_string = SizedCString(filereader)
 
 if __name__ == "__main__":
     test = SOBModelFile()

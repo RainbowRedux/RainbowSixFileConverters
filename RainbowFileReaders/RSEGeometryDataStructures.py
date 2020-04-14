@@ -1,5 +1,5 @@
 """Defines common geometry data structures used in many Red Storm Entertainment file formats"""
-from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure
+from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, SizedCString
 from RainbowFileReaders.R6Constants import RSEGeometryFlags
 from RainbowFileReaders.MathHelpers import normalize_color, pad_color
 from RainbowFileReaders.RenderableArray import RenderableArray
@@ -14,7 +14,7 @@ class RSEGeometryListHeader(BinaryFileDataStructure):
 
         self.geometryListSize = filereader.read_uint32()
         self.ID = filereader.read_uint32()
-        self.read_named_string(filereader, "geometryListString")
+        self.geometry_list_string = SizedCString(filereader)
         self.count = filereader.read_uint32()
 
 class R6GeometryObject(BinaryFileDataStructure):
@@ -107,19 +107,14 @@ class R6GeometryObject(BinaryFileDataStructure):
         """Reads top level information for this data structure"""
         self.size = filereader.read_uint32()
         self.ID = filereader.read_uint32()
-        self.read_version_string(filereader)
-        self.versionNumber = None
+        self.name_string = SizedCString(filereader)
         #If the version string was actually set to version, then a version number is stored, along with object name
-        if self.versionString == 'Version':
+        if self.name_string.string == 'Version':
+            self.version_string = self.name_string
             self.versionNumber = filereader.read_uint32()
-            self.read_name_string(filereader)
+            self.name_string = SizedCString(filereader)
             self.unknown4 = filereader.read_uint32()
             self.unknown5 = filereader.read_uint32()
-        #If an object name was not read, then the version string is actually the name
-        if self.nameStringRaw is None: # differs from spec in AlexKimovs repo
-            self.nameStringLength = self.versionStringLength
-            self.nameStringRaw = self.versionStringRaw
-            self.nameString = self.versionString
 
     def read_vertices(self, filereader):
         """ Reads a count of the number of vertices, followed by the list of vertices """
@@ -203,17 +198,13 @@ class R6MeshDefinition(BinaryFileDataStructure):
 
         self.unknown9 = 0
 
-        self.nameStringLength = 0
-        self.nameStringRaw = None
-        self.nameString = None
-
     def read(self, filereader):
         super().read(filereader)
 
         self.unknown6 = filereader.read_uint32()
 
         #read header
-        self.read_name_string(filereader)
+        self.name_string = SizedCString(filereader)
 
         #read vertices
         self.numVertexIndices = filereader.read_uint32()
@@ -228,7 +219,7 @@ class R6MeshDefinition(BinaryFileDataStructure):
         self.geometryFlagsEvaluated = RSEGeometryFlags.EvaluateFlags(self.geometryFlags)
 
         #read unknown8
-        self.read_named_string(filereader, "unknown8String")
+        self.unknown_8_string = SizedCString(filereader)
 
         #read unknown9
         self.unknown9 = filereader.read_uint32()
