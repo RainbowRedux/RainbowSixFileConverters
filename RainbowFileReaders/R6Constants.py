@@ -1,6 +1,7 @@
 """
 Constants used throughout the code base
 """
+from typing import Dict
 
 class RSEGameVersions(object):
     """Used to group some related constants, somewhat like an enum
@@ -59,7 +60,7 @@ class RSEGeometryFlags(object):
     }
 
     @staticmethod
-    def EvaluateFlags(flags):
+    def EvaluateFlags(flags: int) -> Dict[str, bool]:
         """Expands flags stored in a uint into a human readable dictionary"""
         results = {}
         sumFlags = 0

@@ -26,7 +26,7 @@ class R6MAPTests(unittest.TestCase):
         self.assertEqual(loadedMapFile.roomList.section_string.string, "RoomList")
         self.assertEqual(loadedMapFile.planningLevelList.section_string.string, "PlanningLevelList")
 
-        self.assertEqual(loadedMapFile.mapFooter.end_map_string.string, "EndMap", "Unexpected end of map footer string")
+        self.assertEqual(loadedMapFile.footer.end_map_string.string, "EndMap", "Unexpected end of map footer string")
 
     def test_R6_MAP_Structure(self):
         """Tests reading an R6 MAP file, specifically M01"""
