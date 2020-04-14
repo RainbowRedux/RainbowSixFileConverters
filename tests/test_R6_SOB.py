@@ -17,7 +17,7 @@ class R6SOBTests(unittest.TestCase):
     def check_section_strings(self, loadedSOBFile):
         """Check all strings in the mapFile are as expected"""
         self.assertEqual(loadedSOBFile.header.header_begin_message.string, "BeginModel")
-        self.assertEqual(loadedSOBFile.materialListHeader.materialListBeginMessage, "MaterialList")
+        self.assertEqual(loadedSOBFile.materialListHeader.material_list_string.string, "MaterialList")
         self.assertEqual(loadedSOBFile.geometryListHeader.geometry_list_string.string, "GeometryList")
 
         self.assertEqual(loadedSOBFile.footer.end_model_string.string, "EndModel", "Unexpected end of map footer string")

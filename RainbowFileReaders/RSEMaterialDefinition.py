@@ -4,7 +4,7 @@ import logging
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEMaterialFormatConstants
 from RainbowFileReaders.MathHelpers import normalize_color, unnormalize_color
 from RainbowFileReaders.CXPMaterialPropertiesReader import get_cxp_definition
-from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure
+from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, SizedCString
 
 log = logging.getLogger(__name__)
 
@@ -14,9 +14,6 @@ class RSEMaterialListHeader(BinaryFileDataStructure):
         super().__init__()
         self.size = None
         self.unknown1 = None
-        self.materialListBeginMessageLength = None
-        self.materialListBeginMessageRaw = None
-        self.materialListBeginMessage = None
         self.numMaterials = None
 
     def read(self, filereader):
@@ -24,9 +21,7 @@ class RSEMaterialListHeader(BinaryFileDataStructure):
 
         self.size = filereader.read_uint32()
         self.unknown1 = filereader.read_uint32()
-        self.materialListBeginMessageLength = filereader.read_uint32()
-        self.materialListBeginMessageRaw = filereader.read_bytes(self.materialListBeginMessageLength)
-        self.materialListBeginMessage = self.materialListBeginMessageRaw[:-1].decode("utf-8")
+        self.material_list_string = SizedCString(filereader)
         self.numMaterials = filereader.read_uint32()
 
 

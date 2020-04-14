@@ -18,7 +18,7 @@ class R6MAPTests(unittest.TestCase):
     def check_section_strings(self, loadedMapFile):
         """Check all strings in the mapFile are as expected"""
         self.assertEqual(loadedMapFile.header.header_begin_message.string, "BeginMapv2.1")
-        self.assertEqual(loadedMapFile.materialListHeader.materialListBeginMessage, "MaterialList")
+        self.assertEqual(loadedMapFile.materialListHeader.material_list_string.string, "MaterialList")
         self.assertEqual(loadedMapFile.geometryListHeader.geometry_list_string.string, "GeometryList")
         self.assertEqual(loadedMapFile.portalList.section_string.string, "PortalList")
         self.assertEqual(loadedMapFile.lightList.section_string.string, "LightList")

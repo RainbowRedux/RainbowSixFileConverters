@@ -161,12 +161,7 @@ class RSMAPGeometryData(BinaryFileDataStructure):
         super(RSMAPGeometryData, self).__init__()
         self.size = None
         self.ID = None
-        self.versionStringLength = None
         self.versionNumber = None
-        self.versionString = None
-        self.nameStringLength = None
-        self.nameStringRaw = None
-        self.nameString = None
 
     def read(self, filereader):
         super().read(filereader)
