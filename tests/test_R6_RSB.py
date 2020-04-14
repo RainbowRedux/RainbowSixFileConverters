@@ -3,10 +3,11 @@ import logging
 import unittest
 from os import path
 
+from PIL import Image
+
 from FileUtilities.Settings import load_settings
 from FileUtilities.MipMapGenerator import generate_mip_maps
 from RainbowFileReaders import RSBImageReader
-from PIL import Image
 
 TEST_SETTINGS_FILE = "test_settings.json"
 
