@@ -10,7 +10,7 @@ TEST_SETTINGS_FILE = "test_settings.json"
 
 logging.basicConfig(level=logging.CRITICAL)
 
-class R6RSBTests(unittest.TestCase):
+class R6CXPTests(unittest.TestCase):
     """Test reading R6 CXP files"""
 
     def test_original_cxp(self):
