@@ -1,6 +1,8 @@
 """ This module contains a number of useful math related functions that are used throughout this project """
 import math
 
+from deprecated import deprecated # type: ignore
+
 class AxisAlignedBoundingBox(object):
     """Contains data for an Axis Aligned Bounding Box"""
     def __init__(self):
@@ -100,6 +102,7 @@ class AxisAlignedBoundingBox(object):
         return newAABB
 
     def get_size(self):
+        """Returns a list containing the extents/magnitudes of X,Y and Z."""
         newSize = []
         newSize.append(abs(self.maxX - self.minX))
         newSize.append(abs(self.maxY - self.minY))
@@ -144,11 +147,14 @@ def is_vector_normal(normal):
         return True
     return False
 
+@deprecated
 def calc_vector_length(vector):
+    """Wrapper for Vector.get_length, since this was meant to be tidied up"""
     length = Vector.get_length(vector)
     return length
 
 class Vector(object):
+    """A class containing static methods related to operations on vectors"""
     @staticmethod
     def get_length(vector_array):
         """Calculates a vector length. vector_array is an iterable"""
@@ -185,6 +191,7 @@ class Vector(object):
 
     @staticmethod
     def multiply_scalar(vecA, scalar):
+        """Multiply a vector element-wise by a scalar value"""
         result = []
         for i in range(len(vecA)):
             result.append(vecA[i] * scalar)
@@ -192,6 +199,7 @@ class Vector(object):
 
     @staticmethod
     def divide_scalar(vecA, scalar):
+        """Divide a vector element-wise by a scalar value"""
         result = []
         for i in range(len(vecA)):
             result.append(vecA[i] / scalar)
@@ -199,6 +207,7 @@ class Vector(object):
 
     @staticmethod
     def add_vector(vecA, vecB):
+        """Add 2 vectors, element-wise, together"""
         result = []
         for i in range(len(vecA)):
             result.append(vecA[i] + vecB[i])
@@ -206,6 +215,7 @@ class Vector(object):
 
     @staticmethod
     def subtract_vector(vecA, vecB):
+        """Subtract 2 vectors, element-wise"""
         result = []
         for i in range(len(vecA)):
             result.append(vecA[i] - vecB[i])
@@ -213,6 +223,7 @@ class Vector(object):
 
     @staticmethod
     def multiply_vector(vecA, vecB):
+        """Multiply 2 vectors, element-wise"""
         result = []
         for i in range(len(vecA)):
             result.append(vecA[i] * vecB[i])
@@ -220,6 +231,7 @@ class Vector(object):
 
     @staticmethod
     def divide_vector(vecA, vecB):
+        """Divide 2 vectors, element-wise"""
         result = []
         for i in range(len(vecA)):
             result.append(vecA[i] / vecB[i])
@@ -231,7 +243,6 @@ class Vector(object):
         vecANorm = Vector.get_normal(vecA)
         vecBNorm = Vector.get_normal(vecB)
         multipliedVec = Vector.multiply_vector(vecANorm, vecBNorm)
-        sum
         resultSum = 0
         for el in multipliedVec:
             resultSum += el
