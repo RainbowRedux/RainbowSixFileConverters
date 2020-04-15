@@ -1,22 +1,30 @@
 """ This module contains a number of useful math related functions that are used throughout this project """
+from __future__ import annotations
 import math
 
+from typing import List, Union, Tuple
+
 from deprecated import deprecated # type: ignore
+
+AnyNumber = Union[int, float]
+FloatIterable = Union[List[float], Tuple[float, ...]]
+IntIterable = Union[List[float], Tuple[float, ...]]
+AnyNumberIterable = Union[List[AnyNumber], Tuple[AnyNumber, ...]]
 
 class AxisAlignedBoundingBox(object):
     """Contains data for an Axis Aligned Bounding Box"""
     def __init__(self):
         super(AxisAlignedBoundingBox, self).__init__()
-        self.bInitialized = False
-        self.minX = 0
-        self.minY = 0
-        self.minZ = 0
+        self.bInitialized: bool = False
+        self.minX: AnyNumber = 0
+        self.minY: AnyNumber = 0
+        self.minZ: AnyNumber = 0
 
-        self.maxX = 0
-        self.maxY = 0
-        self.maxZ = 0
+        self.maxX: AnyNumber = 0
+        self.maxY: AnyNumber = 0
+        self.maxZ: AnyNumber = 0
 
-    def add_point(self, vertex):
+    def add_point(self, vertex: List[AnyNumber]):
         """Adds a point to be considered for this AABB. This expands the AABB dimensions immediately."""
         #If not initialized, set the limits to match this point
         if self.bInitialized is False:
@@ -44,7 +52,7 @@ class AxisAlignedBoundingBox(object):
         if self.maxZ < vertex[2]:
             self.maxZ = vertex[2]
 
-    def get_center_position(self):
+    def get_center_position(self) -> List[AnyNumber]:
         """Returns a point which is exactly in the center of this AABB. Useful for working out offsets, pivots etc"""
         X_size = self.maxX - self.minX
         X = self.minX + (X_size / 2)
@@ -58,7 +66,7 @@ class AxisAlignedBoundingBox(object):
         position = [X, Y, Z]
         return position
 
-    def merge(self, other):
+    def merge(self, other: AxisAlignedBoundingBox) -> AxisAlignedBoundingBox:
         """Creates a new AABB which has a size that encompasses both self and other"""
         if self.bInitialized is False and other.bInitialized is False:
             return self
@@ -101,7 +109,7 @@ class AxisAlignedBoundingBox(object):
 
         return newAABB
 
-    def get_size(self):
+    def get_size(self) -> List[AnyNumber]:
         """Returns a list containing the extents/magnitudes of X,Y and Z."""
         newSize = []
         newSize.append(abs(self.maxX - self.minX))
@@ -109,26 +117,28 @@ class AxisAlignedBoundingBox(object):
         newSize.append(abs(self.maxZ - self.minZ))
         return newSize
 
-def normalize_color(color):
+def normalize_color(color: Union[List[int], Tuple[int, ...]]) -> Tuple[float, ...]:
     """ take an iterable object with values 0-255, and convert to 0.0-1.0 range
     returns tuple"""
-    normColor = []
+    normColor: List[float] = []
     for el in color:
         normColor.append(el / 255)
     return tuple(normColor)
 
-def unnormalize_color(color):
+def unnormalize_color(color: FloatIterable) -> Tuple[int, ...]:
     """ take an iterable object with values 0.0-1.0, and convert to 0-255 range
     returns tuple"""
-    normColor = []
+    normColor: List[int] = []
     for el in color:
         normColor.append(int(el * 255))
     return tuple(normColor)
 
-def pad_color(color):
-    """ take an iterable object, and add 1.0 elements until length is 4.
-    returns tuple"""
-    paddedColor = []
+def pad_color(color: AnyNumberIterable) -> Tuple[float, ...]:
+    """
+    Take an iterable object, and add 1.0 elements until length is 4.
+    returns tuple
+    """
+    paddedColor: List[AnyNumber] = []
     for el in color:
         paddedColor.append(el)
 
@@ -136,7 +146,7 @@ def pad_color(color):
         paddedColor.append(1.0)
     return tuple(paddedColor)
 
-def sanitize_float(inFloat):
+def sanitize_float(inFloat: float) -> str:
     """converts float to string, with maximum of 8 decimal places, avoiding e-notation"""
     return "{0:.8f}".format(inFloat)
 
