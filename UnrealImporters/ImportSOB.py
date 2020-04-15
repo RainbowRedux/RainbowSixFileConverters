@@ -1,6 +1,7 @@
 """This moduled defines classes and functions related to importing RSE assets into Unreal"""
 import os
 import logging
+from typing import List
 from PIL import Image as PILImage
 
 # pylint: disable=no-member, broad-except
@@ -619,7 +620,7 @@ class MAPLevel(RSEResourceLoader):
         for currentMesh in self.proceduralMeshComponents:
             currentMesh.UpdateRSEFlagSettings()
 
-    def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], parent_component, mesh_component_type=RSEGeometryComponent):
+    def import_renderables_as_mesh_component(self, name: str, renderables: List[RenderableArray], parent_component, mesh_component_type=RSEGeometryComponent):
         """Will import a list of renderables into a single Mesh Component.
         parent_component is the component that the new mesh component will attach to. Currently cannot be None.
         Returns a mesh component"""
