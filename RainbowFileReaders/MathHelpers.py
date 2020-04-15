@@ -150,7 +150,8 @@ def sanitize_float(inFloat: float) -> str:
     """converts float to string, with maximum of 8 decimal places, avoiding e-notation"""
     return "{0:.8f}".format(inFloat)
 
-def is_vector_normal(normal):
+@deprecated
+def is_vector_normal(normal: FloatIterable) -> bool:
     """Takes an iterable, calculates vector length, and then returns True if it is aproximately 1.0"""
     vector_length = Vector.get_length(normal)
     if vector_length > 0.9999 and vector_length < 1.0001:
@@ -158,7 +159,7 @@ def is_vector_normal(normal):
     return False
 
 @deprecated
-def calc_vector_length(vector):
+def calc_vector_length(vector: FloatIterable):
     """Wrapper for Vector.get_length, since this was meant to be tidied up"""
     length = Vector.get_length(vector)
     return length
@@ -166,23 +167,31 @@ def calc_vector_length(vector):
 class Vector(object):
     """A class containing static methods related to operations on vectors"""
     @staticmethod
-    def get_length(vector_array):
+    def get_length(vector_array: AnyNumberIterable) -> float:
         """Calculates a vector length. vector_array is an iterable"""
-        squaredSum = 0
+        squaredSum = 0.0
         for i in vector_array:
             squaredSum += i * i
         length = math.sqrt(squaredSum)
         return length
 
     @staticmethod
-    def get_normal(vector_array):
+    def is_normal(normal: FloatIterable) -> bool:
+        """Takes an iterable, calculates vector length, and then returns True if it is aproximately 1.0"""
+        vector_length = Vector.get_length(normal)
+        if vector_length > 0.9999 and vector_length < 1.0001:
+            return True
+        return False
+
+    @staticmethod
+    def get_normal(vector_array: AnyNumberIterable) -> List[float]:
         """Calculates a vector normal. vector_array is an iterable"""
         length = Vector.get_length(vector_array)
         normal = Vector.divide_scalar(vector_array, length)
         return normal
 
     @staticmethod
-    def add_scalar(vecA, scalar):
+    def add_scalar(vecA: AnyNumberIterable, scalar: AnyNumber) -> List[float]:
         """Adds a scalar to a vector.
         Element wise operation"""
         result = []
@@ -191,7 +200,7 @@ class Vector(object):
         return result
 
     @staticmethod
-    def subtract_scalar(vecA, scalar):
+    def subtract_scalar(vecA: AnyNumberIterable, scalar: AnyNumber) -> List[float]:
         """Subtracts a scalar from a vector.
         Element wise operation"""
         result = []
@@ -200,7 +209,7 @@ class Vector(object):
         return result
 
     @staticmethod
-    def multiply_scalar(vecA, scalar):
+    def multiply_scalar(vecA: AnyNumberIterable, scalar: AnyNumber) -> List[float]:
         """Multiply a vector element-wise by a scalar value"""
         result = []
         for el in vecA:
@@ -208,7 +217,7 @@ class Vector(object):
         return result
 
     @staticmethod
-    def divide_scalar(vecA, scalar):
+    def divide_scalar(vecA: AnyNumberIterable, scalar: AnyNumber) -> List[float]:
         """Divide a vector element-wise by a scalar value"""
         result = []
         for el in vecA:
@@ -216,7 +225,7 @@ class Vector(object):
         return result
 
     @staticmethod
-    def add_vector(vecA, vecB):
+    def add_vector(vecA: AnyNumberIterable, vecB: AnyNumberIterable) -> List[float]:
         """Add 2 vectors, element-wise, together"""
         result = []
         for i in range(len(vecA)): # pylint: disable=consider-using-enumerate
@@ -224,7 +233,7 @@ class Vector(object):
         return result
 
     @staticmethod
-    def subtract_vector(vecA, vecB):
+    def subtract_vector(vecA: AnyNumberIterable, vecB: AnyNumberIterable) -> List[float]:
         """Subtract 2 vectors, element-wise"""
         result = []
         for i in range(len(vecA)): # pylint: disable=consider-using-enumerate
@@ -232,7 +241,7 @@ class Vector(object):
         return result
 
     @staticmethod
-    def multiply_vector(vecA, vecB):
+    def multiply_vector(vecA: AnyNumberIterable, vecB: AnyNumberIterable) -> List[float]:
         """Multiply 2 vectors, element-wise"""
         result = []
         for i in range(len(vecA)): # pylint: disable=consider-using-enumerate
@@ -240,7 +249,7 @@ class Vector(object):
         return result
 
     @staticmethod
-    def divide_vector(vecA, vecB):
+    def divide_vector(vecA: AnyNumberIterable, vecB: AnyNumberIterable) -> List[float]:
         """Divide 2 vectors, element-wise"""
         result = []
         for i in range(len(vecA)): # pylint: disable=consider-using-enumerate
@@ -248,25 +257,25 @@ class Vector(object):
         return result
 
     @staticmethod
-    def dot(vecA, vecB):
+    def dot(vecA: AnyNumberIterable, vecB: AnyNumberIterable) -> float:
         """Calculates the dot product of 2 vectors. This function normalizes vectors first to ensure consistent results"""
         vecANorm = Vector.get_normal(vecA)
         vecBNorm = Vector.get_normal(vecB)
         multipliedVec = Vector.multiply_vector(vecANorm, vecBNorm)
-        resultSum = 0
+        resultSum = 0.0
         for el in multipliedVec:
             resultSum += el
         return resultSum
 
     @staticmethod
-    def get_angle(vecA, vecB):
+    def get_angle(vecA: AnyNumberIterable, vecB: AnyNumberIterable) -> float:
         """Returns the angle between 2 vectors, expressed in radians"""
         dotproduct = Vector.dot(vecA, vecB)
         theta = math.acos(dotproduct)
         return theta
 
     @staticmethod
-    def cross(vecA, vecB):
+    def cross(vecA: AnyNumberIterable, vecB: AnyNumberIterable) -> List[float]:
         """Returns the cross product between 2 vectors. Both vectors should be lists that are exactly 3 elements long"""
         X = vecA[1] * vecB[2] - vecA[2] * vecB[1]
         Y = vecA[2] * vecB[0] - vecA[0] * vecB[2]
