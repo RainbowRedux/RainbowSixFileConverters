@@ -4,6 +4,8 @@ Classes and functions to load and parse CXP material property files
 import os
 import logging
 
+from typing import List, Dict, Optional
+
 from RainbowFileReaders import R6Settings
 from FileUtilities.TextFileUtilities import read_tokenized_text_file
 
@@ -13,34 +15,37 @@ class CXPMaterialProperties(object):
     """Material properties associated with a single texture/material"""
     def __init__(self):
         super(CXPMaterialProperties, self).__init__()
+        self.type: str = ""
         #Actually just texture name
-        self.materialName = None
+        self.materialName: str = None
         #Should be alpha-transparent in software rendering mode
-        self.softwarealpha = False
+        self.softwarealpha: bool = False
         #Default to opaque mode,
-        self.blendMode = "opaque"
+        self.blendMode: str = "opaque"
         #If this is not empty, this is the color that should act as the alpha mask. It's often slightly off by 1 due to imprecision in 16bit color images, so take that into accound when using this value
-        self.colorkey = []
+        self.colorkey: List[int] = []
         #This appears to describe maximum Min/Mag texture filtering modes. Final value for a given texture seems to be min(UserOption, TextureOption)
-        self.mipMapValues = []
+        self.mipMapValues: List[str] = []
         #Determines if gunfire/bullets can pass through this material
-        self.gunpass = False
+        self.gunpass: bool = False
         #Determines if grenades can pass through this material
-        self.grenadepass = False
+        self.grenadepass: bool = False
         #Parameters around the texture format. Not sure what the leading 0 is, but the rest appear to be RGBA bit depths, eg. 4, 4, 4, 4 for a 16bit texture with an alpha channel
         #This mainly appears to be a property used when generating RSB files.
-        self.textureformat = []
+        self.textureformat: List[int] = []
         #additional textures that should be added to the image sequence
-        self.animated = False
-        self.animNumAdditionalTextures = 0
-        self.animAdditionalTextures = []
+        self.animated: bool = False
+        self.animTypeRaw: str = ""
+        self.animInterval: float = 0.0
+        self.animNumAdditionalTextures: int = 0
+        self.animAdditionalTextures: List[str] = []
         #disables mipmapping?
-        self.nosubsamble = False
+        self.nosubsamble: bool = False
         #Scroll rates, empty if not enabled
-        self.scrolling = False
-        self.scrollParams = []
+        self.scrolling: bool = False
+        self.scrollParams: List[float] = []
 
-    def read_properties(self, keywords):
+    def read_properties(self, keywords: List[str]):
         """Reads a single textures' set of material properties"""
         bFoundEnd = False
         while bFoundEnd is False:
@@ -78,7 +83,7 @@ class CXPMaterialProperties(object):
                 self.nosubsamble = True
             elif currKeyword == "animated":
                 self.animated = True
-                self.animtypeRaw = keywords.pop(0)
+                self.animTypeRaw = keywords.pop(0)
                 self.animInterval = float(keywords.pop(0))
                 self.animNumAdditionalTextures = int(keywords.pop(0))
                 for _ in range(self.animNumAdditionalTextures):
@@ -90,10 +95,10 @@ class CXPMaterialProperties(object):
             else:
                 log.warning("Skipping: %s", currKeyword)
 
-def read_cxp(path):
+def read_cxp(path: str) -> List[CXPMaterialProperties]:
     """Loads and parses a CXP and returns a list of material properties"""
     keywords = read_tokenized_text_file(path)
-    MaterialPropertiesDict = {}
+    MaterialPropertiesDict: Dict[str, CXPMaterialProperties] = {}
     while keywords:
         try:
             if keywords[0].strip() != "Material" and keywords[0] != "Surface":
@@ -122,26 +127,26 @@ def read_cxp(path):
             log.error("\tDiscarded keyword: %s", discardedWord)
 
     # Create and return a list of CXP properties, as many CXP files will be combined, and the order is important for matching
-    MaterialProperties = []
+    MaterialProperties: List[CXPMaterialProperties] = []
     for _, val in MaterialPropertiesDict.items():
         MaterialProperties.append(val)
     return MaterialProperties
 
-def load_relevant_cxps(datapath, modpath = None):
+def load_relevant_cxps(datapath: str, modpath: Optional[str] = None) -> List[CXPMaterialProperties]:
     """Given the main datapath for a game installation, and optionally a modpath,
     this will load the appropriate CXPs and then merge the results into a single list"""
-    dataTexturePath = None
+    dataTexturePath: str = ""
     if datapath is not None:
         dataTexturePath = os.path.join(datapath, R6Settings.paths["TexturePath"])
 
-    modTexturePath = None
+    modTexturePath: str = ""
     if modpath is not None:
         modTexturePath = os.path.join(modpath, R6Settings.paths["TexturePath"])
 
     CXPFilesToRead = []
 
     #Add the mod texture path first, so entries from here take priority
-    if modTexturePath is not None:
+    if modTexturePath:
         modShermanPath = os.path.join(modTexturePath, "Sherman.CXP")
         modRommelPath = os.path.join(modTexturePath, "Rommel.CXP")
         if os.path.isfile(modShermanPath):
@@ -149,7 +154,7 @@ def load_relevant_cxps(datapath, modpath = None):
         if os.path.isfile(modRommelPath):
             CXPFilesToRead.append(modRommelPath)
 
-    if dataTexturePath is not None:
+    if dataTexturePath:
         dataShermanPath = os.path.join(dataTexturePath, "Sherman.CXP")
         dataRommelPath = os.path.join(dataTexturePath, "Rommel.CXP")
         if os.path.isfile(dataShermanPath):
@@ -157,14 +162,14 @@ def load_relevant_cxps(datapath, modpath = None):
         if os.path.isfile(dataRommelPath):
             CXPFilesToRead.append(dataRommelPath)
 
-    CXPDefinitions = []
+    CXPDefinitions: List[CXPMaterialProperties] = []
     for cxpPath in CXPFilesToRead:
         tempCXPDefs = read_cxp(cxpPath)
         CXPDefinitions.extend(tempCXPDefs)
 
     return CXPDefinitions
 
-def get_cxp_definition(CXPDefinitions, texture_name):
+def get_cxp_definition(CXPDefinitions: List[CXPMaterialProperties], texture_name: str) -> Optional[CXPMaterialProperties]:
     """
     Iterates through a list of CXPs to find a definition that matches the texture
     texture_name should be the source texture name, not the RSB texture name.
