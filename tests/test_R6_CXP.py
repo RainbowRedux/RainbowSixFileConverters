@@ -20,10 +20,15 @@ class R6CXPTests(unittest.TestCase):
 
         CXPpath =  path.join(settings["gamePath_R6"], "data", "texture", "Sherman.CXP")
 
-        loadedCXPDefs = CXPMaterialPropertiesReader.read_cxp(CXPpath)
+        manuallyLoadedCXPDefs = CXPMaterialPropertiesReader.read_cxp(CXPpath)
 
         # 294 manually verified in TXT file
-        self.assertEqual(len(loadedCXPDefs), 294, "Unexpected number of definitions in CXP File")
+        self.assertEqual(len(manuallyLoadedCXPDefs), 294, "Unexpected number of definitions in manually loaded CXP File")
+
+        CXPpath =  path.join(settings["gamePath_R6"], "data")
+
+        autoLoadedCXPDefs = CXPMaterialPropertiesReader.load_relevant_cxps(CXPpath)
+        self.assertEqual(len(autoLoadedCXPDefs), 294, "Unexpected number of definitions in Auto loaded CXP File")
 
 
     def test_eagle_watch_cxp(self):
@@ -33,7 +38,12 @@ class R6CXPTests(unittest.TestCase):
 
         CXPpath =  path.join(settings["gamePath_R6_EW"], "data", "texture", "Sherman.CXP")
 
-        loadedCXPDefs = CXPMaterialPropertiesReader.read_cxp(CXPpath)
+        manuallyLoadedCXPDefs = CXPMaterialPropertiesReader.read_cxp(CXPpath)
 
         # 395 manually verified in TXT file
-        self.assertEqual(len(loadedCXPDefs), 395, "Unexpected number of definitions in CXP File")
+        self.assertEqual(len(manuallyLoadedCXPDefs), 395, "Unexpected number of definitions in CXP File")
+
+        CXPpath =  path.join(settings["gamePath_R6_EW"], "data")
+
+        autoLoadedCXPDefs = CXPMaterialPropertiesReader.load_relevant_cxps(CXPpath)
+        self.assertEqual(len(autoLoadedCXPDefs), 395, "Unexpected number of definitions in Auto loaded CXP File")
