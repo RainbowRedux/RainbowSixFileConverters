@@ -14,7 +14,7 @@ from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, 
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 from RainbowFileReaders.RSDMPLightReader import RSDMPLightFile
-from RainbowFileReaders.MathHelpers import normalize_color, pad_color, Vector, AxisAlignedBoundingBox
+from RainbowFileReaders.MathHelpers import pad_color, Vector, AxisAlignedBoundingBox
 from RainbowFileReaders.RenderableArray import RenderableArray
 
 log = logging.getLogger(__name__)
