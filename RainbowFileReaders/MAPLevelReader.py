@@ -229,11 +229,12 @@ class RSMAPGeometryData(BinaryFileDataStructure):
             renderable.UVs.append(facegroup.vertexParams.UVs[currentVertParamIdx].copy())
 
             # Convert color to RenderableArray standard format, RGBA 0.0-1.0 range
-            importedColor = facegroup.vertexParams.colors[currentVertParamIdx].copy()
+            importedColorCopy: List[float] = facegroup.vertexParams.colors[currentVertParamIdx].copy()
             # convert the color to 0.0-1.0 range, rather than 0-255
-            importedColor = normalize_color(importedColor)
+            #TODO: Verify this is no longer needed
+            #importedColor = normalize_color(importedColorCopy)
             # pad with an alpha value so it's RGBA
-            importedColor = pad_color(importedColor)
+            importedColor = pad_color(importedColorCopy)
             renderable.vertexColors.append(importedColor)
         # set the triangle indices
         renderable.triangleIndices = triangleIndices
