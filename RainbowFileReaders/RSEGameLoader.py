@@ -3,6 +3,8 @@
 import logging
 import os
 
+from typing import Dict, List
+
 from RainbowFileReaders.R6Constants import RSEEngineVersions, RSEGameVersions
 from FileUtilities.DirectoryProcessor import gather_files_in_path
 
@@ -13,13 +15,16 @@ class RSEGameLoader(object):
     def __init__(self):
         super(RSEGameLoader, self).__init__()
 
-        self.game_path = ""
-        self.game_name = ""
-        self.game_version = RSEGameVersions.UNKNOWN
-        self.engine_version = RSEEngineVersions.UNKNOWN
-        self.mods = {}
+        self.game_path: str = ""
+        self.game_name: str = ""
+        # Should be RSEGameVersions constant
+        self.game_version: str = RSEGameVersions.UNKNOWN
+        # Should be RSEEngineVersions constant
+        self.engine_version: str = RSEEngineVersions.UNKNOWN
+        # Stores modname, modpath
+        self.mods: Dict[str, str] = {}
 
-    def load_game(self, path):
+    def load_game(self, path: str) -> bool:
         """
         Loads a game from the given path. Will determine engine version and determine mods available (if available)
         Returns True if it was able to identify the game version
@@ -34,7 +39,7 @@ class RSEGameLoader(object):
             return False
         return True
 
-    def _determine_game_from_exes(self):
+    def _determine_game_from_exes(self) -> str:
         if not self.game_path:
             return RSEGameVersions.UNKNOWN
 
@@ -61,9 +66,10 @@ class RSEGameLoader(object):
 
         return self.game_version
 
-    def get_mission_list(self):
+    def get_mission_list(self) -> Dict[str, str]:
         """
         Returns a list of missions that are avaible in the current game and loaded mods
+        Returns a dictionary of missions. Key is mission filename (minus extension), value is mission path
         """
         mission_paths = gather_files_in_path(".MIS", self.game_path)
         if "Eagle Watch" in self.mods:
@@ -78,9 +84,10 @@ class RSEGameLoader(object):
             missions[mission_code] = mission_path
         return missions
 
-    def get_map_list(self):
+    def get_map_list(self) -> Dict[str, str]:
         """
         Returns a lost of maps available in the current game
+        Returns a dictionary of maps. Key is map filename (minus extension), value is map path
         """
         map_paths = gather_files_in_path(".MAP", self.game_path)
 
@@ -91,14 +98,14 @@ class RSEGameLoader(object):
             maps[map_code] = map_path
         return maps
 
-    def get_mod_list(self):
+    def get_mod_list(self) -> List[str]:
         """
         Returns a list of mods available in the current game
         """
         #TODO: read mods in Rogue Spear games
         return list(self.mods.keys())
 
-    def load_mod(self, mod_name):
+    def load_mod(self, mod_name: str):
         """
         Loads the specified name and allows resources belonging to the mod to be retrieved
         """
