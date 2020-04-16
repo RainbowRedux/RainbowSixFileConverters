@@ -1,8 +1,12 @@
 """Provides classes that will read and parse RSB Image files."""
 import logging
-from PIL import Image # type: ignore
+
+from typing import Optional, Tuple, List
+
+from PIL import Image as PILImage # type: ignore
 from PIL import ImagePalette # type: ignore
-from FileUtilities.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader, bytes_to_shortint
+from FileUtilities.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader, bytes_to_shortint, BinaryFileReader
+from RainbowFileReaders.MathHelpers import IntIterable
 
 log = logging.getLogger(__name__)
 
@@ -10,9 +14,9 @@ class RSBImageFile(FileFormatReader):
     """Class to read full RSB files"""
     def __init__(self):
         super(RSBImageFile, self).__init__()
-        self.header = None
-        self.image256 = None
-        self.imageFullColor = None
+        self.header: RSBHeader = RSBHeader()
+        self.image256: Optional[RSBImage] = None
+        self.imageFullColor: RSBImage = RSBImage()
 
     def read_data(self):
         super().read_data()
@@ -46,10 +50,15 @@ class RSBImageFile(FileFormatReader):
         self.imageFullColor = RSBImage()
         self.imageFullColor.read_image(self.header.width, self.header.height, self.header.calculate_bytes_per_pixel(), fileReader)
 
-    def convert_palette_image(self):
-        """Converts the stored palettized version of the image into a full color RGBA image"""
-        #TODO: explore putting the palette information directory into PIL Image, rather than converting to full color
-        newImage = Image.new('RGBA', (self.header.width, self.header.height))
+    def convert_palette_image(self) -> Optional[PILImage.Image]:
+        """
+        Converts the stored palettized version of the image into a full color RGBA image
+        If a palette image exists, a full color RGBA image will be returned
+        If no palette image exists, None is returned
+        """
+        if self.image256 is None:
+            return None
+        newImage = PILImage.new('RGBA', (self.header.width, self.header.height))
         pixels = newImage.load()
         for x in range(newImage.size[0]):    # for every col:
             for y in range(newImage.size[1]):    # For every row
@@ -60,11 +69,16 @@ class RSBImageFile(FileFormatReader):
                 pixels[x,y] = (pixel_color[0], pixel_color[1], pixel_color[2], 255) # set the colour accordingly, ignoring alpha
         return newImage
 
-    def convert_palette_image_pil_palette(self):
-        """Converts the stored palettized version of the image into a full color RGBA image"""
-        #TODO: explore putting the palette information directory into PIL Image, rather than converting to full color
+    def convert_palette_image_pil_palette(self) -> Optional[PILImage.Image]:
+        """
+        Converts the stored palettized version of the image into a full color RGBA image
+        If a palette image exists, a palette based PIL image will be returned
+        If no palette image exists, None is returned
+        """
+        if self.image256 is None:
+            return None
         log.debug("Palette conversion pending")
-        newImage = Image.new('P', (self.header.width, self.header.height))
+        newImage = PILImage.new('P', (self.header.width, self.header.height))
 
         newPalette = ImagePalette.ImagePalette(mode='RGBA')
         for index, color in enumerate(self.palette.palette_entries):
@@ -85,12 +99,15 @@ class RSBImageFile(FileFormatReader):
         return newImage
 
 
-    def convert_full_color_image(self, force_alpha_channel = False):
-        """Converts the stored "full color" version of the image into a full color RGBA image with 8bpp"""
+    def convert_full_color_image(self, force_alpha_channel: bool = False) -> PILImage.Image:
+        """
+        Converts the stored "full color" version of the image into a full color RGBA image with 8bpp
+        An alpha channel will only be generated if alpha information exists, or force_alpha_channel is True
+        """
         pixelformat = 'RGB'
         if self.header.bitDepthAlpha != 0 or force_alpha_channel:
             pixelformat = 'RGBA'
-        newImage = Image.new(pixelformat, (self.header.width, self.header.height))
+        newImage = PILImage.new(pixelformat, (self.header.width, self.header.height))
         pixels = newImage.load()
         for x in range(newImage.size[0]):    # for every col:
             for y in range(newImage.size[1]):    # For every row
@@ -105,7 +122,7 @@ class RSBImageFile(FileFormatReader):
 
         return newImage
 
-    def check_color_key(self, imageColor, colorKey, bitmask):
+    def check_color_key(self, imageColor: IntIterable, colorKey: IntIterable, bitmask: IntIterable) -> bool:
         """Checks if the image color matches the colorkey. Fuzzy match based on the precision allowed by the bitmask"""
         #TODO: Improve matching
         bMatched = True
@@ -136,7 +153,7 @@ class RSBImageFile(FileFormatReader):
                     bMatched = False
         return bMatched
 
-    def convert_full_color_image_with_colorkey_mask(self, colorkeyRGB):
+    def convert_full_color_image_with_colorkey_mask(self, colorkeyRGB: IntIterable) -> PILImage.Image:
         """Converts the stored "full color" version of the image into a full color RGBA image with 8bpp
         colorkeyRGB can be a list or tuple"""
         if colorkeyRGB is None:
@@ -147,9 +164,9 @@ class RSBImageFile(FileFormatReader):
         pixdata = newImage.load()
 
         colorKey = list(colorkeyRGB)
-        colorKeyWithAlpha = colorKey.copy()
-        colorKeyWithAlpha.append(0)
-        colorKeyWithAlpha = tuple(colorKeyWithAlpha)
+        colorKeyCopy = colorKey.copy()
+        colorKeyCopy.append(0)
+        colorKeyWithAlpha = tuple(colorKeyCopy)
         bitmask = self.header.get_rgba_bitmask_tuple()
         for y in range(imageHeight):
             for x in range(imageWidth):
@@ -163,22 +180,22 @@ class RSBHeader(BinaryFileDataStructure):
     """Reads and stores information in the header of RSB files"""
     def __init__(self):
         super(RSBHeader, self).__init__()
-        self.version = None
-        self.width = None
-        self.height = None
-        self.containsPalette = None
-        self.unknown2 = None
-        self.unknown3 = None
-        self.unknown4 = None
-        self.unknown5 = None
-        self.bitDepthRed = None
-        self.bitDepthGreen = None
-        self.bitDepthBlue = None
-        self.bitDepthAlpha = None
-        self.isDXT = False
-        self.dxtType = None
+        self.version: int = None
+        self.width: int = None
+        self.height: int = None
+        self.containsPaletteRaw: int = None
+        self.unknown2: int = None
+        self.unknown3: int = None
+        self.unknown4: bytes = None
+        self.unknown5: int = None
+        self.bitDepthRed: int = None
+        self.bitDepthGreen: int = None
+        self.bitDepthBlue: int = None
+        self.bitDepthAlpha: int = None
+        self.isDXT: bool = False
+        self.dxtType: int = None
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         """Some images cause errors when converting, they seem to have invalid headers. Simple checks here identify bad headers"""
         if self.bitDepthAlpha + self.bitDepthBlue + self.bitDepthGreen + self.bitDepthRed == 0:
             return False
@@ -186,7 +203,7 @@ class RSBHeader(BinaryFileDataStructure):
             return False
         return True
 
-    def calculate_bytes_per_pixel(self):
+    def calculate_bytes_per_pixel(self) -> int:
         """Calculates how many bytes per pixel are to be expected in the images"""
         #Pylint disabled R1705 because stylistically i prefer this way here so i can extend it easier
         if self.isDXT: # pylint: disable=R1705
@@ -198,7 +215,7 @@ class RSBHeader(BinaryFileDataStructure):
             bitDepthTotal = self.bitDepthRed + self.bitDepthGreen + self.bitDepthBlue + self.bitDepthAlpha
             return bitDepthTotal // 8
 
-    def read_bit_mask(self, filereader):
+    def read_bit_mask(self, filereader: BinaryFileReader):
         """Reads the bitmask for each color channel. May be stored outside of the header in Version 0 files"""
         #bit depth information
         self.bitDepthRed = filereader.read_uint32()
@@ -206,11 +223,11 @@ class RSBHeader(BinaryFileDataStructure):
         self.bitDepthBlue = filereader.read_uint32()
         self.bitDepthAlpha = filereader.read_uint32()
 
-    def get_rgba_bitmask_tuple(self):
+    def get_rgba_bitmask_tuple(self) -> Tuple[int, ...]:
         """Returns the bitmask in RGBA order as a tuple"""
         return (self.bitDepthRed, self.bitDepthGreen, self.bitDepthBlue, self.bitDepthAlpha)
 
-    def read(self, filereader):
+    def read(self, filereader: BinaryFileReader):
         super().read(filereader)
 
         self.version = filereader.read_uint32()
@@ -218,7 +235,11 @@ class RSBHeader(BinaryFileDataStructure):
         self.height = filereader.read_uint32()
 
         if self.version == 0:
-            self.containsPalette = filereader.read_uint32()
+            self.containsPaletteRaw = filereader.read_uint32()
+            if self.containsPaletteRaw == 1:
+                self.containsPalette = True
+            else:
+                self.containsPalette = False
 
         #num_bytes_processed += 1
         if self.version > 7:
@@ -244,9 +265,9 @@ class RSBPalette(BinaryFileDataStructure):
     def __init__(self):
         super(RSBPalette, self).__init__()
         self.num_palette_entries = 256
-        self.palette_entries = []
+        self.palette_entries: List[List[int]] = []
 
-    def get_color(self, index):
+    def get_color(self, index: int) -> List[int]:
         """Retrieves the color stored at the index"""
         return self.palette_entries[index]
 
@@ -255,35 +276,32 @@ class RSBPalette(BinaryFileDataStructure):
         for i, color in enumerate(self.palette_entries):
             log.info("I: %d (R: %d\tG: %d\tB: %d\tA: %d)", i, color[0], color[1], color[2], color[3])
 
-    def read(self, filereader):
+    def read(self, filereader: BinaryFileReader):
         super().read(filereader)
 
-        num_bytes_processed = 0
         self.palette_entries = []
         for _ in range(self.num_palette_entries):
             temp = filereader.read_bgra_color_8bpp_byte()
-            num_bytes_processed += 4
             self.palette_entries.append(temp)
-        return num_bytes_processed
 
 class RSBImage(BinaryFileDataStructure):
     """Reads and stores the image data of RSB files"""
     def __init__(self):
         super(RSBImage, self).__init__()
-        self.image = []
+        self.image: List[bytes] = []
 
-    def get_pixel(self, index):
+    def get_pixel(self, index: int) -> bytes:
         """Retrieves the pixel stored at the specified index"""
         if index >= len(self.image):
             log.error("Invalid index: %d", index)
-            return "0"
+            return b'0'
         return self.image[index]
 
-    def read(self, filereader):
+    def read(self, filereader: BinaryFileReader):
         super().read(filereader)
         log.error("Error! This class does not support the base read operation as it requires extra parameters")
 
-    def read_image(self, width, height, bytes_per_pixel, filereader):
+    def read_image(self, width: int, height: int, bytes_per_pixel: int, filereader: BinaryFileReader):
         """Reads data from the file that is to be interpreted as an image. Size of data read is determined by resolution and bytes per pixel. Image is not converted to RGBA image here, as the data can be a number of internal formats"""
         self.image = []
         for _ in range(width*height):
