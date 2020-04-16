@@ -31,7 +31,7 @@ class MAPLevelFile(FileFormatReader):
         self.geometryListHeader: RSEGeometryListHeader = None
         self.geometryObjects: List[Union[R6GeometryObject, RSMAPGeometryObject]] = []
         self.portalList: RSEMAPPortalList = []
-        self.lightList: RSEMAPPortalList = []
+        self.lightList: R6MAPLightList = []
         self.objectList: RSEMAPObjectList = []
         self.dmpLights: RSDMPLightFile = None
 
