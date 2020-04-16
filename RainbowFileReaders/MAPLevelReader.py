@@ -20,7 +20,7 @@ from RainbowFileReaders.RSMAPStructures import RSMAPRoomDefinition, RSMAPGeometr
 
 log = logging.getLogger(__name__)
 
-AnyRoomType = Union[R6MAPRoomDefinition, RSMAPRoomDefinition] # pylint: disable=used-before-assignment
+AnyRoomType = Union[R6MAPRoomDefinition, RSMAPRoomDefinition]
 
 class MAPLevelFile(FileFormatReader):
     """Class to read full MAP files"""
