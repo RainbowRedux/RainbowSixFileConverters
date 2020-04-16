@@ -3,8 +3,7 @@
 import logging
 from typing import Tuple, Union, List, Optional
 
-import PIL
-from PIL import Image
+from PIL import Image as PILImage # type: ignore
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +22,7 @@ def halve_image_dimensions(dimensions: Union[Tuple[int, ...], List[int]]) -> Tup
     return tuple(new_dimensions)
 
 
-def generate_mip_maps(src_image: Image.Image) -> Optional[List[Image.Image]]:
+def generate_mip_maps(src_image: PILImage.Image) -> Optional[List[PILImage.Image]]:
     """
     Generate a list of images suitable for use as MipMaps
     src_image should be a PIL.Image with Power Of 2 dimensions
@@ -37,7 +36,7 @@ def generate_mip_maps(src_image: Image.Image) -> Optional[List[Image.Image]]:
         log.warning("Skipping image as dimensions are not power of 2")
         return None
 
-    mips: List[Image.Image] = []
+    mips: List[PILImage.Image] = []
     mips.append(src_image)
 
     current_size: List[int] = list(original_dimensions)
@@ -45,7 +44,7 @@ def generate_mip_maps(src_image: Image.Image) -> Optional[List[Image.Image]]:
         current_size = list(halve_image_dimensions(current_size))
 
         # Create the new MipMap with the current size, using high quality downsampling
-        newMip = src_image.resize(current_size, PIL.Image.LANCZOS)
+        newMip = src_image.resize(current_size, PILImage.LANCZOS)
         mips.append(newMip)
 
     return mips
