@@ -1,6 +1,10 @@
 """Contains data structures and related functions for renderable geometry"""
 
+from typing import List, Optional
+
+from RainbowFileReaders.R6Constants import UINT_MAX
 from RainbowFileReaders.MathHelpers import calc_vector_length, AxisAlignedBoundingBox
+from RainbowFileReaders.MathHelpers import AnyNumber, FloatIterable, IntIterable, AnyNumberIterable
 
 class RenderableArray(object):
     """Stores geometry information in a way that's closer to how renderers work, can easily be adapted to each engine from this method.
@@ -9,12 +13,12 @@ class RenderableArray(object):
     Triangle indices refer to the same element index in every array. You cannot specify vertex I, normal J, etc"""
     def __init__(self):
         super(RenderableArray, self).__init__()
-        self.vertices = []
-        self.vertexColors = []
-        self.normals = []
-        self.UVs = []
-        self.materialIndex = None
-        self.triangleIndices = []
+        self.vertices: List[FloatIterable] = []
+        self.vertexColors: Optional[List[FloatIterable]] = []
+        self.normals: List[FloatIterable] = []
+        self.UVs: Optional[List[FloatIterable]] = []
+        self.materialIndex: int = UINT_MAX
+        self.triangleIndices: List[IntIterable] = []
 
     def calculate_AABB(self):
         """Calculates and returns an Axis Aligned Bounding Box structure"""

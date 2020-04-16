@@ -14,7 +14,7 @@ from RainbowFileReaders.RSEGeometryDataStructures import RSEGeometryListHeader, 
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
 from RainbowFileReaders.RSDMPLightReader import RSDMPLightFile
-from RainbowFileReaders.MathHelpers import pad_color, Vector, AxisAlignedBoundingBox
+from RainbowFileReaders.MathHelpers import pad_color, Vector, AxisAlignedBoundingBox, IntIterable
 from RainbowFileReaders.RenderableArray import RenderableArray
 
 log = logging.getLogger(__name__)
@@ -200,7 +200,7 @@ class RSMAPGeometryData(BinaryFileDataStructure):
         renderable.materialIndex = facegroup.materialIndex
 
         attribList: List[Tuple[int, int]] = []
-        triangleIndices = []
+        triangleIndices: List[IntIterable] = []
 
         for i in range(facegroup.faceCount):
             # Pack triangle indices into sub arrays per face for consistency with RenderableArray format
@@ -211,14 +211,15 @@ class RSMAPGeometryData(BinaryFileDataStructure):
             numVerts = len(currentVertIndices)
             for j in range(numVerts):
                 currentAttribIndices = (currentVertIndices[j], currentVertParamIndices[j])
-                if currentAttribIndices in attribList:
-                    currentTriangleIndices.append(attribList.index(currentAttribIndices))
-                else:
+                if currentAttribIndices not in attribList:
                     attribList.append(currentAttribIndices)
-                    currentTriangleIndices.append(attribList.index(currentAttribIndices))
+                currentTriangleIndices.append(attribList.index(currentAttribIndices))
 
             triangleIndices.append(currentTriangleIndices)
 
+        #Create fresh lists for vertexColors and UVs
+        renderable.vertexColors = []
+        renderable.UVs = []
         for currentAttribSet in attribList:
             # Make sure to copy any arrays so any transforms don't get interferred with in other renderables
             currentVertex: List[float] = self.vertices[currentAttribSet[0]]
@@ -481,8 +482,8 @@ class RSEMAPPortal(BinaryFileDataStructure):
     def generate_renderable_array_object(self) -> RenderableArray:
         """Generates RenderableArray object for a portal"""
         # Hard coded triangle indices as file format only specifies 4 indices
-        triangleIndices = [ [0,1,2],
-                            [0,2,3] ]
+        triangleIndices: List[IntIterable] = [ [0,1,2],
+                                               [0,2,3] ]
 
         currentRenderable = RenderableArray()
         currentRenderable.materialIndex = R6Constants.UINT_MAX
@@ -497,7 +498,7 @@ class RSEMAPPortal(BinaryFileDataStructure):
 
         #use the same normal for all vertices
         currentRenderable.normals = []
-        for vertex in currentRenderable.vertices:
+        for _ in range(len(currentRenderable.vertices)):
             currentRenderable.normals.append(crossProductNormal.copy())
 
         #Explicitly state that there are no values for these attributes

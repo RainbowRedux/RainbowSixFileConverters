@@ -8,7 +8,7 @@ from deprecated import deprecated # type: ignore
 
 AnyNumber = Union[int, float]
 FloatIterable = Union[List[float], Tuple[float, ...]]
-IntIterable = Union[List[float], Tuple[float, ...]]
+IntIterable = Union[List[int], Tuple[int, ...]]
 AnyNumberIterable = Union[List[AnyNumber], Tuple[AnyNumber, ...]]
 
 class AxisAlignedBoundingBox(object):
