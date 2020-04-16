@@ -1,10 +1,10 @@
 """Contains data structures and related functions for renderable geometry"""
-
-from typing import List, Optional
+from __future__ import annotations
+from typing import List, Optional, Dict
 
 from RainbowFileReaders.R6Constants import UINT_MAX
 from RainbowFileReaders.MathHelpers import calc_vector_length, AxisAlignedBoundingBox
-from RainbowFileReaders.MathHelpers import AnyNumber, FloatIterable, IntIterable, AnyNumberIterable
+from RainbowFileReaders.MathHelpers import FloatIterable, IntIterable, AnyNumberIterable
 
 class RenderableArray(object):
     """Stores geometry information in a way that's closer to how renderers work, can easily be adapted to each engine from this method.
@@ -13,35 +13,35 @@ class RenderableArray(object):
     Triangle indices refer to the same element index in every array. You cannot specify vertex I, normal J, etc"""
     def __init__(self):
         super(RenderableArray, self).__init__()
-        self.vertices: List[FloatIterable] = []
+        self.vertices: List[List[float]] = []
         self.vertexColors: Optional[List[FloatIterable]] = []
         self.normals: List[FloatIterable] = []
         self.UVs: Optional[List[FloatIterable]] = []
         self.materialIndex: int = UINT_MAX
         self.triangleIndices: List[IntIterable] = []
 
-    def calculate_AABB(self):
+    def calculate_AABB(self) -> AxisAlignedBoundingBox:
         """Calculates and returns an Axis Aligned Bounding Box structure"""
         AABB = AxisAlignedBoundingBox()
         for vertex in self.vertices:
             AABB.add_point(vertex)
         return AABB
 
-    def scale(self, scale):
-        """Performs a scaling operation on each vertex"""
+    def scale(self, scale: AnyNumberIterable):
+        """Performs an element-wise scaling operation on each vertex"""
         for vertex in self.vertices:
             vertex[0] = vertex[0] * scale[0]
             vertex[1] = vertex[1] * scale[1]
             vertex[2] = vertex[2] * scale[2]
 
-    def translate(self, translation):
-        """Translates all vertices by this amount"""
+    def translate(self, translation: AnyNumberIterable):
+        """Translates all vertices by this amount, element-wise"""
         for vertex in self.vertices:
             vertex[0] = vertex[0] + translation[0]
             vertex[1] = vertex[1] + translation[1]
             vertex[2] = vertex[2] + translation[2]
 
-    def merge(self, otherRenderable):
+    def merge(self, otherRenderable: RenderableArray):
         """Merges in geometry from another renderable into this one."""
         if otherRenderable is None:
             return
@@ -49,9 +49,11 @@ class RenderableArray(object):
         indexOffset = len(self.vertices)
 
         self.vertices.extend(otherRenderable.vertices)
-        self.vertexColors.extend(otherRenderable.vertexColors)
+        if self.vertexColors and otherRenderable.vertexColors:
+            self.vertexColors.extend(otherRenderable.vertexColors)
         self.normals.extend(otherRenderable.normals)
-        self.UVs.extend(otherRenderable.UVs)
+        if self.UVs and otherRenderable.UVs:
+            self.UVs.extend(otherRenderable.UVs)
 
         for triangle in otherRenderable.triangleIndices:
             newTri = []
@@ -61,10 +63,10 @@ class RenderableArray(object):
             self.triangleIndices.append(newTri)
 
 
-def merge_renderables_by_material(renderables):
+def merge_renderables_by_material(renderables: List[RenderableArray]) -> List[RenderableArray]:
     """Merge renderables with the same material index"""
     # Rogue spear maps in particular seem to have meshes broken up to each polygon. Collapsing these into a single mesh significantly reduces draw calls.
-    mergedRenderables = {}
+    mergedRenderables: Dict[int, RenderableArray] = {}
     for renderable in renderables:
         if renderable.materialIndex in mergedRenderables:
             # There is already a renderable using this material index
@@ -72,9 +74,9 @@ def merge_renderables_by_material(renderables):
             masterRenderable.merge(renderable)
         else:
             mergedRenderables[renderable.materialIndex] = renderable
-    return mergedRenderables.values()
+    return list(mergedRenderables.values())
 
-def shift_origin_of_renderables(renderables, distance_threshold = 0):
+def shift_origin_of_renderables(renderables: List[RenderableArray], distance_threshold: float = 0.0) -> AxisAlignedBoundingBox:
     """Calculates the bounds of all renderables in the list, and then translates the vertices by the center position of the AABB
     Does not shift objects that have a center position less than distance_threshold away from the origin"""
 

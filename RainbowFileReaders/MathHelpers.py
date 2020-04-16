@@ -24,7 +24,7 @@ class AxisAlignedBoundingBox(object):
         self.maxY: AnyNumber = 0
         self.maxZ: AnyNumber = 0
 
-    def add_point(self, vertex: List[AnyNumber]):
+    def add_point(self, vertex: AnyNumberIterable):
         """Adds a point to be considered for this AABB. This expands the AABB dimensions immediately."""
         #If not initialized, set the limits to match this point
         if self.bInitialized is False:
