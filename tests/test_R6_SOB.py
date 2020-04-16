@@ -39,9 +39,9 @@ class R6SOBTests(unittest.TestCase):
 
         self.assertEqual(len(loadedFile.materials), 7, "Unexpected number of materials read")
 
-        self.assertEqual(loadedFile.materials[0].materialName, "aK barell", "Unexpected material name")
+        self.assertEqual(loadedFile.materials[0].material_name.string, "aK barell", "Unexpected material name")
 
-        self.assertEqual(loadedFile.materials[0].textureName, "AK47_BARREL_32.BMP", "Unexpected material name")
+        self.assertEqual(loadedFile.materials[0].texture_name.string, "AK47_BARREL_32.BMP", "Unexpected material name")
 
         self.assertEqual(len(loadedFile.geometryObjects), 1, "Unexpected number of geometry objects")
 

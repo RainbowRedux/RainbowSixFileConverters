@@ -74,8 +74,8 @@ class R6MAPTests(unittest.TestCase):
         firstMaterial = loadedFile.materials[0]
         self.assertEqual(firstMaterial.get_material_game_version(), RSEGameVersions.RAINBOW_SIX, "Wrong material format detected")
         self.assertEqual(firstMaterial.versionNumber, 1, "Wrong material version number")
-        self.assertEqual(firstMaterial.materialName, "WI_plain5", "Wrong material name")
-        self.assertEqual(firstMaterial.textureName, "Wl_paper_congo_tan_leaves1.BMP", "Wrong texture name")
+        self.assertEqual(firstMaterial.material_name.string, "WI_plain5", "Wrong material name")
+        self.assertEqual(firstMaterial.texture_name.string, "Wl_paper_congo_tan_leaves1.BMP", "Wrong texture name")
 
         self.assertAlmostEqual(firstMaterial.opacity, 1.0, 3, "Wrong opacity value")
         self.assertAlmostEqual(firstMaterial.emissiveStrength, 0.0, 3, "Wrong emissive strength value")

@@ -1,5 +1,7 @@
 """Defines common geometry data structures used in many Red Storm Entertainment file formats"""
 
+from __future__ import annotations
+
 from typing import List, Tuple, Dict
 
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, SizedCString, BinaryFileReader
