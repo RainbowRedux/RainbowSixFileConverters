@@ -23,6 +23,9 @@ from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
 from RainbowFileReaders.R6Constants import RSEGameVersions
 from RainbowFileReaders.RenderableArray import RenderableArray, merge_renderables_by_material, shift_origin_of_renderables
 from RainbowFileReaders.MathHelpers import AxisAlignedBoundingBox
+from RainbowFileReaders.MAPLevelReader import RSEMAPPortalList
+from RainbowFileReaders.RSMAPStructures import RSMAPGeometryObject
+from RainbowFileReaders.RSEGeometryDataStructures import R6GeometryObject
 
 from UnrealImporters import ImporterSettings
 
@@ -114,7 +117,7 @@ def import_renderable(newRSEGeoComp, renderable: RenderableArray, materials: Lis
     if renderable.materialIndex != R6Constants.UINT_MAX:
         newRSEGeoComp.SetMaterial(newMeshSectionIdx, materials[renderable.materialIndex])
 
-def set_rse_geometry_flags_on_mesh_component(mesh_component, collision_only, flags_dict: Dict[str, bool]):
+def set_rse_geometry_flags_on_mesh_component(mesh_component, collision_only: bool, flags_dict: Dict[str, bool]):
     """Set flags from a dictionary that contains geometry flags for an object"""
     if mesh_component is None:
         return
@@ -436,7 +439,7 @@ class MAPLevel(RSEResourceLoader):
         self.import_r6_lights(MAPFile)
         self.import_rs_lights(MAPFile)
 
-    def shift_origin_of_new_renderables(self, renderables):
+    def shift_origin_of_new_renderables(self, renderables: List[RenderableArray]):
         """Calculates the combined bounds of the new renderables and shifts the origin
         Returns an offset vector in Unreal correct space"""
         if self.shift_origin:
@@ -463,9 +466,9 @@ class MAPLevel(RSEResourceLoader):
                 rsemeshcomponent.SetProjectilePassFlags(material.CXPMaterialProperties.gunpass,
                                                         material.CXPMaterialProperties.grenadepass)
 
-    def import_rogue_spear_geometry_object(self, geoObjectDefinition, geoObjComponent):
+    def import_rogue_spear_geometry_object(self, geoObjectDefinition: RSMAPGeometryObject, geoObjComponent):
         """Imports geometry from a rogue spear map geometryObject definition"""
-        name = geoObjectDefinition.nameString
+        name = geoObjectDefinition.name_string.string
 
         #Setup all visual geometry
         geoObjRenderables = []
@@ -487,7 +490,7 @@ class MAPLevel(RSEResourceLoader):
 
         #setup collision geometry
         collisionName = name + "_collision"
-        collisionComponent = self.uobject.add_actor_component(SceneComponent, collisionName, self.defaultSceneComponent)
+        collisionComponent = self.uobject.add_actor_component(SceneComponent, collisionName, self.defaultSceneComponent) # type: ignore
         collisionData = geoObjectDefinition.geometryData.collisionInformation
         for i, collMesh in enumerate(collisionData.collisionMeshDefinitions):
             if collMesh.geometryFlagsEvaluated["GF_INVISIBLE"] is True:
@@ -499,12 +502,12 @@ class MAPLevel(RSEResourceLoader):
 
             set_rse_geometry_flags_on_mesh_component(newMeshComponent, True, collMesh.geometryFlagsEvaluated)
 
-    def import_rainbow_six_geometry_object(self, geoObjectDefinition, geoObjComponent):
+    def import_rainbow_six_geometry_object(self, geoObjectDefinition: R6GeometryObject, geoObjComponent):
         """Imports geometry from a rainbow six map geometryObject definition"""
-        name = geoObjectDefinition.nameString
+        name = geoObjectDefinition.name_string.string
 
         for srcMeshIdx, sourceMesh in enumerate(geoObjectDefinition.meshes):
-            renderableName = name + "_" + sourceMesh.nameString + "_" + str(srcMeshIdx)
+            renderableName = name + "_" + sourceMesh.name_string.string + "_" + str(srcMeshIdx)
             currRenderables = geoObjectDefinition.generate_renderable_arrays_for_mesh(sourceMesh)
 
             mergedRenderables = merge_renderables_by_material(currRenderables)
@@ -517,25 +520,25 @@ class MAPLevel(RSEResourceLoader):
             set_rse_geometry_flags_on_mesh_component(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
             geoObjComponent.AddMesh(newMeshComponent)
 
-    def import_portals(self, portallist):
+    def import_portals(self, portallist: RSEMAPPortalList):
         """Imports portals and creates appropriate static meshes for them."""
-        self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
-        portalParentComponent = self.uobject.add_actor_component(SceneComponent, "portals", self.defaultSceneComponent)
+        self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent) # type: ignore
+        portalParentComponent = self.uobject.add_actor_component(SceneComponent, "portals", self.defaultSceneComponent) # type: ignore
         portalComponents = []
         for portal in portallist.portals:
             portalRA = portal.generate_renderable_array_object()
             offsetVec = self.shift_origin_of_new_renderables([portalRA])
-            newMeshComponent = self.import_renderables_as_mesh_component(portal.nameString, [portalRA], portalParentComponent, RSEPortalMeshComponent)
+            newMeshComponent = self.import_renderables_as_mesh_component(portal.name_string.string, [portalRA], portalParentComponent, RSEPortalMeshComponent)
             newMeshComponent.set_relative_location(offsetVec)
             newMeshComponent.roomA = portal.roomA
             newMeshComponent.roomB = portal.roomB
             portalComponents.append(newMeshComponent)
 
-        self.uobject.RefreshPortals(portalComponents)
+        self.uobject.RefreshPortals(portalComponents) # type: ignore
 
         return portalComponents
 
-    def import_rooms(self, MAPFile):
+    def import_rooms(self, MAPFile: MAPLevelReader.MAPLevelFile):
         """Imports room volumes to for portals and occlusion checking"""
         for room in MAPFile.roomList.rooms:
             for levelDef in room.shermanLevels:
@@ -547,8 +550,8 @@ class MAPLevel(RSEResourceLoader):
                 vertex = aabb.get_size()
                 scale = FVector(vertex[0], vertex[1], vertex[2])
                 scale = KismetMathLibrary.RotateAngleAxis(scale, 90.0, FVector(1.0, 0.0, 0.0))
-                self.uobject.AddRoomTrigger(levelDef.nameString, center, scale)
-        self.uobject.RefreshRoomTriggersDebug()
+                self.uobject.AddRoomTrigger(levelDef.nameString, center, scale) # type: ignore
+        self.uobject.RefreshRoomTriggersDebug() # type: ignore
 
     def load_map(self):
         """Wrapper function for load_map_actual, with some optional profiling code"""
@@ -556,10 +559,10 @@ class MAPLevel(RSEResourceLoader):
         #cProfile.runctx('self.load_map_actual()', globals(), locals())
         self.load_map_actual()
 
-    def load_map_actual(self):
+    def load_map_actual(self) -> None:
         """Loads the file and creates appropriate assets in unreal"""
         #self.filepath = ImporterSettings.map_file_path
-        self.filepath = self.uobject.mappath
+        self.filepath = self.uobject.mappath # type: ignore
         #self.filepath = "D:/R6Data/TestData/ReducedGames/RSDemo/data/map/rm01/rm01.map"
         MAPFile = MAPLevelReader.MAPLevelFile()
         MAPFile.read_file(self.filepath)
@@ -578,24 +581,26 @@ class MAPLevel(RSEResourceLoader):
         self.rooms = {}
 
         for _, geoObjectDefinition in enumerate(MAPFile.geometryObjects):
-            name = geoObjectDefinition.nameString
+            name = geoObjectDefinition.name_string.string
             if name in usedNames:
                 ue.log("Duplicate name! " + name)
             else:
                 usedNames.append(name)
 
             #ue.log("Processing geoobj: " + name)
-            self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
-            geoObjComponent = self.uobject.add_actor_component(bp_RoomComponent, name, self.defaultSceneComponent)
+            self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent) # type: ignore
+            geoObjComponent = self.uobject.add_actor_component(bp_RoomComponent, name, self.defaultSceneComponent) # type: ignore
             self.rooms[name] = geoObjComponent
-            self.uobject.add_instance_component(geoObjComponent)
-            self.uobject.modify()
+            self.uobject.add_instance_component(geoObjComponent) # type: ignore
+            self.uobject.modify() # type: ignore
             self.objectComponents.append(geoObjComponent)
 
             if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
-                self.import_rainbow_six_geometry_object(geoObjectDefinition, geoObjComponent)
+                if isinstance(geoObjectDefinition, R6GeometryObject):
+                    self.import_rainbow_six_geometry_object(geoObjectDefinition, geoObjComponent)
             else: # Rogue spear
-                self.import_rogue_spear_geometry_object(geoObjectDefinition, geoObjComponent)
+                if isinstance(geoObjectDefinition, RSMAPGeometryObject):
+                    self.import_rogue_spear_geometry_object(geoObjectDefinition, geoObjComponent)
 
         self.objectsToShift.extend(self.import_portals(MAPFile.portalList))
 
