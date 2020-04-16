@@ -9,8 +9,8 @@ Texture and surface data extraction to JSON file is not complete
 
 import logging
 
-from RainbowFileReaders import SOBModelReader
-from RainbowFileReaders.MathHelpers import is_vector_normal
+from RainbowFileReaders.SOBModelReader import SOBModelFile
+from RainbowFileReaders.MathHelpers import Vector
 from FileUtilities.Settings import load_settings
 from FileUtilities import DirectoryProcessor
 from FileUtilities import JSONMetaInfo, OBJModelWriter
@@ -24,7 +24,7 @@ def convert_SOB(filename):
     """ Reads an SOB file and then writes to OBJ format """
     log.info("Processing: %s", filename)
 
-    modelFile = SOBModelReader.SOBModelFile()
+    modelFile = SOBModelFile()
     modelFile.read_file(filename)
 
     meta = JSONMetaInfo.JSONMetaInfo()
@@ -37,7 +37,7 @@ def convert_SOB(filename):
     countGoodNormals = 0
     for geoObj in modelFile.geometryObjects:
         for vertexParam in geoObj.vertexParams:
-            if is_vector_normal(vertexParam.normal):
+            if Vector.is_normal(vertexParam.normal):
                 countGoodNormals += 1
             else:
                 countBadNormals += 1
@@ -52,12 +52,12 @@ def convert_SOB(filename):
 
     log.info("===============================================")
 
-def write_OBJ(filename, SOBObject):
+def write_OBJ(filename, SOBObject: SOBModelFile):
     """Writes the given Geometry Object to an OBJ file """
     writer = OBJModelWriter.OBJModelWriter()
     writer.open_file(filename)
     for geoObject in SOBObject.geometryObjects:
-        writer.begin_new_object(geoObject.nameString)
+        writer.begin_new_object(geoObject.name_string.string)
         #write vertices
         for i in range(len(geoObject.vertices)):
             vertex = geoObject.vertices[i]

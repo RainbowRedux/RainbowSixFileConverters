@@ -1,5 +1,8 @@
 """Provides classes that will read and parse SOB model files."""
-from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader, SizedCString
+
+from typing import List
+
+from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader, SizedCString, BinaryFileReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition, RSEMaterialListHeader
 from RainbowFileReaders.CXPMaterialPropertiesReader import load_relevant_cxps
@@ -9,12 +12,12 @@ class SOBModelFile(FileFormatReader):
     """Class to read full SOB files"""
     def __init__(self):
         super(SOBModelFile, self).__init__()
-        self.header = None
-        self.materialListHeader = None
-        self.materials = []
-        self.geometryListHeader = None
-        self.geometryObjects = []
-        self.footer = None
+        self.header: SOBHeader = None
+        self.materialListHeader: RSEMaterialListHeader = None
+        self.materials: List[RSEMaterialDefinition] = []
+        self.geometryListHeader: RSEGeometryListHeader = None
+        self.geometryObjects: List[R6GeometryObject] = []
+        self.footer: SOBFooterDefinition = None
 
     def read_data(self):
         super().read_data()
@@ -54,8 +57,7 @@ class SOBModelFile(FileFormatReader):
             newObj.read(fileReader)
             self.geometryObjects.append(newObj)
             if self.verboseOutput:
-                pass
-                #newObj.print_structure_info()
+                newObj.print_structure_info()
 
         self.footer = SOBFooterDefinition()
         self.footer.read(fileReader)
@@ -66,7 +68,7 @@ class SOBHeader(BinaryFileDataStructure):
     def __init__(self):
         super(SOBHeader, self).__init__()
 
-    def read(self, filereader):
+    def read(self, filereader: BinaryFileReader):
         super().read(filereader)
 
         self.header_begin_message = SizedCString(filereader)
@@ -77,7 +79,7 @@ class SOBFooterDefinition(BinaryFileDataStructure):
     def __init__(self):
         super(SOBFooterDefinition, self).__init__()
 
-    def read(self, filereader):
+    def read(self, filereader: BinaryFileReader):
         super().read(filereader)
         self.end_model_string = SizedCString(filereader)
 
