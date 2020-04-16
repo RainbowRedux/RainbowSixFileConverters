@@ -550,7 +550,7 @@ class MAPLevel(RSEResourceLoader):
                 vertex = aabb.get_size()
                 scale = FVector(vertex[0], vertex[1], vertex[2])
                 scale = KismetMathLibrary.RotateAngleAxis(scale, 90.0, FVector(1.0, 0.0, 0.0))
-                self.uobject.AddRoomTrigger(levelDef.nameString, center, scale) # type: ignore
+                self.uobject.AddRoomTrigger(levelDef.name_string.string, center, scale) # type: ignore
         self.uobject.RefreshRoomTriggersDebug() # type: ignore
 
     def load_map(self):
