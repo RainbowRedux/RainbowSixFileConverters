@@ -19,6 +19,8 @@ from RainbowFileReaders.RenderableArray import RenderableArray
 
 log = logging.getLogger(__name__)
 
+AnyRoomType = Union[R6MAPRoomDefinition, RSMAPRoomDefinition] # pylint: disable=used-before-assignment
+
 class MAPLevelFile(FileFormatReader):
     """Class to read full MAP files"""
     def __init__(self):
@@ -682,7 +684,6 @@ class RSEMAPRoomList(BinaryFileDataStructure):
         """
         self.roomCount: int = filereader.read_uint32()
 
-        AnyRoomType = Union[R6MAPRoomDefinition, RSMAPRoomDefinition]
         self.rooms: List[AnyRoomType] = []
         for _ in range(self.roomCount):
             newObject: Optional[AnyRoomType] = None
