@@ -26,27 +26,8 @@ jobs:
       
       - name: install requirements
         run: python3 -m pip install -r $GITHUB_WORKSPACE/requirements.txt
-        continue-on-error: true
+        continue-on-error: false
       
       - name: run mypy
         run: python3 -m mypy $GITHUB_WORKSPACE
-        continue-on-error: true
-
-      - name: Python Code Quality and Lint
-        uses: ricardochaves/python-lint@v1.1.0
-        continue-on-error: true
-        with:
-          # A list of all paths to test
-          python-root-list: $GITHUB_WORKSPACE # optional, default is .:  
-          # Use Pylint
-          use-pylint: false # optional, default is true:  
-          # Use pycodestyle
-          use-pycodestyle: false # optional, default is true
-          # Use Flake8
-          use-flake8: false # optional, default is true
-          # Use Black
-          use-black: false # optional, default is true
-          # Use mypy
-          use-mypy: true # optional, default is true
-          # Use isort
-          use-isort: false # optional, default is true
+        continue-on-error: false
