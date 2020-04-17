@@ -19,7 +19,7 @@ jobs:
         uses: ricardochaves/python-lint@v1.1.0
         with:
           # Use Pylint
-          use-pylint: true # optional, default is true:  
+          use-pylint: false # optional, default is true:  
           # Use pycodestyle
           use-pycodestyle: false # optional, default is true
           # Use Flake8
