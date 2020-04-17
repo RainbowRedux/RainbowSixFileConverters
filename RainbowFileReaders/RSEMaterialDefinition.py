@@ -5,7 +5,7 @@ from typing import List
 
 from RainbowFileReaders.R6Constants import RSEGameVersions, RSEMaterialFormatConstants
 from RainbowFileReaders.MathHelpers import normalize_color, unnormalize_color
-from RainbowFileReaders.CXPMaterialPropertiesReader import get_cxp_definition
+from RainbowFileReaders.CXPMaterialPropertiesReader import get_cxp_definition, CXPMaterialProperties
 from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, SizedCString, BinaryFileReader
 
 log = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class RSEMaterialDefinition(BinaryFileDataStructure):
         self.twoSidedRaw: int = None
         self.twoSided: bool = None
         self.normalizedColors: bool = None
-        self.CXPMaterialProperties = None
+        self.CXPMaterialProperties: CXPMaterialProperties = None
 
     def get_material_game_version(self) -> str:
         """Returns the game this type of material is used in"""
