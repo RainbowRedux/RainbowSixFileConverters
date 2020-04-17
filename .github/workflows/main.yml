@@ -19,12 +19,17 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       
+      - uses: actions/setup-python@v1
+        with:
+        python-version: '3.7' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+        architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
+      
       - name: install requirements
         run: python3 -m pip install -r $GITHUB_WORKSPACE/requirements.txt
         continue-on-error: true
       
       - name: run mypy
-        run: mypy $GITHUB_WORKSPACE
+        run: python3 -m mypy $GITHUB_WORKSPACE
         continue-on-error: true
 
       - name: Python Code Quality and Lint
