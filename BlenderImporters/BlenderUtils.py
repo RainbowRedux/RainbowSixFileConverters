@@ -4,12 +4,18 @@ Defines generic and often used functions to perform operations in Blender
 import math
 import logging
 
-import bpy
-import bmesh
-from bpy_extras import node_shader_utils
+from typing import List
+
+import bpy # type: ignore
+import bmesh # type: ignore
+from bpy_extras import node_shader_utils # type: ignore
 
 from RainbowFileReaders import R6Constants
 from RainbowFileReaders.R6Settings import find_texture
+from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
+from RainbowFileReaders.RSEGeometryDataStructures import R6GeometryObject
+from RainbowFileReaders.RSMAPStructures import RSMAPGeometryObject
+from RainbowFileReaders.RenderableArray import RenderableArray
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +67,7 @@ def create_blender_blank_object(name):
 
     return newBlankObject
 
-def create_blender_mesh_object(name, existingMesh=None):
+def create_blender_mesh_object(name: str, existingMesh=None):
     """Create a blender object and associated mesh.
     If existingMesh is given a valid mesh, that will be used instead of creating a new one"""
     newMesh = existingMesh
@@ -73,49 +79,6 @@ def create_blender_mesh_object(name, existingMesh=None):
     # Link object to scene
     bpy.context.scene.collection.objects.link(newObject)
     return (newMesh, newObject)
-
-def clone_mesh_object_with_specified_faces(newObjectName, faceIndices, originalObject ):
-    """Clones a mesh, and then will delete all but the faces with the specified indices"""
-    #Copy master mesh into new object
-    newObjMeshCopy = originalObject.data.copy()
-    newObjMeshCopy, newSubBlendObject = create_blender_mesh_object(newObjectName, newObjMeshCopy)
-    newObjMeshCopy.name = newObjectName + "Mesh"
-
-    #select the object
-    newSubBlendObject.select_set(True)
-    bpy.context.view_layer.objects.active = newSubBlendObject
-
-    bpy.ops.object.mode_set(mode='EDIT')
-
-    bmDelFaces = bmesh.from_edit_mesh(newObjMeshCopy)
-
-    #https://blender.stackexchange.com/a/31750
-    bmDelFaces.faces.ensure_lookup_table()
-
-    selectedFaces = []
-    for i in range(len(bmDelFaces.faces)):
-        if i in faceIndices:
-            pass
-        else:
-            selectedFaces.append(bmDelFaces.faces[i])
-
-    bmesh.ops.delete(bmDelFaces, geom=selectedFaces, context="FACES")
-
-    # Push the changes back to edit mode and change to object mode
-    bmesh.update_edit_mesh(newObjMeshCopy, True)
-    bpy.ops.object.mode_set(mode='OBJECT')
-
-    numFacesToKeep = len(faceIndices)
-    numFacesRemaining = len(newSubBlendObject.data.polygons)
-
-    if numFacesRemaining != numFacesToKeep:
-        log.error("Face count mismatch!")
-        #errorCount += 1
-        #errorList.append(newObjectName + " missing " + str(numFacesToKeep - numFacesRemaining))
-        #TODO: Add a way to log errors that can be summarised at the end of a set of operations
-        #raise Exception('Unable to create correct object')
-
-    return newSubBlendObject
 
 def attach_materials_to_blender_object(blenderObject, materials):
     """Adds all materials in list to the specified blender object"""
@@ -148,7 +111,7 @@ def remove_unused_materials_from_mesh_object(objectToClean):
             j -= 1
         j += 1
 
-def create_blender_materials_from_list(materialList, texturePaths):
+def create_blender_materials_from_list(materialList: List[RSEMaterialDefinition], texturePaths: List[str]):
     """Takes a list of RSEMaterialDefinition and creates a list of blender materials"""
     blenderMaterials = []
 
@@ -159,7 +122,7 @@ def create_blender_materials_from_list(materialList, texturePaths):
     return blenderMaterials
 
 
-def create_material_from_RSE_specification(materialSpecification, texturePaths):
+def create_material_from_RSE_specification(materialSpecification: RSEMaterialDefinition, texturePaths: List[str]):
     """Creates a material from an RSE specification.
     This does ignore some values that don't map well to PBR and don't influence model behaviour much.
     Materials will be more finely tuned in the game engine.
@@ -170,10 +133,10 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
         directory, as that directory structure is used when loading textures"""
 
     #Create new material
-    newMaterial = bpy.data.materials.new(name=materialSpecification.materialName)
+    newMaterial = bpy.data.materials.new(name=materialSpecification.material_name.string)
     newMaterialBSDFWrap = node_shader_utils.PrincipledBSDFWrapper(newMaterial, is_readonly=False)
 
-    textureName = materialSpecification.textureName
+    textureName = materialSpecification.texture_name.string
     texToLoad = None
 
     #Search for texture to load
@@ -249,7 +212,7 @@ def create_material_from_RSE_specification(materialSpecification, texturePaths):
 
     return newMaterial
 
-def import_renderable_array(renderable, blenderMaterials, meshNamePrefix=""):
+def import_renderable_array(renderable: RenderableArray, blenderMaterials, meshNamePrefix=""):
     """Creates a mesh in blender from a RenderableArray object"""
     meshName = ""
     if renderable.materialIndex == R6Constants.UINT_MAX:
@@ -331,9 +294,9 @@ def import_renderable_array(renderable, blenderMaterials, meshNamePrefix=""):
 
     return meshObj
 
-def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
+def create_objects_from_R6GeometryObject(geometryObject: R6GeometryObject, blenderMaterials):
     """ Generates blender objects from an R6GeometryObject and adds appropriate tags """
-    geoObjectName = geometryObject.nameString
+    geoObjectName = geometryObject.name_string.string
     geoBlendObj = create_blender_blank_object(geoObjectName)
 
     #fix up rotation
@@ -341,7 +304,7 @@ def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
 
     for index, mesh in enumerate(geometryObject.meshes):
         #TODO: Add GeometryFlags as custom properties, as well as unknown vars
-        meshName =  geometryObject.nameString + "_" + mesh.nameString + "_idx" + str(index)
+        meshName =  geometryObject.name_string.string + "_" + mesh.name_string.string + "_idx" + str(index)
         meshObj = create_blender_blank_object(meshName)
         meshObj.parent = geoBlendObj
 
@@ -354,9 +317,9 @@ def create_objects_from_R6GeometryObject(geometryObject, blenderMaterials):
             renderableMesh = import_renderable_array(renderable, blenderMaterials, renderable_prefix)
             renderableMesh.parent = meshObj
 
-def create_objects_from_RSMAPGeometryObject(geometryObject, blenderMaterials):
+def create_objects_from_RSMAPGeometryObject(geometryObject: RSMAPGeometryObject, blenderMaterials):
     """Creates all meshes associated with an RSMAPGeometryObject"""
-    geoObjName = geometryObject.nameString
+    geoObjName = geometryObject.name_string.string
 
     geoObjectParentObject = create_blender_blank_object(geoObjName)
 

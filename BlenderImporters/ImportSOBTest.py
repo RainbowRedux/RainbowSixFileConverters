@@ -1,3 +1,4 @@
+"""A quick test script to import a few SOB models"""
 import sys
 import importlib
 

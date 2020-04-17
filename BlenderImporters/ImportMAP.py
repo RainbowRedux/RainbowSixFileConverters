@@ -6,8 +6,8 @@ import sys
 import logging
 from math import radians
 
-import bpy
-import mathutils
+import bpy # type: ignore
+import mathutils # type: ignore
 
 sys.path.insert(0, 'E:/Dropbox/Development/Rainbow/RainbowSixFileConverters')
 sys.path.insert(0, '/Users/philipedwards/Dropbox/Development/Rainbow/RainbowSixFileConverters')
@@ -15,17 +15,21 @@ sys.path.insert(0, '/home/philipedwards/Dropbox/Development/Rainbow/RainbowSixFi
 from RainbowFileReaders import MAPLevelReader
 from RainbowFileReaders import R6Settings
 from RainbowFileReaders.R6Constants import RSEGameVersions
+from RainbowFileReaders.R6MAPStructures import R6MAPLight, R6MAPLightList
+from RainbowFileReaders.RSDMPLightReader import RSDMPLight, RSDMPLightFile
+from RainbowFileReaders.RSEGeometryDataStructures import R6GeometryObject
+from RainbowFileReaders.RSMAPStructures import RSMAPGeometryObject
 
 from BlenderImporters import BlenderUtils
 from BlenderImporters.BlenderUtils import create_objects_from_R6GeometryObject, create_objects_from_RSMAPGeometryObject
 
 log = logging.getLogger(__name__)
 
-def create_spotlight_from_r6_light_specification(lightSpec, name):
+def create_spotlight_from_r6_light_specification(lightSpec: R6MAPLight, name: str):
     """Create a spotlight from a rainbow six light specification"""
     #https://stackoverflow.com/a/17355744
     lamp_data = None
-    lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_pointdata", type='POINT')
+    lamp_data = bpy.data.lights.new(name=lightSpec.name_string.string + "_pointdata", type='POINT')
     # Create new object with our lamp datablock
     lamp_object = bpy.data.objects.new(name=name, object_data=lamp_data)
     # Link lamp object to the scene so it'll appear in this scene
@@ -77,7 +81,7 @@ def create_spotlight_from_r6_light_specification(lightSpec, name):
 
     return lamp_object
 
-def import_r6_lights(lightlist):
+def import_r6_lights(lightlist: R6MAPLightList):
     """Import all lights from a rainbow six map"""
     lightGroup = bpy.data.objects.new("LightGroup", None)
     lightGroup.location = (0,0,0)
@@ -87,15 +91,15 @@ def import_r6_lights(lightlist):
     lightGroup.rotation_euler = (radians(90),0,0)
 
     for idx, light in enumerate(lightlist.lights):
-        name = light.nameString + "_idx" + str(idx)
+        name = light.name_string.string + "_idx" + str(idx)
         newLamp = create_spotlight_from_r6_light_specification(light, name)
         newLamp.parent = lightGroup
 
-def create_spotlight_from_rs_light_specification(lightSpec, name):
+def create_spotlight_from_rs_light_specification(lightSpec: RSDMPLight, name: str):
     """Create a spotlight from a rogue spear light specification"""
     #https://stackoverflow.com/a/17355744
     lamp_data = None
-    lamp_data = bpy.data.lights.new(name=lightSpec.nameString + "_pointdata", type='POINT')
+    lamp_data = bpy.data.lights.new(name=lightSpec.name_string.string + "_pointdata", type='POINT')
     # Create new object with our lamp datablock
     lamp_object = bpy.data.objects.new(name=name, object_data=lamp_data)
     # Link lamp object to the scene so it'll appear in this scene
@@ -133,7 +137,7 @@ def create_spotlight_from_rs_light_specification(lightSpec, name):
 
     return lamp_object
 
-def import_rs_lights(dmpLightFile):
+def import_rs_lights(dmpLightFile: RSDMPLightFile):
     """Import all lights from a rogue spear DMP file"""
     lightGroup = bpy.data.objects.new("LightGroup", None)
     lightGroup.location = (0,0,0)
@@ -143,18 +147,18 @@ def import_rs_lights(dmpLightFile):
     lightGroup.rotation_euler = (radians(90),0,0)
 
     for idx, light in enumerate(dmpLightFile.lights):
-        name = light.nameString + "_idx" + str(idx)
+        name = light.name_string.string + "_idx" + str(idx)
         newLamp = create_spotlight_from_rs_light_specification(light, name)
         newLamp.parent = lightGroup
 
-def import_MAP_to_scene(filename):
+def import_MAP_to_scene(filename: str):
     """Imports a given map to the blender scene.
     Skips files named obstacletest.map since its an invalid test file on original rainbow six installations"""
     if filename.endswith("obstacletest.map"):
         #I believe this is an early test map that was shipped by accident.
         # It's data structures are not consistent with the rest of the map files
         # and it is not used anywhere so it is safe to skip
-        log.info("Skipping test map: " + filename)
+        log.info("Skipping test map: %s", filename)
         return False
     MAPObject = MAPLevelReader.MAPLevelFile()
     MAPObject.read_file(filename)
@@ -169,10 +173,12 @@ def import_MAP_to_scene(filename):
 
     if MAPObject.gameVersion == RSEGameVersions.RAINBOW_SIX:
         for geoObj in MAPObject.geometryObjects:
-            create_objects_from_R6GeometryObject(geoObj, blenderMaterials)
+            if isinstance(geoObj, R6GeometryObject):
+                create_objects_from_R6GeometryObject(geoObj, blenderMaterials)
     else:
         for geoObj in MAPObject.geometryObjects:
-            create_objects_from_RSMAPGeometryObject(geoObj, blenderMaterials)
+            if isinstance(geoObj, RSMAPGeometryObject):
+                create_objects_from_RSMAPGeometryObject(geoObj, blenderMaterials)
 
     if MAPObject.gameVersion == RSEGameVersions.RAINBOW_SIX:
         import_r6_lights(MAPObject.lightList)
@@ -183,15 +189,15 @@ def import_MAP_to_scene(filename):
     return True
 
 
-def save_blend_scene(path):
+def save_blend_scene(path: str):
     """Saves the scene to a .blend file"""
     bpy.ops.wm.save_as_mainfile(filepath=path)
 
-def export_fbx_scene(path):
+def export_fbx_scene(path: str):
     """exports the scene to a .fbx file"""
     bpy.ops.export_scene.fbx(filepath=path, path_mode='RELATIVE')
 
-def import_map_and_save(path):
+def import_map_and_save(path: str):
     """Wrapper method to import a map to scene, save and export"""
     inPath = os.path.abspath(path)
     importSuccess = import_MAP_to_scene(inPath)

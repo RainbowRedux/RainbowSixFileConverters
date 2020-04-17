@@ -17,8 +17,8 @@ def ExportAllMaps():
     #paths.append("FullGames/R6EWCD")
     #paths.append("FullGames/RSUOCD")
     #paths.append("FullGames")
-    import ProcessorPathsHelper
-    paths = ProcessorPathsHelper.expand_paths(paths)
+
+    #TODO: make this use new settings file for paths
 
     fp = DirectoryProcessor.DirectoryProcessor()
     fp.paths = fp.paths + paths
