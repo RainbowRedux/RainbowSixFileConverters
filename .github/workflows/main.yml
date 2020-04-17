@@ -18,10 +18,21 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+      
+      - name: install requirements
+        run: python3 -m pip install -r $GITHUB_WORKSPACE/requirements.txt
+        continue-on-error: true
+      
+      - name: run mypy
+        run: mypy $GITHUB_WORKSPACE
+        continue-on-error: true
 
       - name: Python Code Quality and Lint
         uses: ricardochaves/python-lint@v1.1.0
+        continue-on-error: true
         with:
+          # A list of all paths to test
+          python-root-list: $GITHUB_WORKSPACE # optional, default is .:  
           # Use Pylint
           use-pylint: false # optional, default is true:  
           # Use pycodestyle
