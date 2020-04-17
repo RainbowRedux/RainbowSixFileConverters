@@ -243,7 +243,7 @@ class RSMAPCollisionInformation(BinaryFileDataStructure):
                 log.error("Error in mesh. Vertex index out of range")
                 log.error(str(currentAttribSet[0]))
                 log_pprint(collisionMesh.geometryFlags, logging.ERROR)
-                exit(1)
+                raise IndexError("A vertex index was out of range, something has gone wrong reading this file.")
 
             currentRenderable.vertices.append(currentVertex.copy())
             #currentRenderable.normals.append(currentNormal.copy())

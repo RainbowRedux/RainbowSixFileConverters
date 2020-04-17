@@ -63,7 +63,7 @@ class R6MAPTests(unittest.TestCase):
         map_filepath = path.join(settings["gamePath_R6_EW"], "data", "map", "m02", "mansion.map")
 
         loadedFile = MAPLevelReader.MAPLevelFile()
-        readSucessfullyToEOF = loadedFile.read_file(map_filepath)
+        loadedFile.read_file(map_filepath)
 
         #TODO: This is currently disabled as this file has an unread part at the end, but the rest of this test is meaninful
         #self.assertTrue(readSucessfullyToEOF, "Failed to read whole file")

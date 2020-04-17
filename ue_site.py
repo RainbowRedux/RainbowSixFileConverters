@@ -1,4 +1,8 @@
 """This module should import and initialize all modules required by unreal"""
+# This module is only for importing and initializing the unreal environment
+# Because of this, ignore unused import statements
+# pylint: disable=unused-import
+
 
 from PIL import Image # type: ignore
 
