@@ -1,6 +1,7 @@
 """
 Constants used throughout the code base
 """
+from typing import Dict
 
 class RSEGameVersions(object):
     """Used to group some related constants, somewhat like an enum
@@ -47,7 +48,7 @@ class RSEGeometryFlags(object):
     """Provides constants to identify each flag in a GeometryFlag variable,
     as well as helper methods to expand all flags into human readable form"""
     #Each of these flags masks an individual bit in a DWORD (32bit number)
-    FLAG_CONSTANTS = {
+    FLAG_MASKS: Dict[str, int] = {
         "GF_CLIMBABLE" :    0x00000001, # Object can be climbed like a ladder
         "GF_NOCOLLIDE2D" :     0x00000002, # No 2D collision
         "GF_INVISIBLE" :    0x00000004, # invisible, for RS collision geometry also appears to be "ignored for all collision"
@@ -59,11 +60,11 @@ class RSEGeometryFlags(object):
     }
 
     @staticmethod
-    def EvaluateFlags(flags):
+    def EvaluateFlags(flags: int) -> Dict[str, bool]:
         """Expands flags stored in a uint into a human readable dictionary"""
         results = {}
         sumFlags = 0
-        for flagName, flagMaskVal in RSEGeometryFlags.FLAG_CONSTANTS.items():
+        for flagName, flagMaskVal in RSEGeometryFlags.FLAG_MASKS.items():
             sumFlags += flagMaskVal
             if flagMaskVal & flags > 0:
                 results[flagName] = True

@@ -1,4 +1,6 @@
 """Contains all functions to do with loading a game, such as finding the exe, listing missions, and loading missions"""
+# pylint: disable=no-member
+
 import os
 import logging
 from pathlib import Path
@@ -33,7 +35,7 @@ class GameLoader(object):
     def begin_play(self):
         """Run on spawn, or on game start"""
         log.debug("Testing game loader")
-        self.game_loader = RSEGameLoader()
+        self.game_loader: RSEGameLoader = RSEGameLoader()
         file_path = self.ask_exe_file()
         if not file_path:
             file_path = "D:/R6Data/FullGames/R6EWCD"
@@ -51,7 +53,7 @@ class GameLoader(object):
         for missionName in missions:
             self.uobject.PrintMission(missionName)
 
-    def load_mission(self, missionName):
+    def load_mission(self, missionName: str):
         """Loads a mission file and sets appropriate parameters"""
         missions = self.game_loader.get_mission_list()
         missionPath = missions[missionName]
@@ -60,15 +62,15 @@ class GameLoader(object):
             missionFile.load_mission(missionPath)
             mappath = os.path.join(self.game_loader.game_path, "data", "map", missionFile.map_directory, missionFile.map_file_name)
             mappath = os.path.normpath(mappath)
-            self.uobject.LoadMap(mappath)
-            self.uobject.LoadedMap.SetFogParameters(missionFile.render_fog_color[0], missionFile.render_fog_color[1], missionFile.render_fog_color[2], missionFile.render_fog_start_distance, missionFile.render_fog_end_distance)
+            self.uobject.LoadMap(mappath) # type: ignore
+            self.uobject.LoadedMap.SetFogParameters(missionFile.render_fog_color[0], missionFile.render_fog_color[1], missionFile.render_fog_color[2], missionFile.render_fog_start_distance, missionFile.render_fog_end_distance) # type: ignore
             if missionFile.render_fog_enabled != 0:
-                self.uobject.LoadedMap.SetFogEnabled(True)
+                self.uobject.LoadedMap.SetFogEnabled(True) # type: ignore
             else:
-                self.uobject.LoadedMap.SetFogEnabled(False)
-            self.uobject.LoadedMap.SetAmbientLightColor(missionFile.render_ambient_light_color[0], missionFile.render_ambient_light_color[1], missionFile.render_ambient_light_color[2])
-            self.uobject.LoadedMap.SetSkyColor(missionFile.render_background_color[0], missionFile.render_background_color[1], missionFile.render_background_color[2])
+                self.uobject.LoadedMap.SetFogEnabled(False) # type: ignore
+            self.uobject.LoadedMap.SetAmbientLightColor(missionFile.render_ambient_light_color[0], missionFile.render_ambient_light_color[1], missionFile.render_ambient_light_color[2]) # type: ignore
+            self.uobject.LoadedMap.SetSkyColor(missionFile.render_background_color[0], missionFile.render_background_color[1], missionFile.render_background_color[2]) # type: ignore
 
 
-    def tick(self, delta_time):
+    def tick(self, delta_time: float):
         """Called every frame"""

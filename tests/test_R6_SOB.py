@@ -16,11 +16,11 @@ class R6SOBTests(unittest.TestCase):
 
     def check_section_strings(self, loadedSOBFile):
         """Check all strings in the mapFile are as expected"""
-        self.assertEqual(loadedSOBFile.header.headerBeginMessage, "BeginModel")
-        self.assertEqual(loadedSOBFile.materialListHeader.materialListBeginMessage, "MaterialList")
-        self.assertEqual(loadedSOBFile.geometryListHeader.geometryListString, "GeometryList")
+        self.assertEqual(loadedSOBFile.header.header_begin_message.string, "BeginModel")
+        self.assertEqual(loadedSOBFile.materialListHeader.material_list_string.string, "MaterialList")
+        self.assertEqual(loadedSOBFile.geometryListHeader.geometry_list_string.string, "GeometryList")
 
-        self.assertEqual(loadedSOBFile.footer.EndModelString, "EndModel", "Unexpected end of map footer string")
+        self.assertEqual(loadedSOBFile.footer.end_model_string.string, "EndModel", "Unexpected end of map footer string")
 
     def test_R6_SOB_Structure(self):
         """Tests reading an R6 SOB file, specifically ak47.sob"""
@@ -39,13 +39,13 @@ class R6SOBTests(unittest.TestCase):
 
         self.assertEqual(len(loadedFile.materials), 7, "Unexpected number of materials read")
 
-        self.assertEqual(loadedFile.materials[0].materialName, "aK barell", "Unexpected material name")
+        self.assertEqual(loadedFile.materials[0].material_name.string, "aK barell", "Unexpected material name")
 
-        self.assertEqual(loadedFile.materials[0].textureName, "AK47_BARREL_32.BMP", "Unexpected material name")
+        self.assertEqual(loadedFile.materials[0].texture_name.string, "AK47_BARREL_32.BMP", "Unexpected material name")
 
         self.assertEqual(len(loadedFile.geometryObjects), 1, "Unexpected number of geometry objects")
 
-        self.assertEqual(loadedFile.geometryObjects[0].nameString, "AK47", "Unexpected object name")
+        self.assertEqual(loadedFile.geometryObjects[0].name_string.string, "AK47", "Unexpected object name")
 
         self.assertEqual(loadedFile.geometryObjects[0].vertexCount, 81, "Unexpected number of vertices")
 

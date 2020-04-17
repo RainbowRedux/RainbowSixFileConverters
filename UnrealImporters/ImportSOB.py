@@ -1,17 +1,18 @@
 """This moduled defines classes and functions related to importing RSE assets into Unreal"""
 import os
 import logging
-from PIL import Image as PILImage
+from typing import List, Dict
+from PIL import Image as PILImage # type: ignore
 
 # pylint: disable=no-member, broad-except
 # Disabled no-member for this module since a lot of functionality exposed by UnrealEnginePython doesn't exist outside of unreal and generates false positives
 # Disabled unresolved-import since many imports are only available at runtime
 # Disabled broad-except as UnrealEnginePython only raises the Exception class.
 
-import unreal_engine as ue
-from unreal_engine.classes import SceneComponent, RSEGeometryComponent, KismetMathLibrary, MaterialInterface, Texture2D, RSEPortalMeshComponent
-from unreal_engine import FVector, FVector2D, FColor, FLinearColor
-from unreal_engine.enums import EPixelFormat, TextureAddress
+import unreal_engine as ue # type: ignore
+from unreal_engine.classes import SceneComponent, RSEGeometryComponent, KismetMathLibrary, MaterialInterface, Texture2D, RSEPortalMeshComponent # type: ignore
+from unreal_engine import FVector, FVector2D, FColor, FLinearColor # type: ignore
+from unreal_engine.enums import EPixelFormat, TextureAddress # type: ignore
 
 from RainbowFileReaders import SOBModelReader
 from RainbowFileReaders import MAPLevelReader
@@ -22,6 +23,9 @@ from RainbowFileReaders.RSEMaterialDefinition import RSEMaterialDefinition
 from RainbowFileReaders.R6Constants import RSEGameVersions
 from RainbowFileReaders.RenderableArray import RenderableArray, merge_renderables_by_material, shift_origin_of_renderables
 from RainbowFileReaders.MathHelpers import AxisAlignedBoundingBox
+from RainbowFileReaders.MAPLevelReader import RSEMAPPortalList
+from RainbowFileReaders.RSMAPStructures import RSMAPGeometryObject
+from RainbowFileReaders.RSEGeometryDataStructures import R6GeometryObject
 
 from UnrealImporters import ImporterSettings
 
@@ -71,7 +75,7 @@ def determine_parent_material_required(materialDefinition: RSEMaterialDefinition
 
     return materialRequired
 
-def import_renderable(newRSEGeoComp, renderable, materials):
+def import_renderable(newRSEGeoComp, renderable: RenderableArray, materials: List[RSEMaterialDefinition]):
     """Adds the specified renderable as a mesh section to the supplied procedural mesh component"""
     vertexArray = []
     #Repack vertices into array of FVectors, and invert X coordinate
@@ -113,7 +117,7 @@ def import_renderable(newRSEGeoComp, renderable, materials):
     if renderable.materialIndex != R6Constants.UINT_MAX:
         newRSEGeoComp.SetMaterial(newMeshSectionIdx, materials[renderable.materialIndex])
 
-def set_rse_geometry_flags_on_mesh_component(mesh_component, collision_only, flags_dict):
+def set_rse_geometry_flags_on_mesh_component(mesh_component, collision_only: bool, flags_dict: Dict[str, bool]):
     """Set flags from a dictionary that contains geometry flags for an object"""
     if mesh_component is None:
         return
@@ -131,7 +135,7 @@ def set_rse_geometry_flags_on_mesh_component(mesh_component, collision_only, fla
                                            flags_dict["GF_UNKNOWN4"],
                                            flags_dict["GF_NOTSHOWNINPLAN"])
 
-def arrayvector_to_fvector(position, performRotation=False):
+def arrayvector_to_fvector(position: List[float], performRotation: bool=False):
     """Converts a list of 3 floats into an unreal FVector class"""
     newVec = FVector(position[0], position[1], position[2])
     if performRotation:
@@ -198,7 +202,7 @@ class RSEResourceLoader:
         self.loadedTextures[texturePath] = newTexture
         return newTexture
 
-    def get_unreal_master_material(self, material_name: str) -> (MaterialInterface):
+    def get_unreal_master_material(self, material_name: str) -> MaterialInterface:
         """Gets an unreal material for use. If it's not already loaded, it will load it automatically and cache it for next time"""
         if material_name in self.loadedParentMaterials:
             return self.loadedParentMaterials[material_name]
@@ -213,22 +217,22 @@ class RSEResourceLoader:
         self.loadedParentMaterials[material_name] = loadedMaterial
         return loadedMaterial
 
-    def LoadMaterial(self, materialDefinition):
+    def LoadMaterial(self, materialDefinition: RSEMaterialDefinition):
         """Creates a single material instance from a material definition"""
         verbose = False
-        if materialDefinition.textureName.startswith("cl02_spray1"):
+        if materialDefinition.texture_name.string.startswith("cl02_spray1"):
             verbose = True
         parentMaterialName = determine_parent_material_required(materialDefinition)
         parentMaterial = self.get_unreal_master_material(parentMaterialName)
         if verbose:
             ue.log("=====================")
-            ue.log(materialDefinition.textureName)
+            ue.log(materialDefinition.texture_name.string)
             ue.log(parentMaterialName)
         if parentMaterial is None:
             ue.log("Error, could not load parent material: {}".format(parentMaterialName))
             self.generatedMaterials.append(None)
             return None
-        mid = self.uobject.create_material_instance_dynamic(parentMaterial)
+        mid = self.uobject.create_material_instance_dynamic(parentMaterial) # type: ignore
 
         mid.set_material_scalar_parameter("EmissiveStrength", materialDefinition.emissiveStrength)
         mid.set_material_scalar_parameter("SpecularLevel", materialDefinition.specularLevel)
@@ -246,13 +250,13 @@ class RSEResourceLoader:
             colorKeyRGB = [300, 300, 300]
 
         # Determine, load and Set diffuse texture
-        if materialDefinition.textureName == "NULL":
+        if materialDefinition.texture_name.string == "NULL":
             mid.set_material_scalar_parameter('UseVertexColor', 1.0)
         else:
             mid.set_material_scalar_parameter('UseVertexColor', 0.0)
             texturesToLoad = []
             # Add the first texture
-            texturesToLoad.append(materialDefinition.textureName)
+            texturesToLoad.append(materialDefinition.texture_name.string)
             # Gather all other texture names
             if materialDefinition.CXPMaterialProperties is not None:
                 for additionalTexture in materialDefinition.CXPMaterialProperties.animAdditionalTextures:
@@ -362,40 +366,39 @@ class MAPLevel(RSEResourceLoader):
         self.shift_origin = True
         refresh_class_references()
 
-    def tick(self, delta_time):
+    def tick(self, delta_time: float):
         """Called every frame"""
 
-    def import_level_heights(self, MAPFile):
+    def import_level_heights(self, MAPFile: MAPLevelReader.MAPLevelFile):
         """Imports a level height definition from the map data structure"""
         for level in MAPFile.planningLevelList.planningLevels:
             adjustedHeight = level.floorHeight - self.worldOffsetVec[2]
             #self.worldOffsetVec[2]
-            self.uobject.AddLevelHeight(adjustedHeight)
+            self.uobject.AddLevelHeight(adjustedHeight) # type: ignore
 
-    def import_lights(self, MAPFile):
-        """Import every light in the map file, both RS and R6 types"""
-
+    def import_r6_lights(self, MAPFile: MAPLevelReader.MAPLevelFile):
+        """Imports lights in the rainbow six format light list"""
         #Import lightlist
-        for lightDef in MAPFile.lightList.lights:
+        for r6LightDef in MAPFile.lightList.lights:
             # Place lamp to a specified location
-            position = arrayvector_to_fvector(lightDef.position, True)
+            position = arrayvector_to_fvector(r6LightDef.position, True)
             if self.shift_origin:
                 position = position - self.worldOffsetVec
 
             color = []
-            for color_el in lightDef.color:
+            for color_el in r6LightDef.color:
                 color.append(color_el / 255.0)
             linearColor = FLinearColor(color[0], color[1], color[2])
 
-            constAtten = lightDef.constantAttenuation
-            linAtten = lightDef.linearAttenuation
-            quadAtten = lightDef.quadraticAttenuation
-            energy = lightDef.energy
-            falloff = lightDef.falloff
-            lightType = lightDef.type
-            lightName = lightDef.nameString
+            constAtten = r6LightDef.constantAttenuation
+            linAtten = r6LightDef.linearAttenuation
+            quadAtten = r6LightDef.quadraticAttenuation
+            energy = r6LightDef.energy
+            falloff = r6LightDef.falloff
+            lightType = r6LightDef.type
+            lightName = r6LightDef.name_string.string
             roomNumber = str(int(lightName.split("_")[-1]))
-            self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
+            self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent) # type: ignore
             #roomAttachment = self.defaultSceneComponent
             roomAttachment = None
             if roomNumber in self.rooms:
@@ -403,32 +406,40 @@ class MAPLevel(RSEResourceLoader):
             else:
                 ue.log("No room for light: " + lightName + " roomnumber: " + roomNumber)
 
-            self.uobject.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName, roomAttachment)
+            self.uobject.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName, roomAttachment) # type: ignore
 
+    def import_rs_lights(self, MAPFile: MAPLevelReader.MAPLevelFile):
+        """Imports lights imported via DMP files for Rogue Spear"""
         #Import DMP lights
         if MAPFile.dmpLights is not None:
-            for lightDef in MAPFile.dmpLights.lights:
+            for rsLightDef in MAPFile.dmpLights.lights:
                 # Place lamp to a specified location
-                position = arrayvector_to_fvector(lightDef.position, True)
+                position = arrayvector_to_fvector(rsLightDef.position, True)
                 if self.shift_origin:
                     position = position - self.worldOffsetVec
 
                 color = []
-                for color_el in lightDef.diffuseColor:
+                for color_el in rsLightDef.diffuseColor:
                     color.append(color_el)
                 linearColor = FLinearColor(color[0], color[1], color[2])
 
-                constAtten = lightDef.constantAttenuation
-                linAtten = lightDef.linearAttenuation
-                quadAtten = lightDef.quadraticAttenuation
-                energy = lightDef.energy
-                falloff = lightDef.falloff
-                lightType = lightDef.lightType
-                lightName = lightDef.nameString
+                constAtten = rsLightDef.constantAttenuation
+                linAtten = rsLightDef.linearAttenuation
+                quadAtten = rsLightDef.quadraticAttenuation
+                energy = rsLightDef.energy
+                falloff = rsLightDef.falloff
+                lightType = rsLightDef.lightType
+                lightName = rsLightDef.name_string.string
 
-                self.uobject.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName, None)
+                self.uobject.AddPointlight(position, linearColor, constAtten, linAtten, quadAtten, falloff, energy, lightType, lightName, None) # type: ignore
 
-    def shift_origin_of_new_renderables(self, renderables):
+
+    def import_lights(self, MAPFile: MAPLevelReader.MAPLevelFile):
+        """Import every light in the map file, both RS and R6 types"""
+        self.import_r6_lights(MAPFile)
+        self.import_rs_lights(MAPFile)
+
+    def shift_origin_of_new_renderables(self, renderables: List[RenderableArray]):
         """Calculates the combined bounds of the new renderables and shifts the origin
         Returns an offset vector in Unreal correct space"""
         if self.shift_origin:
@@ -455,9 +466,9 @@ class MAPLevel(RSEResourceLoader):
                 rsemeshcomponent.SetProjectilePassFlags(material.CXPMaterialProperties.gunpass,
                                                         material.CXPMaterialProperties.grenadepass)
 
-    def import_rogue_spear_geometry_object(self, geoObjectDefinition, geoObjComponent):
+    def import_rogue_spear_geometry_object(self, geoObjectDefinition: RSMAPGeometryObject, geoObjComponent):
         """Imports geometry from a rogue spear map geometryObject definition"""
-        name = geoObjectDefinition.nameString
+        name = geoObjectDefinition.name_string.string
 
         #Setup all visual geometry
         geoObjRenderables = []
@@ -479,7 +490,7 @@ class MAPLevel(RSEResourceLoader):
 
         #setup collision geometry
         collisionName = name + "_collision"
-        collisionComponent = self.uobject.add_actor_component(SceneComponent, collisionName, self.defaultSceneComponent)
+        collisionComponent = self.uobject.add_actor_component(SceneComponent, collisionName, self.defaultSceneComponent) # type: ignore
         collisionData = geoObjectDefinition.geometryData.collisionInformation
         for i, collMesh in enumerate(collisionData.collisionMeshDefinitions):
             if collMesh.geometryFlagsEvaluated["GF_INVISIBLE"] is True:
@@ -491,12 +502,12 @@ class MAPLevel(RSEResourceLoader):
 
             set_rse_geometry_flags_on_mesh_component(newMeshComponent, True, collMesh.geometryFlagsEvaluated)
 
-    def import_rainbow_six_geometry_object(self, geoObjectDefinition, geoObjComponent):
+    def import_rainbow_six_geometry_object(self, geoObjectDefinition: R6GeometryObject, geoObjComponent):
         """Imports geometry from a rainbow six map geometryObject definition"""
-        name = geoObjectDefinition.nameString
+        name = geoObjectDefinition.name_string.string
 
         for srcMeshIdx, sourceMesh in enumerate(geoObjectDefinition.meshes):
-            renderableName = name + "_" + sourceMesh.nameString + "_" + str(srcMeshIdx)
+            renderableName = name + "_" + sourceMesh.name_string.string + "_" + str(srcMeshIdx)
             currRenderables = geoObjectDefinition.generate_renderable_arrays_for_mesh(sourceMesh)
 
             mergedRenderables = merge_renderables_by_material(currRenderables)
@@ -509,25 +520,25 @@ class MAPLevel(RSEResourceLoader):
             set_rse_geometry_flags_on_mesh_component(newMeshComponent, False, sourceMesh.geometryFlagsEvaluated)
             geoObjComponent.AddMesh(newMeshComponent)
 
-    def import_portals(self, portallist):
+    def import_portals(self, portallist: RSEMAPPortalList):
         """Imports portals and creates appropriate static meshes for them."""
-        self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
-        portalParentComponent = self.uobject.add_actor_component(SceneComponent, "portals", self.defaultSceneComponent)
+        self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent) # type: ignore
+        portalParentComponent = self.uobject.add_actor_component(SceneComponent, "portals", self.defaultSceneComponent) # type: ignore
         portalComponents = []
         for portal in portallist.portals:
             portalRA = portal.generate_renderable_array_object()
             offsetVec = self.shift_origin_of_new_renderables([portalRA])
-            newMeshComponent = self.import_renderables_as_mesh_component(portal.nameString, [portalRA], portalParentComponent, RSEPortalMeshComponent)
+            newMeshComponent = self.import_renderables_as_mesh_component(portal.name_string.string, [portalRA], portalParentComponent, RSEPortalMeshComponent)
             newMeshComponent.set_relative_location(offsetVec)
             newMeshComponent.roomA = portal.roomA
             newMeshComponent.roomB = portal.roomB
             portalComponents.append(newMeshComponent)
 
-        self.uobject.RefreshPortals(portalComponents)
+        self.uobject.RefreshPortals(portalComponents) # type: ignore
 
         return portalComponents
 
-    def import_rooms(self, MAPFile):
+    def import_rooms(self, MAPFile: MAPLevelReader.MAPLevelFile):
         """Imports room volumes to for portals and occlusion checking"""
         for room in MAPFile.roomList.rooms:
             for levelDef in room.shermanLevels:
@@ -539,8 +550,8 @@ class MAPLevel(RSEResourceLoader):
                 vertex = aabb.get_size()
                 scale = FVector(vertex[0], vertex[1], vertex[2])
                 scale = KismetMathLibrary.RotateAngleAxis(scale, 90.0, FVector(1.0, 0.0, 0.0))
-                self.uobject.AddRoomTrigger(levelDef.nameString, center, scale)
-        self.uobject.RefreshRoomTriggersDebug()
+                self.uobject.AddRoomTrigger(levelDef.name_string.string, center, scale) # type: ignore
+        self.uobject.RefreshRoomTriggersDebug() # type: ignore
 
     def load_map(self):
         """Wrapper function for load_map_actual, with some optional profiling code"""
@@ -548,10 +559,10 @@ class MAPLevel(RSEResourceLoader):
         #cProfile.runctx('self.load_map_actual()', globals(), locals())
         self.load_map_actual()
 
-    def load_map_actual(self):
+    def load_map_actual(self) -> None:
         """Loads the file and creates appropriate assets in unreal"""
         #self.filepath = ImporterSettings.map_file_path
-        self.filepath = self.uobject.mappath
+        self.filepath = self.uobject.mappath # type: ignore
         #self.filepath = "D:/R6Data/TestData/ReducedGames/RSDemo/data/map/rm01/rm01.map"
         MAPFile = MAPLevelReader.MAPLevelFile()
         MAPFile.read_file(self.filepath)
@@ -570,24 +581,26 @@ class MAPLevel(RSEResourceLoader):
         self.rooms = {}
 
         for _, geoObjectDefinition in enumerate(MAPFile.geometryObjects):
-            name = geoObjectDefinition.nameString
+            name = geoObjectDefinition.name_string.string
             if name in usedNames:
                 ue.log("Duplicate name! " + name)
             else:
                 usedNames.append(name)
 
             #ue.log("Processing geoobj: " + name)
-            self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent)
-            geoObjComponent = self.uobject.add_actor_component(bp_RoomComponent, name, self.defaultSceneComponent)
+            self.defaultSceneComponent = self.uobject.get_actor_component_by_type(SceneComponent) # type: ignore
+            geoObjComponent = self.uobject.add_actor_component(bp_RoomComponent, name, self.defaultSceneComponent) # type: ignore
             self.rooms[name] = geoObjComponent
-            self.uobject.add_instance_component(geoObjComponent)
-            self.uobject.modify()
+            self.uobject.add_instance_component(geoObjComponent) # type: ignore
+            self.uobject.modify() # type: ignore
             self.objectComponents.append(geoObjComponent)
 
             if MAPFile.gameVersion == RSEGameVersions.RAINBOW_SIX:
-                self.import_rainbow_six_geometry_object(geoObjectDefinition, geoObjComponent)
+                if isinstance(geoObjectDefinition, R6GeometryObject):
+                    self.import_rainbow_six_geometry_object(geoObjectDefinition, geoObjComponent)
             else: # Rogue spear
-                self.import_rogue_spear_geometry_object(geoObjectDefinition, geoObjComponent)
+                if isinstance(geoObjectDefinition, RSMAPGeometryObject):
+                    self.import_rogue_spear_geometry_object(geoObjectDefinition, geoObjComponent)
 
         self.objectsToShift.extend(self.import_portals(MAPFile.portalList))
 
@@ -619,15 +632,15 @@ class MAPLevel(RSEResourceLoader):
         for currentMesh in self.proceduralMeshComponents:
             currentMesh.UpdateRSEFlagSettings()
 
-    def import_renderables_as_mesh_component(self, name: str, renderables: [RenderableArray], parent_component, mesh_component_type=RSEGeometryComponent):
+    def import_renderables_as_mesh_component(self, name: str, renderables: List[RenderableArray], parent_component, mesh_component_type=RSEGeometryComponent):
         """Will import a list of renderables into a single Mesh Component.
         parent_component is the component that the new mesh component will attach to. Currently cannot be None.
         Returns a mesh component"""
 
         # Treat each geometryObject as a single component
-        newRSEGeoComp = self.uobject.add_actor_component(mesh_component_type, name, parent_component)
-        self.uobject.add_instance_component(newRSEGeoComp)
-        self.uobject.modify()
+        newRSEGeoComp = self.uobject.add_actor_component(mesh_component_type, name, parent_component) # type: ignore
+        self.uobject.add_instance_component(newRSEGeoComp)  # type: ignore
+        self.uobject.modify() # type: ignore
         if mesh_component_type is RSEGeometryComponent:
             self.proceduralMeshComponents.append(newRSEGeoComp)
 

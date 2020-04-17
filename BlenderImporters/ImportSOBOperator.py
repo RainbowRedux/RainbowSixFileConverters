@@ -5,12 +5,12 @@ Blender operator for giving an SOB import GUI interface
 import sys
 import logging
 
-import bpy
+import bpy # type: ignore
 # ImportHelper is a helper class, defines filename and
 # invoke() function which calls the file selector.
-from bpy.props import StringProperty, BoolProperty, EnumProperty
-from bpy.types import Operator
-from bpy_extras.io_utils import ImportHelper
+from bpy.props import StringProperty, BoolProperty, EnumProperty # type: ignore
+from bpy.types import Operator # type: ignore
+from bpy_extras.io_utils import ImportHelper # type: ignore
 
 # TODO: find a better way to load this module from Blender.
 sys.path.insert(0, 'E:/Dropbox/Development/Rainbow/RainbowSixFileConverters')

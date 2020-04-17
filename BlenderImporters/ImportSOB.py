@@ -16,10 +16,7 @@ from BlenderImporters.BlenderUtils import create_objects_from_R6GeometryObject
 
 log = logging.getLogger(__name__)
 
-errorCount = 0
-errorList = []
-
-def import_SOB_to_scene(filename):
+def import_SOB_to_scene(filename: str):
     """Opens SOB file and imports all relevant information"""
     SOBObject = SOBModelReader.SOBModelFile()
     SOBObject.read_file(filename)

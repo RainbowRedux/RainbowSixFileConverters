@@ -9,7 +9,7 @@ TEST_SETTINGS_FILE = "test_settings.json"
 logging.basicConfig(level=logging.INFO)
 
 class R6SettingsTests(unittest.TestCase):
-    """Test reading R6 CXP files"""
+    """Test Module and functionality associated with R6 game settings and path determination"""
 
     def test_rs_demo_path(self):
         """Tests a map path from the rogue spear demo"""

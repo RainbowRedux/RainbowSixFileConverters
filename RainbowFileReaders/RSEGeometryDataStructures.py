@@ -1,7 +1,12 @@
 """Defines common geometry data structures used in many Red Storm Entertainment file formats"""
-from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure
+
+from __future__ import annotations
+
+from typing import List, Tuple, Dict
+
+from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, SizedCString, BinaryFileReader
 from RainbowFileReaders.R6Constants import RSEGeometryFlags
-from RainbowFileReaders.MathHelpers import normalize_color, pad_color
+from RainbowFileReaders.MathHelpers import normalize_color, pad_color, IntIterable
 from RainbowFileReaders.RenderableArray import RenderableArray
 
 class RSEGeometryListHeader(BinaryFileDataStructure):
@@ -9,48 +14,45 @@ class RSEGeometryListHeader(BinaryFileDataStructure):
     def __init__(self):
         super(RSEGeometryListHeader, self).__init__()
 
-    def read(self, filereader):
+    def read(self, filereader: BinaryFileReader):
         super().read(filereader)
 
-        self.geometryListSize = filereader.read_uint32()
-        self.ID = filereader.read_uint32()
-        self.read_named_string(filereader, "geometryListString")
-        self.count = filereader.read_uint32()
+        self.geometryListSize: int = filereader.read_uint32()
+        self.id: int = filereader.read_uint32()
+        self.geometry_list_string: SizedCString = SizedCString(filereader)
+        self.count: int = filereader.read_uint32()
 
 class R6GeometryObject(BinaryFileDataStructure):
     """Reads and stores a Rainbow Six Geometry Object"""
     def __init__(self):
         super(R6GeometryObject, self).__init__()
-        self.size = None
-        self.ID = None
-        self.versionStringLength = None
-        self.versionNumber = None
-        self.versionString = None
-        self.nameStringLength = None
-        self.nameStringRaw = None
-        self.nameString = None
-        self.unknown4 = None
-        self.unknown5 = None
-        self.vertexCount = None
-        self.vertices = None
-        self.vertexParamsCount = None
-        self.vertexParams = None
-        self.faceCount = None
-        self.faces = None
-        self.meshCount = None
-        self.meshes = None
+        self.size: int = None
+        self.id: int = None
+        self.name_string: SizedCString = None
+        self.version_string: SizedCString = None
+        self.versionNumber: int = None
+        self.unknown4: int = None
+        self.unknown5: int = None
+        self.vertexCount: int = None
+        self.vertices: List[List[float]] = []
+        self.vertexParamsCount: int = None
+        self.vertexParams: List[R6VertexParameterCollection] = None
+        self.faceCount: int = None
+        self.faces: List[R6FaceDefinition] = None
+        self.meshCount: int = None
+        self.meshes: List[R6MeshDefinition] = None
 
-    def generate_renderable_arrays_for_mesh(self, mesh):
+    def generate_renderable_arrays_for_mesh(self, mesh: R6MeshDefinition) -> List[RenderableArray]:
         """ Generates a list of RenderableArray objects from the internal data structure """
-        renderables = []
+        renderables: List[RenderableArray] = []
         uniqueMaterials = set()
         for faceIdx in mesh.faceIndices:
             currentFace = self.faces[faceIdx]
             uniqueMaterials.add(currentFace.materialIndex)
 
         for materialIdx in uniqueMaterials:
-            attribList = []
-            triangleIndices = []
+            attribList: List[Tuple[int, int]] = []
+            triangleIndices: List[IntIterable] = []
 
             #build list of sets of vertices and associated params, and list of new triangle indices
             for faceIdx in mesh.faceIndices:
@@ -69,6 +71,9 @@ class R6GeometryObject(BinaryFileDataStructure):
                     triangleIndices.append(currentTriangleIndices)
 
             currentRenderable = RenderableArray()
+            currentRenderable.normals = []
+            currentRenderable.UVs = []
+            currentRenderable.vertexColors = []
             # fill out new renderable by unravelling and expanding the vertex and param pairs
             for currentAttribSet in attribList:
                 # Make sure to copy any arrays so any transforms don't get interferred with in other renderables
@@ -79,9 +84,9 @@ class R6GeometryObject(BinaryFileDataStructure):
                 currentRenderable.UVs.append(currentVertexParams.UV.copy())
 
                 # Convert color to RenderableArray standard format, RGBA 0.0-1.0 range
-                importedColor = currentVertexParams.color.copy()
+                importedColorCopy = currentVertexParams.color.copy()
                 # convert the color to 0.0-1.0 range, rather than 0-255
-                importedColor = normalize_color(importedColor)
+                importedColor = normalize_color(importedColorCopy)
                 # pad with an alpha value so it's RGBA
                 importedColor = pad_color(importedColor)
                 currentRenderable.vertexColors.append(importedColor)
@@ -94,7 +99,7 @@ class R6GeometryObject(BinaryFileDataStructure):
 
         return renderables
 
-    def read(self, filereader):
+    def read(self, filereader: BinaryFileReader):
         super().read(filereader)
 
         self.read_header_info(filereader)
@@ -103,32 +108,27 @@ class R6GeometryObject(BinaryFileDataStructure):
         self.read_faces(filereader)
         self.read_meshes(filereader)
 
-    def read_header_info(self, filereader):
+    def read_header_info(self, filereader: BinaryFileReader):
         """Reads top level information for this data structure"""
         self.size = filereader.read_uint32()
         self.ID = filereader.read_uint32()
-        self.read_version_string(filereader)
-        self.versionNumber = None
+        self.name_string = SizedCString(filereader)
         #If the version string was actually set to version, then a version number is stored, along with object name
-        if self.versionString == 'Version':
+        if self.name_string.string == 'Version':
+            self.version_string = self.name_string
             self.versionNumber = filereader.read_uint32()
-            self.read_name_string(filereader)
+            self.name_string = SizedCString(filereader)
             self.unknown4 = filereader.read_uint32()
             self.unknown5 = filereader.read_uint32()
-        #If an object name was not read, then the version string is actually the name
-        if self.nameStringRaw is None: # differs from spec in AlexKimovs repo
-            self.nameStringLength = self.versionStringLength
-            self.nameStringRaw = self.versionStringRaw
-            self.nameString = self.versionString
 
-    def read_vertices(self, filereader):
+    def read_vertices(self, filereader: BinaryFileReader):
         """ Reads a count of the number of vertices, followed by the list of vertices """
         self.vertexCount = filereader.read_uint32()
         self.vertices = []
         for _ in range(self.vertexCount):
             self.vertices.append(filereader.read_vec_f(3))
 
-    def read_vertex_params(self, filereader):
+    def read_vertex_params(self, filereader: BinaryFileReader):
         """ Reads a count of the number of vertex parameters, followed by the list of vertex parameters """
         self.vertexParamsCount = filereader.read_uint32()
         self.vertexParams = []
@@ -137,7 +137,7 @@ class R6GeometryObject(BinaryFileDataStructure):
             newParams.read(filereader)
             self.vertexParams.append(newParams)
 
-    def read_faces(self, filereader):
+    def read_faces(self, filereader: BinaryFileReader):
         """ Reads a count of the number of faces, followed by the list of faces """
         self.faceCount = filereader.read_uint32()
         self.faces = []
@@ -146,7 +146,7 @@ class R6GeometryObject(BinaryFileDataStructure):
             newFace.read(filereader)
             self.faces.append(newFace)
 
-    def read_meshes(self, filereader):
+    def read_meshes(self, filereader: BinaryFileReader):
         """ Reads a count of the number of meshes, followed by the list of meshes """
         self.meshCount = filereader.read_uint32()
         self.meshes = []
@@ -159,12 +159,12 @@ class R6VertexParameterCollection(BinaryFileDataStructure):
     """ Contains a given pair/set of attributes for a particular vertex. Contains, normal, UV and color values """
     def __init__(self):
         super(R6VertexParameterCollection, self).__init__()
-        self.normal = None
-        self.UV = None
-        self.unknown10 = None
-        self.color = None
+        self.normal: List[float] = None
+        self.UV: List[float] = None
+        self.unknown10: float = None
+        self.color: List[int] = None
 
-    def read(self, filereader):
+    def read(self, filereader: BinaryFileReader):
         super().read(filereader)
 
         self.normal = filereader.read_vec_f(3)
@@ -177,43 +177,42 @@ class R6FaceDefinition(BinaryFileDataStructure):
     def __init__(self):
         super(R6FaceDefinition, self).__init__()
 
-    def read(self, filereader):
+    def read(self, filereader: BinaryFileReader):
         super().read(filereader)
 
-        self.vertexIndices = filereader.read_vec_uint32(3)
-        self.paramIndices = filereader.read_vec_uint32(3)
-        self.faceNormal = filereader.read_vec_f(4)
-        self.materialIndex = filereader.read_uint32()
+        self.vertexIndices: List[int] = filereader.read_vec_uint32(3)
+        self.paramIndices: List[int] = filereader.read_vec_uint32(3)
+        self.faceNormal: List[float] = filereader.read_vec_f(4)
+        self.materialIndex: int = filereader.read_uint32()
 
-#TODO: Check if this is actually smoothing groups
 class R6MeshDefinition(BinaryFileDataStructure):
     """ Contains a list of faces that make up this mesh, as well as some associated properties """
     def __init__(self):
         super(R6MeshDefinition, self).__init__()
-        self.unknown6 = 0
+        self.unknown6: int = 0
 
-        self.numVertexIndices = 0
-        self.vertexIndices = []
+        self.name_string: SizedCString = SizedCString()
 
-        self.numFaceIndices = 0
-        self.faceIndices = []
+        self.numVertexIndices: int = 0
+        self.vertexIndices: List[int] = []
 
-        self.geometryFlags = 0
-        self.geometryFlagsEvaluated = {}
+        self.numFaceIndices: int = 0
+        self.faceIndices: List[int] = []
 
-        self.unknown9 = 0
+        self.geometryFlags: int = 0
+        self.geometryFlagsEvaluated: Dict[str, bool] = {}
 
-        self.nameStringLength = 0
-        self.nameStringRaw = None
-        self.nameString = None
+        self.unknown_8_string: SizedCString = SizedCString()
 
-    def read(self, filereader):
+        self.unknown9: int = 0
+
+    def read(self, filereader: BinaryFileReader):
         super().read(filereader)
 
         self.unknown6 = filereader.read_uint32()
 
         #read header
-        self.read_name_string(filereader)
+        self.name_string = SizedCString(filereader)
 
         #read vertices
         self.numVertexIndices = filereader.read_uint32()
@@ -228,7 +227,7 @@ class R6MeshDefinition(BinaryFileDataStructure):
         self.geometryFlagsEvaluated = RSEGeometryFlags.EvaluateFlags(self.geometryFlags)
 
         #read unknown8
-        self.read_named_string(filereader, "unknown8String")
+        self.unknown_8_string = SizedCString(filereader)
 
         #read unknown9
         self.unknown9 = filereader.read_uint32()

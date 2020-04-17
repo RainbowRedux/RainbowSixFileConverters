@@ -4,6 +4,7 @@ import unittest
 from os import path
 
 from FileUtilities.Settings import load_settings
+from FileUtilities.MipMapGenerator import generate_mip_maps
 from RainbowFileReaders import RSBImageReader
 
 TEST_SETTINGS_FILE = "test_settings.json"
@@ -12,6 +13,40 @@ logging.basicConfig(level=logging.CRITICAL)
 
 class R6RSBTests(unittest.TestCase):
     """Test R6 RSBs"""
+
+    def test_mip_map_generation(self):
+        """Tests reading an image and generating mip maps for it"""
+        settings = load_settings(TEST_SETTINGS_FILE)
+
+        RSB_filepath = path.join(settings["gamePath_R6_EW"], "data", "texture", "08_engine.RSB")
+
+        loadedFile = RSBImageReader.RSBImageFile()
+        readSucessfullyToEOF = loadedFile.read_file(RSB_filepath)
+
+        self.assertTrue(readSucessfullyToEOF, "Failed to read whole file")
+
+        fullColorImage = loadedFile.convert_full_color_image()
+
+        mips = generate_mip_maps(fullColorImage)
+
+        self.assertEqual(len(mips), 8, "Failed to generate correct number of mipmaps")
+
+    def test_impossible_mip_map_generation(self):
+        """Tests reading a non-power-of-2 image, and tries to generate mipmaps for it. This shouldn't be possible"""
+        settings = load_settings(TEST_SETTINGS_FILE)
+
+        RSB_filepath = path.join(settings["gamePath_R6_EW"], "data", "shell", "briefing", "Ac_a13.RSB")
+
+        loadedFile = RSBImageReader.RSBImageFile()
+        readSucessfullyToEOF = loadedFile.read_file(RSB_filepath)
+
+        self.assertTrue(readSucessfullyToEOF, "Failed to read whole file")
+
+        fullColorImage = loadedFile.convert_full_color_image()
+
+        mips = generate_mip_maps(fullColorImage)
+
+        self.assertIsNone(mips, "Did not return None, instead generated mip-maps")
 
     def test_palette_image(self):
         """Tests reading an image that contains a palette"""

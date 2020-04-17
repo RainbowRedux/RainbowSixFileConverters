@@ -1,7 +1,9 @@
 """Utility classes and functions for reading text files"""
 import shlex
 
-def read_tokenized_text_file(path):
+from typing import List, Dict, Any
+
+def read_tokenized_text_file(path: str) -> List[str]:
     """Reads a text file and tokenizes.
     Keeps strings within quotes, and discards comments"""
     inFile = open(path, "r")
@@ -26,7 +28,7 @@ def read_tokenized_text_file(path):
             keywords.append(value)
     return keywords
 
-def read_text_dict(path):
+def read_text_dict(path: str) -> Dict[str, str]:
     """Reads a tokenized text file and assumes that it's full of key/value pairs"""
     new_dict = {}
     tokens = read_tokenized_text_file(path)
@@ -37,8 +39,8 @@ def read_text_dict(path):
 
     return new_dict
 
-def read_keyword_list(keywords, list_length):
-    """Reads a number of tokens froma keyword list and returns as separate list"""
+def read_keyword_list(keywords: List[Any], list_length: int) -> List[Any]:
+    """Reads a number of tokens from a keyword list and returns as separate list"""
     newlist = []
     #Uses a loop like this to ensure the original list is modified when removing keywords, rather than a just this reference to the list updating
     for _ in range(list_length):

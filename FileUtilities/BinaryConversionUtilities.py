@@ -4,12 +4,13 @@ Also provides some functions to unpack data from packed structures
 """
 import struct
 import logging
-
 import functools
+
+from typing import List, Tuple
 
 from math import floor
 
-from deprecated import deprecated
+from deprecated import deprecated # type: ignore
 
 from FileUtilities.LoggingUtils import log_pprint
 
@@ -28,7 +29,7 @@ class BinaryFileReader(object):
         if path is not None:
             self.open_file(path)
 
-    def open_file(self, path):
+    def open_file(self, path: str):
         """Opens the file at specified path and reads all data at once into buffer self.bytes"""
         self.filepath = path
         log.debug("Opening file for read: %s", self.filepath)
@@ -40,7 +41,7 @@ class BinaryFileReader(object):
         # note that we "seek" to the beginning of the file at load
         self._seekg = 0
 
-    def read_bytes(self, size):
+    def read_bytes(self, size: int) -> bytes:
         """Reads and returns a sequence of bytes of specified length"""
         if len(self.bytes) < self._seekg + size:
             log.critical("File not long enough to read %d bytes", str(size))
@@ -50,11 +51,11 @@ class BinaryFileReader(object):
         return val
 
     @deprecated
-    def read_uint(self):
+    def read_uint(self) -> int:
         """Converts 4 bytes to an integer"""
         return self.read_uint32()
 
-    def read_uint32(self):
+    def read_uint32(self) -> int:
         """Converts 4 bytes to an integer"""
         #https://stackoverflow.com/a/444610
         data = self.read_bytes(4)
@@ -64,11 +65,11 @@ class BinaryFileReader(object):
         return struct.unpack("<I", data)[0]
 
     @deprecated
-    def read_int(self):
+    def read_int(self) -> int:
         """Converts 4 bytes to an integer"""
         return self.read_int32()
 
-    def read_int32(self):
+    def read_int32(self) -> int:
         """Converts 4 bytes to an integer"""
         #https://stackoverflow.com/a/444610
         data = self.read_bytes(4)
@@ -78,11 +79,11 @@ class BinaryFileReader(object):
         return struct.unpack("<i", data)[0]
 
     @deprecated
-    def read_short_int(self):
+    def read_short_int(self) -> int:
         """Converts 2 bytes to a short integer"""
         return self.read_int16()
 
-    def read_int16(self):
+    def read_int16(self) -> int:
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(2)
         if len(data) < 2:
@@ -91,11 +92,11 @@ class BinaryFileReader(object):
         return struct.unpack("<H", data)[0]
 
     @deprecated
-    def read_short_uint(self):
+    def read_short_uint(self) -> int:
         """Converts 2 bytes to a short integer"""
         return self.read_uint16()
 
-    def read_uint16(self):
+    def read_uint16(self) -> int:
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(2)
         if len(data) < 2:
@@ -103,7 +104,7 @@ class BinaryFileReader(object):
             return 0
         return struct.unpack("<h", data)[0]
 
-    def read_float(self):
+    def read_float(self) -> float:
         """Converts 2 bytes to a short integer"""
         data = self.read_bytes(4)
         if len(data) < 4:
@@ -111,7 +112,7 @@ class BinaryFileReader(object):
             return 0
         return struct.unpack("f", data)[0]
 
-    def read_vec_f(self, size):
+    def read_vec_f(self, size: int) -> List[float]:
         """Reads a specified number of floats into a list"""
         vec = []
         for _ in range(size):
@@ -119,11 +120,11 @@ class BinaryFileReader(object):
         return vec
 
     @deprecated
-    def read_vec_uint(self, size):
+    def read_vec_uint(self, size: int) -> List[int]:
         """Reads a specified number of uints into a list"""
         return self.read_vec_uint32(size)
 
-    def read_vec_uint32(self, size):
+    def read_vec_uint32(self, size: int) -> List[int]:
         """Reads a specified number of uints into a list"""
         vec = []
         for _ in range(size):
@@ -131,21 +132,21 @@ class BinaryFileReader(object):
         return vec
 
     @deprecated
-    def read_vec_short_uint(self, size):
+    def read_vec_short_uint(self, size: int) -> List[int]:
         """Reads a specified number of short uints into a list"""
         return self.read_vec_uint16(size)
 
-    def read_vec_uint16(self, size):
+    def read_vec_uint16(self, size: int) -> List[int]:
         """Reads a specified number of short uints into a list"""
         vec = []
         for _ in range(size):
             vec.append(self.read_uint16())
         return vec
 
-    def read_bgra_color_8bpp_byte(self):
+    def read_bgra_color_8bpp_byte(self) -> List[int]:
         """reads 4 bytes into a BGRA color, and then converts to RGBA."""
         byteStream = self.read_bytes(4)
-        color = []
+        color: List[int] = []
         for j in range(4):
             color.append(ord(byteStream[j:j + 1]))
         tempblue = color[0]
@@ -153,36 +154,36 @@ class BinaryFileReader(object):
         color[2] = tempblue
         return color
 
-    def read_rgb_color_24bpp_uint(self):
+    def read_rgb_color_24bpp_uint(self) -> List[int]:
         """Reads 3 uints"""
         color = []
         for _ in range(3):
             color.append(self.read_uint32())
         return color
 
-    def read_rgba_color_32bpp_uint(self):
+    def read_rgba_color_32bpp_uint(self) -> List[int]:
         """Reads 4 uints"""
         color = []
         for _ in range(4):
             color.append(self.read_uint32())
         return color
 
-    def read_rgba_color_32bpp_float(self):
+    def read_rgba_color_32bpp_float(self) -> List[float]:
         """Reads 4 uints"""
         color = []
         for _ in range(4):
             color.append(self.read_float())
         return color
 
-    def get_length(self):
+    def get_length(self) -> int:
         """Returns the length of the file that was read"""
         return len(self.bytes)
 
-    def get_seekg(self):
+    def get_seekg(self) -> int:
         """Returns the current location that is due to be read next operation"""
         return self._seekg
 
-    def is_at_eof(self):
+    def is_at_eof(self) -> bool:
         """Returns true if all bytes have been read, more specifically if seekg >= length of bytes"""
         return self.get_seekg() >= self.get_length()
 
@@ -193,7 +194,9 @@ class FileFormatReader(object):
     Child classes just need to specify fields to perform detailed read operations in read_data"""
     def __init__(self):
         super(FileFormatReader, self).__init__()
-        self.filepath = None
+        self.filepath: str = None
+        self._filereader: BinaryFileReader = None
+        self.verboseOutput: bool = False
 
     def print_structure_info(self):
         """Utility method to print detailed information on data stored"""
@@ -235,46 +238,38 @@ class BinaryFileDataStructure(object):
     def __init__(self):
         super().__init__()
 
-    def read_section_string(self, filereader):
-        """Read a string that stores the name of this section - header related"""
-        self.read_named_string(filereader, "sectionString")
-
-    def read_name_string(self, filereader):
-        """Read a string for the name of this object"""
-        self.read_named_string(filereader, "nameString")
-
-    def read_version_string(self, filereader):
-        """Read the string for the version. Does not read associated version numbers"""
-        self.read_named_string(filereader, "versionString")
-
-    def copy_string(self, srcName, dstName):
-        """This will copy a string, and it's associated data to another name"""
-        self.__setattr__(dstName + "Length", self.__getattribute__(srcName + "Length"))
-        self.__setattr__(dstName + "Raw", self.__getattribute__(srcName + "Raw"))
-        self.__setattr__(dstName, self.__getattribute__(srcName))
-
-    def read_named_string(self, filereader, stringName):
-        """Read a string with the specified name"""
-        newStringLength = filereader.read_uint32()
-        newStringRaw = filereader.read_bytes(newStringLength)
-        newString = newStringRaw[:-1].decode("utf-8")
-        self.__setattr__(stringName + "Length", newStringLength)
-        self.__setattr__(stringName + "Raw", newStringRaw)
-        self.__setattr__(stringName, newString)
-
-    def read(self, filereader):
+    def read(self, filereader: BinaryFileReader):
         """This is to be overriden in child classes. This is where all data for this structure can be read from"""
 
     def print_structure_info(self):
         """Helper method to output class information for debugging"""
         log_pprint(vars(self), logging.INFO)
 
-def bytes_to_shortint(byteStream):
+class SizedCString(object):
+    """Reads a null-terminated string from a file. Assumes there is a 4 byte integer specifying size"""
+    def __init__(self, filereader: BinaryFileReader = None):
+        self.string_length: int = -1
+        self.string_value_raw: bytes = b''
+        self.string: str = ""
+
+        if filereader:
+            self.read(filereader)
+
+    def read(self, filereader: BinaryFileReader):
+        """Reads a length and then a null-terminated string of that length from the BinaryFileReader"""
+        self.string_length = filereader.read_uint32()
+        self.string_value_raw = filereader.read_bytes(self.string_length)
+        self.string = self.string_value_raw[:-1].decode("utf-8")
+
+
+
+def bytes_to_shortint(byteStream: bytes) -> Tuple[int]:
     """Converts 2 bytes to a short integer"""
-    return struct.unpack('H', byteStream)
+    # Ignore this in typing, as the 'H' will guarantee ints are returned
+    return struct.unpack('H', byteStream) # type: ignore
 
 @functools.lru_cache(maxsize=8)
-def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):
+def calc_bitmasks_ARGB_color(bdR: int, bdG: int, bdB: int, bdA: int):
     """Calculates the appropriate bitmasks for a color stored in ARGB format."""
 
     redMask = 0
@@ -304,7 +299,7 @@ def calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA):
     return masks
 
 @functools.lru_cache(maxsize=None)
-def read_bitmask_ARGB_color(colorVal, bdR, bdG, bdB, bdA):
+def read_bitmask_ARGB_color(colorVal: int, bdR: int, bdG: int, bdB: int, bdA: int) -> List[int]:
     """Reads an ARGB color with custom bit depths for each channel, returns in RGBA format"""
     masks = calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA)
     redMask = masks[0]
@@ -318,8 +313,8 @@ def read_bitmask_ARGB_color(colorVal, bdR, bdG, bdB, bdA):
         alphaColor = alphaColor >> (bdR + bdG + bdB)
         alphaMaxValue = 2 ** bdA - 1
         #convert to full 255 range of color
-        alphaColor = float(alphaColor) / float(alphaMaxValue) * 255
-        alphaColor = int(floor(alphaColor))
+        alphaColorFlt = float(alphaColor) / float(alphaMaxValue) * 255
+        alphaColor = int(floor(alphaColorFlt))
 
     redColor = redMask & colorVal
     redColor = redColor >> (bdG + bdB)

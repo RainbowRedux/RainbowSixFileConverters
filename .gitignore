@@ -112,5 +112,8 @@ wiki/
 
 #Ignore unreal asset files next to source assets
 *.uasset
-#Ignore embedded PIL library as it's only used for testing in Unreal
+
+#Ignore embedded Python libraries as they are a quirk of embedding a python with unreal
 PIL/
+deprecated/
+wrapt/

@@ -1,1 +1,1 @@
-__all__ = ["ImportSOB", "ImportSOBOperator"]
+"""This module provides blender integration of the Rainbow Six file formats"""

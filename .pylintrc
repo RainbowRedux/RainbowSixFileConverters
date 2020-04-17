@@ -44,7 +44,7 @@ suggestion-mode=yes
 # active Python interpreter and may run arbitrary code.
 unsafe-load-any-extension=no
 
-disable=C0103,C0413,W0201,E0401,W0235,C0326,C0301,R0902,R0205,R0903,R0912,R0915,R0914
+disable=C0103,C0413,W0201,E0401,W0235,C0326,C0301,R0902,R0205,R0903,R0912,R0915,R0914,chained-comparison
 #disabled:
 #     snake_case: c0103 - Will improve over time as this is a new style change for this codebase
 #     import at top of file c0413 - can't improve while have to add in module path
@@ -59,6 +59,7 @@ disable=C0103,C0413,W0201,E0401,W0235,C0326,C0301,R0902,R0205,R0903,R0912,R0915,
 #     too many branches R0912: - Don't care
 #     too many statements R0915: - Don't care
 #     too many locals R0914 - Don't care
+#     chained-comparison - Don't care, prefer readability of simple conditions rather than math-like chained conditions
 
 
 [MESSAGES CONTROL]
@@ -358,7 +359,8 @@ logging-modules=logging
 
 # List of note tags to take in consideration, separated by a comma.
 notes=FIXME,
-      XXX
+      XXX,
+      PETODO
       #TODO
 
 
