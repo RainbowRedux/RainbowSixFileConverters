@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Mypy Tests 
+name: mypy 
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -18,16 +18,16 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      
+
       - uses: actions/setup-python@v1
         with:
           python-version: '3.7' # Version range or exact version of a Python version to use, using SemVer's version range syntax
           architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
-      
+
       - name: install requirements
         run: python3 -m pip install -r $GITHUB_WORKSPACE/requirements.txt
         continue-on-error: false
-      
+
       - name: run mypy
         run: python3 -m mypy $GITHUB_WORKSPACE
         continue-on-error: false
