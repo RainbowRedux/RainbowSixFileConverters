@@ -1,0 +1,32 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Python Code Quality and Lint
+        uses: ricardochaves/python-lint@v1.1.0
+        with:
+          # Use Pylint
+          use-pylint: true # optional, default is true:  
+          # Use pycodestyle
+          use-pycodestyle: false # optional, default is true
+          # Use Flake8
+          use-flake8: false # optional, default is true
+          # Use Black
+          use-black: false # optional, default is true
+          # Use mypy
+          use-mypy: true # optional, default is true
+          # Use isort
+          use-isort: false # optional, default is true
