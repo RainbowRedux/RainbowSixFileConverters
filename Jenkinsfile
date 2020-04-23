@@ -9,7 +9,7 @@ pipeline {
         }
         stage('mypy verification') {
             steps {
-                bat 'python -m mypy BlenderImporters FileUtilities RainbowFileReaders UnrealImporters tests gameLoadTest.py MAPConverter.py RSBPNGCacheGenerator.py RSBtoPNGConverter.py SOBtoOBJConverter.py'
+                bat 'python -m mypy %WORKSPACE%'
             }
         }
         stage('Unit Test') {
