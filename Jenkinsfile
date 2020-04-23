@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('InstallPrereqs') {
             steps {
-                bat 'python -m pip -r requirements.txt'
+                bat 'python -m pip install -r requirements.txt'
             }
         }
         stage('mypy verification') {
