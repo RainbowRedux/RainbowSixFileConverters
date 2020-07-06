@@ -5,7 +5,8 @@ from typing import Optional, Tuple, List
 
 from PIL import Image as PILImage # type: ignore
 from PIL import ImagePalette # type: ignore
-from FileUtilities.BinaryConversionUtilities import read_bitmask_ARGB_color, BinaryFileDataStructure, FileFormatReader, bytes_to_shortint, BinaryFileReader
+from FileUtilities.BinaryConversionUtilities import BinaryFileDataStructure, FileFormatReader, bytes_to_shortint, BinaryFileReader
+from FileUtilities.ColorConversionUtilities import get_color_format, get_color_lookup_table
 from RainbowFileReaders.MathHelpers import IntIterable
 
 log = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ class RSBImageFile(FileFormatReader):
         self.imageFullColor: RSBImage = RSBImage()
 
     def read_data(self):
+        """Reads the data from an RSB Image file. Overrides parent function"""
         super().read_data()
 
         fileReader = self._filereader
@@ -107,14 +109,17 @@ class RSBImageFile(FileFormatReader):
         pixelformat = 'RGB'
         if self.header.bitDepthAlpha != 0 or force_alpha_channel:
             pixelformat = 'RGBA'
+
+        color_format = get_color_format(self.header.bitDepthRed, self.header.bitDepthGreen, self.header.bitDepthBlue, self.header.bitDepthAlpha)
+        color_lookup = get_color_lookup_table(color_format)
         newImage = PILImage.new(pixelformat, (self.header.width, self.header.height))
         pixels = newImage.load()
         for x in range(newImage.size[0]):    # for every col:
             for y in range(newImage.size[1]):    # For every row
                 pixel_index = self.header.width * y + x
-                pixel_data = self.imageFullColor.get_pixel(pixel_index)
+                pixel_data = self.imageFullColor.image[pixel_index]
                 pixel_color_16 = bytes_to_shortint(pixel_data)[0]
-                pixel_color = read_bitmask_ARGB_color(pixel_color_16, self.header.bitDepthRed, self.header.bitDepthGreen, self.header.bitDepthBlue, self.header.bitDepthAlpha)
+                pixel_color = color_lookup[pixel_color_16]
                 if self.header.bitDepthAlpha == 0:
                     #strip alpha channel if not required
                     pixel_color = pixel_color[:3]
@@ -228,6 +233,7 @@ class RSBHeader(BinaryFileDataStructure):
         return (self.bitDepthRed, self.bitDepthGreen, self.bitDepthBlue, self.bitDepthAlpha)
 
     def read(self, filereader: BinaryFileReader):
+        """Reads the data from an RSB header. Overrides parent function"""
         super().read(filereader)
 
         self.version = filereader.read_uint32()
@@ -277,6 +283,7 @@ class RSBPalette(BinaryFileDataStructure):
             log.info("I: %d (R: %d\tG: %d\tB: %d\tA: %d)", i, color[0], color[1], color[2], color[3])
 
     def read(self, filereader: BinaryFileReader):
+        """Reads data associated with an RSBPalette"""
         super().read(filereader)
 
         self.palette_entries = []

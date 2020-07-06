@@ -4,11 +4,8 @@ Also provides some functions to unpack data from packed structures
 """
 import struct
 import logging
-import functools
 
 from typing import List, Tuple
-
-from math import floor
 
 from deprecated import deprecated # type: ignore
 
@@ -262,78 +259,7 @@ class SizedCString(object):
         self.string = self.string_value_raw[:-1].decode("utf-8")
 
 
-
 def bytes_to_shortint(byteStream: bytes) -> Tuple[int]:
     """Converts 2 bytes to a short integer"""
     # Ignore this in typing, as the 'H' will guarantee ints are returned
     return struct.unpack('H', byteStream) # type: ignore
-
-@functools.lru_cache(maxsize=8)
-def calc_bitmasks_ARGB_color(bdR: int, bdG: int, bdB: int, bdA: int):
-    """Calculates the appropriate bitmasks for a color stored in ARGB format."""
-
-    redMask = 0
-    greenMask = 0
-    blueMask = 0
-    alphaMask = 0
-
-    if bdA > 0:
-        for _ in range(bdA):
-            alphaMask = (alphaMask << 1) + 1
-        alphaMask = alphaMask << (bdR + bdG + bdB)
-
-    for _ in range(bdR):
-        redMask = (redMask << 1) + 1
-    redMask = redMask << (bdG + bdB)
-
-    greenMask = 0
-    for _ in range(bdG):
-        greenMask = (greenMask << 1) + 1
-    greenMask = greenMask << (bdB)
-
-    blueMask = 0
-    for _ in range(bdB):
-        blueMask = (blueMask << 1) + 1
-
-    masks = [redMask, greenMask, blueMask, alphaMask]
-    return masks
-
-@functools.lru_cache(maxsize=None)
-def read_bitmask_ARGB_color(colorVal: int, bdR: int, bdG: int, bdB: int, bdA: int) -> List[int]:
-    """Reads an ARGB color with custom bit depths for each channel, returns in RGBA format"""
-    masks = calc_bitmasks_ARGB_color(bdR, bdG, bdB, bdA)
-    redMask = masks[0]
-    greenMask = masks[1]
-    blueMask = masks[2]
-    alphaMask = masks[3]
-
-    alphaColor = 255
-    if bdA > 0:
-        alphaColor = alphaMask & colorVal
-        alphaColor = alphaColor >> (bdR + bdG + bdB)
-        alphaMaxValue = 2 ** bdA - 1
-        #convert to full 255 range of color
-        alphaColorFlt = float(alphaColor) / float(alphaMaxValue) * 255
-        alphaColor = int(floor(alphaColorFlt))
-
-    redColor = redMask & colorVal
-    redColor = redColor >> (bdG + bdB)
-    redMaxValue = (2 ** bdR) - 1
-    #convert to full 255 range of color
-    redColor = float(redColor) / float(redMaxValue) * 255
-    redColor = int(floor(redColor))
-
-    greenColor = greenMask & colorVal
-    greenColor = greenColor >> (bdB)
-    greenMaxValue = (2 ** bdG) - 1
-    #convert to full 255 range of color
-    greenColor = float(greenColor) / float(greenMaxValue) * 255
-    greenColor = int(floor(greenColor))
-
-    blueColor = blueMask & colorVal
-    blueMaxValue = (2 ** bdB) - 1
-    #convert to full 255 range of color
-    blueColor = float(blueColor) / float(blueMaxValue) * 255
-    blueColor = int(floor(blueColor))
-
-    return [redColor, greenColor, blueColor, alphaColor]
