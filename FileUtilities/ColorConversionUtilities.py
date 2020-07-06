@@ -22,7 +22,7 @@ def get_color_format(bdR, bdG, bdB, bdA):
     """ Determines the color format, which can be used for color lookup tables """
     if bdR == 4 and bdG == 4 and bdB == 4 and bdA == 4:
         return ColorFormats.CF_ARGB_4444
-    
+
     if bdR == 5 and bdG == 6 and bdB == 5 and bdA == 0:
         return ColorFormats.CF_ARGB_0565
 
