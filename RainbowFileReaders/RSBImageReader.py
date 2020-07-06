@@ -10,7 +10,7 @@ from FileUtilities.ColorConversionUtilities import get_color_format, get_color_l
 from RainbowFileReaders.MathHelpers import IntIterable
 
 log = logging.getLogger(__name__)
-
+ 
 class RSBImageFile(FileFormatReader):
     """Class to read full RSB files"""
     def __init__(self):
