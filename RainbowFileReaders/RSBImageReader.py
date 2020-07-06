@@ -20,6 +20,7 @@ class RSBImageFile(FileFormatReader):
         self.imageFullColor: RSBImage = RSBImage()
 
     def read_data(self):
+        """Reads the data from an RSB Image file. Overrides parent function"""
         super().read_data()
 
         fileReader = self._filereader
@@ -232,6 +233,7 @@ class RSBHeader(BinaryFileDataStructure):
         return (self.bitDepthRed, self.bitDepthGreen, self.bitDepthBlue, self.bitDepthAlpha)
 
     def read(self, filereader: BinaryFileReader):
+        """Reads the data from an RSB header. Overrides parent function"""
         super().read(filereader)
 
         self.version = filereader.read_uint32()
@@ -281,6 +283,7 @@ class RSBPalette(BinaryFileDataStructure):
             log.info("I: %d (R: %d\tG: %d\tB: %d\tA: %d)", i, color[0], color[1], color[2], color[3])
 
     def read(self, filereader: BinaryFileReader):
+        """Reads data associated with an RSBPalette"""
         super().read(filereader)
 
         self.palette_entries = []
