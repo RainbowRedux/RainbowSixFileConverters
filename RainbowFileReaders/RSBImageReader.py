@@ -231,9 +231,9 @@ class RSBHeader(BinaryFileDataStructure):
     def get_rgba_bitmask_tuple(self) -> Tuple[int, ...]:
         """Returns the bitmask in RGBA order as a tuple"""
         return (self.bitDepthRed, self.bitDepthGreen, self.bitDepthBlue, self.bitDepthAlpha)
- 
+
     def read(self, filereader: BinaryFileReader):
-        """ Reads the data from an RSB header. Overrides parent function"""
+        """Reads the data from an RSB header. Overrides parent function"""
         super().read(filereader)
 
         self.version = filereader.read_uint32()
