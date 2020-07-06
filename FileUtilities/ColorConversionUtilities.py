@@ -3,10 +3,6 @@ Provides some utility functions for converting colors
 """
 import functools
 
-##### Runtimes
-# Before new method: 118.39s, 117.12s, 117.80s
-# New method: 98.77s, 99.22s, 98.12s
-
 from typing import List, Tuple, Dict
 from math import floor
 
@@ -14,7 +10,7 @@ from math import floor
 COLOR_LOOKUPS: Dict[str, List[int]] = {}
 
 #Stores a lookup list for every bitdepth
-BITDEPTH_VALUE_LOOKUPS = {}
+BITDEPTH_VALUE_LOOKUPS: Dict[int, List[int]] = {}
 
 class ColorFormats(object):
     """Used to store constants representing the different color formats"""
