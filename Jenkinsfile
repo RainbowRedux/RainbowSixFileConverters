@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'windows' }
+    agent { label 'windows && unreal' }
 
     stages {
         stage ('Connect Network Drives') {
