@@ -2,6 +2,11 @@ pipeline {
     agent { label 'windows' }
 
     stages {
+        stage ('Connect Network Drives') {
+            steps {
+                bat 'C:\ConnectNetworkDrives.bat'
+            }
+        }
         stage('InstallPrereqs') {
             steps {
                 bat 'python -m pip install -r requirements.txt'
