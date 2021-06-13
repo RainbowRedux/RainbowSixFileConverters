@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage ('Connect Network Drives') {
             steps {
-                bat 'C:\ConnectNetworkDrives.bat'
+                bat 'C:\\ConnectNetworkDrives.bat'
             }
         }
         stage('InstallPrereqs') {
